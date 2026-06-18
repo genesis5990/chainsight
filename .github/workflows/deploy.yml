@@ -39,6 +39,17 @@ jobs:
             echo "App chainsight-api-dev already exists"
           fi
 
+      - name: Destroy stale machines (force fresh service config)
+        # flyctl deploy does a rolling update on existing machines and does NOT
+        # add new [http_service] config to them. We destroy all machines so the
+        # next deploy creates them fresh from the full toml config.
+        run: |
+          MIDS=$(flyctl machine list -a chainsight-api-dev --json 2>/dev/null | jq -r '.[].id' || true)
+          for MID in $MIDS; do
+            echo "Destroying machine $MID"
+            flyctl machine destroy --force "$MID" -a chainsight-api-dev || true
+          done
+
       - name: Set app secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -77,6 +88,13 @@ jobs:
             flyctl apps create chainsight-web-dev --org "$FLY_ORG"
           fi
 
+      - name: Destroy stale machines
+        run: |
+          MIDS=$(flyctl machine list -a chainsight-web-dev --json 2>/dev/null | jq -r '.[].id' || true)
+          for MID in $MIDS; do
+            flyctl machine destroy --force "$MID" -a chainsight-web-dev || true
+          done
+
       - name: Set app secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -111,6 +129,13 @@ jobs:
             flyctl apps create chainsight-worker-dev --org "$FLY_ORG"
           fi
 
+      - name: Destroy stale machines
+        run: |
+          MIDS=$(flyctl machine list -a chainsight-worker-dev --json 2>/dev/null | jq -r '.[].id' || true)
+          for MID in $MIDS; do
+            flyctl machine destroy --force "$MID" -a chainsight-worker-dev || true
+          done
+
       - name: Set app secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -141,6 +166,13 @@ jobs:
           if ! flyctl status -a chainsight-math-dev >/dev/null 2>&1; then
             flyctl apps create chainsight-math-dev --org "$FLY_ORG"
           fi
+
+      - name: Destroy stale machines
+        run: |
+          MIDS=$(flyctl machine list -a chainsight-math-dev --json 2>/dev/null | jq -r '.[].id' || true)
+          for MID in $MIDS; do
+            flyctl machine destroy --force "$MID" -a chainsight-math-dev || true
+          done
 
       - name: Deploy chainsight-math-dev
         # Math service Dockerfile expects the build context to be apps/math
