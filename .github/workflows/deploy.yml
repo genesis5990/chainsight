@@ -18,6 +18,7 @@ on:
 env:
   TURBO_TELEMETRY_DISABLED: 1
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  FLY_ORG: personal
 
 jobs:
   # Each service deploys independently. Failures in one don't block others.
@@ -28,10 +29,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure app exists
+        run: |
+          if ! flyctl status -a chainsight-api-dev >/dev/null 2>&1; then
+            echo "App missing — creating chainsight-api-dev"
+            flyctl apps create chainsight-api-dev --org "$FLY_ORG"
+          else
+            echo "App chainsight-api-dev already exists"
+          fi
+
+      - name: Set app secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          flyctl secrets set --app chainsight-api-dev --stage \
+            SUPABASE_URL="$SUPABASE_URL" \
+            SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            SUPABASE_JWKS_URL="${SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+
       - name: Deploy chainsight-api-dev
         # Run from repo root so Dockerfile COPY paths resolve correctly.
-        # --dockerfile is relative to the working directory (the repo root).
-        run: flyctl deploy . --config infra/fly/fly.api.toml --dockerfile apps/api/Dockerfile --remote-only --wait-timeout=600
+        run: flyctl deploy . --config infra/fly/fly.api.toml --dockerfile apps/api/Dockerfile --remote-only --wait-timeout=600 --ha=false
 
   deploy-web:
     name: Deploy Web
@@ -40,8 +62,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure app exists
+        run: |
+          if ! flyctl status -a chainsight-web-dev >/dev/null 2>&1; then
+            flyctl apps create chainsight-web-dev --org "$FLY_ORG"
+          fi
+
+      - name: Set app secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          flyctl secrets set --app chainsight-web-dev --stage \
+            NEXT_PUBLIC_SUPABASE_URL="$SUPABASE_URL" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+
       - name: Deploy chainsight-web-dev
-        run: flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600
+        run: flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600 --ha=false
 
   deploy-worker:
     name: Deploy Worker
@@ -50,8 +88,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure app exists
+        run: |
+          if ! flyctl status -a chainsight-worker-dev >/dev/null 2>&1; then
+            flyctl apps create chainsight-worker-dev --org "$FLY_ORG"
+          fi
+
+      - name: Set app secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # NOTE: REDIS_URL is a placeholder until Upstash is provisioned.
+          # The worker will crash-loop until a real Redis is wired in — by design for Phase 0.
+          flyctl secrets set --app chainsight-worker-dev --stage \
+            SUPABASE_URL="$SUPABASE_URL" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            REDIS_URL="redis://localhost:6379"
+
       - name: Deploy chainsight-worker-dev
-        run: flyctl deploy . --config infra/fly/fly.worker.toml --dockerfile apps/worker/Dockerfile --remote-only --wait-timeout=600
+        # Worker has no http_service so it doesn't need a public IP.
+        run: flyctl deploy . --config infra/fly/fly.worker.toml --dockerfile apps/worker/Dockerfile --remote-only --wait-timeout=600 --ha=false
+        continue-on-error: true  # Phase 0: worker crash-loops until Redis is wired — don't block other deploys.
 
   deploy-math:
     name: Deploy Math Service
@@ -60,10 +119,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Ensure app exists
+        run: |
+          if ! flyctl status -a chainsight-math-dev >/dev/null 2>&1; then
+            flyctl apps create chainsight-math-dev --org "$FLY_ORG"
+          fi
+
       - name: Deploy chainsight-math-dev
         # Math service Dockerfile expects the build context to be apps/math
         # (it has COPY pyproject.toml ./ etc. with no repo-root prefix).
-        run: flyctl deploy apps/math --config infra/fly/fly.math.toml --dockerfile apps/math/Dockerfile --remote-only --wait-timeout=600
+        run: flyctl deploy apps/math --config infra/fly/fly.math.toml --dockerfile apps/math/Dockerfile --remote-only --wait-timeout=600 --ha=false
 
   health-check:
     name: Post-deploy health check
@@ -73,21 +139,31 @@ jobs:
     steps:
       - name: Verify API health
         run: |
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6 7 8 9 10; do
             if curl -sf "https://chainsight-api-dev.fly.dev/v1/health/live" > /dev/null; then
               echo "API healthy"
               break
             fi
             echo "Attempt $i: API not ready yet, retrying..."
-            sleep 10
+            sleep 15
           done
       - name: Verify Math service health
         run: |
-          for i in 1 2 3 4 5; do
+          for i in 1 2 3 4 5 6 7 8 9 10; do
             if curl -sf "https://chainsight-math-dev.fly.dev/health" > /dev/null; then
               echo "Math service healthy"
               break
             fi
             echo "Attempt $i: Math service not ready yet, retrying..."
-            sleep 10
+            sleep 15
+          done
+      - name: Verify Web app
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -sf "https://chainsight-web-dev.fly.dev/" > /dev/null; then
+              echo "Web healthy"
+              break
+            fi
+            echo "Attempt $i: Web not ready yet, retrying..."
+            sleep 15
           done
