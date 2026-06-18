@@ -55,6 +55,14 @@ jobs:
         # Run from repo root so Dockerfile COPY paths resolve correctly.
         run: flyctl deploy . --config infra/fly/fly.api.toml --dockerfile apps/api/Dockerfile --remote-only --wait-timeout=600 --ha=false
 
+      - name: Dump API logs on failure
+        if: failure()
+        run: |
+          echo '--- flyctl logs (chainsight-api-dev) ---'
+          flyctl logs -a chainsight-api-dev --no-tail || true
+          echo '--- flyctl machine list ---'
+          flyctl machine list -a chainsight-api-dev || true
+
   deploy-web:
     name: Deploy Web
     runs-on: ubuntu-latest
@@ -80,6 +88,14 @@ jobs:
 
       - name: Deploy chainsight-web-dev
         run: flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600 --ha=false
+
+      - name: Dump Web logs on failure
+        if: failure()
+        run: |
+          echo '--- flyctl logs (chainsight-web-dev) ---'
+          flyctl logs -a chainsight-web-dev --no-tail || true
+          echo '--- flyctl machine list ---'
+          flyctl machine list -a chainsight-web-dev || true
 
   deploy-worker:
     name: Deploy Worker
@@ -130,6 +146,14 @@ jobs:
         # Math service Dockerfile expects the build context to be apps/math
         # (it has COPY pyproject.toml ./ etc. with no repo-root prefix).
         run: flyctl deploy apps/math --config infra/fly/fly.math.toml --dockerfile apps/math/Dockerfile --remote-only --wait-timeout=600 --ha=false
+
+      - name: Dump Math logs on failure
+        if: failure()
+        run: |
+          echo '--- flyctl logs (chainsight-math-dev) ---'
+          flyctl logs -a chainsight-math-dev --no-tail || true
+          echo '--- flyctl machine list ---'
+          flyctl machine list -a chainsight-math-dev || true
 
   health-check:
     name: Post-deploy health check
