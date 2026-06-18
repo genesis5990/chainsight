@@ -29,7 +29,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy chainsight-api-dev
-        run: flyctl deploy --config infra/fly/fly.api.toml --remote-only --wait-timeout=600
+        # Run from repo root so Dockerfile COPY paths resolve correctly.
+        # --dockerfile is relative to the working directory (the repo root).
+        run: flyctl deploy . --config infra/fly/fly.api.toml --dockerfile apps/api/Dockerfile --remote-only --wait-timeout=600
 
   deploy-web:
     name: Deploy Web
@@ -39,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy chainsight-web-dev
-        run: flyctl deploy --config infra/fly/fly.web.toml --remote-only --wait-timeout=600
+        run: flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600
 
   deploy-worker:
     name: Deploy Worker
@@ -49,7 +51,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy chainsight-worker-dev
-        run: flyctl deploy --config infra/fly/fly.worker.toml --remote-only --wait-timeout=600
+        run: flyctl deploy . --config infra/fly/fly.worker.toml --dockerfile apps/worker/Dockerfile --remote-only --wait-timeout=600
 
   deploy-math:
     name: Deploy Math Service
@@ -59,7 +61,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Deploy chainsight-math-dev
-        run: flyctl deploy --config infra/fly/fly.math.toml --remote-only --wait-timeout=600
+        # Math service Dockerfile expects the build context to be apps/math
+        # (it has COPY pyproject.toml ./ etc. with no repo-root prefix).
+        run: flyctl deploy apps/math --config infra/fly/fly.math.toml --dockerfile apps/math/Dockerfile --remote-only --wait-timeout=600
 
   health-check:
     name: Post-deploy health check

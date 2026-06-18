@@ -4,7 +4,7 @@ app = "chainsight-web-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "apps/web/Dockerfile"
+  dockerfile = "../../apps/web/Dockerfile"
 
 [http_service]
   internal_port = 3000

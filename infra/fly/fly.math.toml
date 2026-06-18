@@ -4,7 +4,7 @@ app = "chainsight-math-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "apps/math/Dockerfile"
+  dockerfile = "../../apps/math/Dockerfile"
 
 [http_service]
   internal_port = 8081

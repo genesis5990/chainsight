@@ -6,7 +6,11 @@ app = "chainsight-api-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "apps/api/Dockerfile"
+  # Paths in this file are relative to the config file's directory.
+  # The deploy workflow passes --image-label and we run flyctl from the
+  # repo root with --build-target-arg PROJECT_ROOT=. so the Dockerfile
+  # COPY paths still work.
+  dockerfile = "../../apps/api/Dockerfile"
 
 [http_service]
   internal_port = 8080
