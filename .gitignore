@@ -84,3 +84,9 @@ Thumbs.db
 
 # generated types
 packages/shared-types/src/supabase.ts
+
+# stray TS build outputs in source dirs (shouldn't happen, but a safety net)
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js.map
+*.tsbuildinfo
