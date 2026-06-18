@@ -31,8 +31,9 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      - name: Typecheck
-        run: pnpm typecheck
+      - name: Typecheck (TypeScript workspaces only)
+        # The math service has its own typecheck (mypy) in a separate job.
+        run: pnpm turbo run typecheck --filter='!@chainsight/math'
 
       # Lint and test land in Week 2 once ESLint + Vitest configs are written.
       # Soft-fail until then so CI stays green during Phase 0 foundations.
