@@ -4,14 +4,18 @@
  * Phase 0 Week 1: empty skeleton with a hello-world job for end-to-end smoke testing.
  * Phase 0 Week 3+: Tracer Agent jobs, document extraction, wallet analysis kickoff.
  */
-import { Worker, Queue } from 'bullmq';
+import { Worker, Queue, type ConnectionOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import pino from 'pino';
 
 const log = pino({ name: 'chainsight-worker', level: process.env.LOG_LEVEL ?? 'info' });
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
-const connection = new IORedis(REDIS_URL, { maxRetriesPerRequest: null });
+// BullMQ accepts an IORedis instance as `connection`, but its type expects
+// a ConnectionOptions union. Casting via unknown is the documented pattern.
+const connection = new IORedis(REDIS_URL, {
+  maxRetriesPerRequest: null,
+}) as unknown as ConnectionOptions;
 
 const HELLO_QUEUE = 'hello-world';
 

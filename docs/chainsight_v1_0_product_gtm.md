@@ -4,7 +4,7 @@
 > **Status:** Phase 0 reference  
 > **Locked decisions referenced:** F46 (packaging), F45 (community), F44 (EOL/escrow), F43 (legal/insurance), F42 (certifications), F41 (bias/fairness), F40 (in-house heuristics), F33 (stablecoin freeze), F29 (chain-of-custody), F27 (supervisor mode), F26 (expert witness), G1 (human-in-the-loop), G5 (path immutability), G8 (BYOK neutrality), G9 (BYOK scope), G10 (transaction-centric graph), G22 (SaaS Blind)  
 > **Build posture:** Solo developer + AI agents; SaaS Blind first; On-Prem Sovereign as fast-follow  
-> **Infrastructure (SaaS Blind v1):** Supabase (Postgres + pgvector + storage) + Fly.io (application tier, scale-to-zero) + GitHub (CI/CD, Actions) — all existing founder accounts. Phase 0 infrastructure burn: under $300/month at zero customers. AWS migration planned for Phase 2 alongside SOC 2 Type 1 work.  
+> **Infrastructure (SaaS Blind v1):** Supabase (Postgres + pgvector + storage) + Fly.io (application tier, scale-to-zero) + GitHub (CI/CD, Actions) — all existing founder accounts. Phase 0 infrastructure burn: under $300/month at zero customers. AWS migration planned for Phase 2 alongside SOC 2 Type 1 work.
 
 ---
 
@@ -18,22 +18,24 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Opaque, enterprise-negotiated. Best available data: Reactor starts around $40,000 per seat per year for law enforcement; average contract across all customers is approximately $185,000 per year (Vendr benchmark); enterprise deployments with Reactor + KYT + Kryptos run $500K–$5M+ annually. Chainalysis KYT is volume-based (transaction count), so fast-growth exchanges face escalating costs. UK G-Cloud lists Reactor with Data Solutions at £55,000 per license per year.
 
-**Strengths:**  
-- The deepest attribution database in the market — 134,000+ entity labels, 325 million+ swaps, 300+ bridges, 75+ supported chains. This is a genuine moat, built over eight years of proprietary data accumulation.  
-- Incumbent relationship with over 110 government agencies across 70+ countries. The IRS, DOJ, and FBI buy Chainalysis on sole-source authority. This is not an open competition in most federal procurement — it is a monopoly by bureaucratic inertia.  
-- Reactor's certification program ($699–$1,349 per certification) has trained a generation of investigators. Those investigators advocate for Reactor on budget requests.  
-- Active LINKS conference (1,000+ attendees), creating community and loyalty.  
+**Strengths:**
+
+- The deepest attribution database in the market — 134,000+ entity labels, 325 million+ swaps, 300+ bridges, 75+ supported chains. This is a genuine moat, built over eight years of proprietary data accumulation.
+- Incumbent relationship with over 110 government agencies across 70+ countries. The IRS, DOJ, and FBI buy Chainalysis on sole-source authority. This is not an open competition in most federal procurement — it is a monopoly by bureaucratic inertia.
+- Reactor's certification program ($699–$1,349 per certification) has trained a generation of investigators. Those investigators advocate for Reactor on budget requests.
+- Active LINKS conference (1,000+ attendees), creating community and loyalty.
 - FedRAMP-authorized path for cloud deployment.
 
-**Weaknesses:**  
-- The SaaS model means the vendor has full visibility into every investigation. Chainalysis *could* read your case data. It operates on a policy prohibition, not a technical guarantee. This is a real objection from federal and intelligence-community customers who've tried to get more restrictive terms.  
-- Pricing excludes nearly every buyer below the $50,000/year threshold — solo investigators, small task forces, local LE units, private-sector compliance teams at smaller firms cannot access the product. This is a large underserved market.  
-- Attribution data is a black box. When Reactor says "this address belongs to Exchange X," it doesn't explain its methodology. The [ChainArgos non-determinism problem](https://medium.com/chainargos/blockchain-tracing-determinism-5a690a95ca5f) is real: provider labels drift over time, and a Reactor-based finding from 2023 may no longer reproduce identically today.  
-- No BYOK architecture. Agencies cannot bring their existing TRM or Elliptic subscriptions and route them through Reactor. Chainalysis wants to be the only data source.  
-- AI features are being added (Hexagate for threat intelligence, KYT v2 with ML risk scoring), but the accuracy of AI outputs is not provenanced to the same court-defensible standard ChainSight builds to.  
+**Weaknesses:**
+
+- The SaaS model means the vendor has full visibility into every investigation. Chainalysis _could_ read your case data. It operates on a policy prohibition, not a technical guarantee. This is a real objection from federal and intelligence-community customers who've tried to get more restrictive terms.
+- Pricing excludes nearly every buyer below the $50,000/year threshold — solo investigators, small task forces, local LE units, private-sector compliance teams at smaller firms cannot access the product. This is a large underserved market.
+- Attribution data is a black box. When Reactor says "this address belongs to Exchange X," it doesn't explain its methodology. The [ChainArgos non-determinism problem](https://medium.com/chainargos/blockchain-tracing-determinism-5a690a95ca5f) is real: provider labels drift over time, and a Reactor-based finding from 2023 may no longer reproduce identically today.
+- No BYOK architecture. Agencies cannot bring their existing TRM or Elliptic subscriptions and route them through Reactor. Chainalysis wants to be the only data source.
+- AI features are being added (Hexagate for threat intelligence, KYT v2 with ML risk scoring), but the accuracy of AI outputs is not provenanced to the same court-defensible standard ChainSight builds to.
 - No genuine on-prem option below the highest enterprise tiers.
 
-**Where ChainSight differentiates:** Court defensibility (Reproducibility Pack replays bit-for-bit; Chainalysis cannot offer this). BYOK (agencies bring their Chainalysis Reactor data *into* ChainSight — the positioning is "ChainSight + your Chainalysis subscription," not "ChainSight instead of Chainalysis"). Sovereignty (technical guarantee, not a policy). Accessible pricing (Phase 0 Investigator tier puts the platform within reach of buyers Chainalysis ignores). Bias/fairness commitment in writing (F41).
+**Where ChainSight differentiates:** Court defensibility (Reproducibility Pack replays bit-for-bit; Chainalysis cannot offer this). BYOK (agencies bring their Chainalysis Reactor data _into_ ChainSight — the positioning is "ChainSight + your Chainalysis subscription," not "ChainSight instead of Chainalysis"). Sovereignty (technical guarantee, not a policy). Accessible pricing (Phase 0 Investigator tier puts the platform within reach of buyers Chainalysis ignores). Bias/fairness commitment in writing (F41).
 
 **The key sales insight:** Chainalysis is not the enemy. Chainalysis is a BYOK provider. An agency that already pays Chainalysis can add a ChainSight subscription to get court-defensible workflow, AI orchestration, reproducibility, and sovereign deployment — all running on top of the Chainalysis data they're already paying for. The objection "we already pay Chainalysis" is best answered: "Good. Connect your Chainalysis key to ChainSight in two minutes. You just bought an AI agent and a court-mode interface for your existing investment."
 
@@ -45,18 +47,20 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Enterprise contract, custom. UK G-Cloud lists TRM Forensics Premium at £33,272–£41,590 per license per year. Third-party estimates put average enterprise at $693,000 per year (Vendr), with contracts up to $1.3M. Small teams are estimated at $15,000–$50,000 per year. No public list pricing.
 
-**Strengths:**  
-- Genuinely innovative product design. TRM invented "glass-box attribution" — their labels include source and methodology, not just a raw label. This is real differentiation over Chainalysis's black-box model.  
-- Orion is the most ambitious product in the market: an intelligence fusion layer that crosses crypto, open-source, and dark-web signals. No other vendor has built this at scale.  
-- Strong compliance team market penetration — TRM is the default for mid-to-large exchanges and fintechs who need API-based risk scoring at volume.  
-- Active in policy and advocacy (regular government testimony, white papers). Strong regulatory credibility.  
+**Strengths:**
+
+- Genuinely innovative product design. TRM invented "glass-box attribution" — their labels include source and methodology, not just a raw label. This is real differentiation over Chainalysis's black-box model.
+- Orion is the most ambitious product in the market: an intelligence fusion layer that crosses crypto, open-source, and dark-web signals. No other vendor has built this at scale.
+- Strong compliance team market penetration — TRM is the default for mid-to-large exchanges and fintechs who need API-based risk scoring at volume.
+- Active in policy and advocacy (regular government testimony, white papers). Strong regulatory credibility.
 - Deep coverage of DeFi protocols, NFTs, cross-chain bridges.
 
-**Weaknesses:**  
-- Orion's intelligence layer means TRM is a data broker for its customers' investigation content. An agency using Orion is feeding its intelligence into TRM's proprietary graph. For classified or sensitive investigations, this is disqualifying.  
-- No sovereignty story. TRM's architecture is SaaS-native. An agency cannot deploy TRM on-premises without a custom contract that may not exist.  
-- Pricing is opaque and high — the same barrier as Chainalysis for smaller customers.  
-- The investigation UX is built for compliance analysts, not forensic investigators. Court mode, methodology disclosure, expert witness workflow — these aren't TRM's design priorities.  
+**Weaknesses:**
+
+- Orion's intelligence layer means TRM is a data broker for its customers' investigation content. An agency using Orion is feeding its intelligence into TRM's proprietary graph. For classified or sensitive investigations, this is disqualifying.
+- No sovereignty story. TRM's architecture is SaaS-native. An agency cannot deploy TRM on-premises without a custom contract that may not exist.
+- Pricing is opaque and high — the same barrier as Chainalysis for smaller customers.
+- The investigation UX is built for compliance analysts, not forensic investigators. Court mode, methodology disclosure, expert witness workflow — these aren't TRM's design priorities.
 - No reproducibility guarantee. If TRM changes an attribution label six months after a case is closed, the original finding does not replay the same way.
 
 **Where ChainSight differentiates:** ChainSight embraces TRM's glass-box approach and extends it — every attribution carries full provenance to the specific provider response, frozen at case-close (F46 BYOK). Sovereignty is the decisive differentiator for federal customers currently struggling to get Orion through sensitive program restrictions. The Reproducibility Pack solves the non-determinism problem that glass-box attribution partially but not fully addresses.
@@ -69,18 +73,20 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Not published. Industry estimates: Lens entry tier ~$299–$800/month; Navigator API access ~$500–$2,000/month; enterprise tier $2,000+/month ($24,000–$100,000+ annually). AWS Marketplace lists tiers at $50,000 and $100,000 per 12 months.
 
-**Strengths:**  
-- Strongest EU/UK regulatory compliance posture. When UK/EU regulators ask for blockchain evidence, Elliptic is often the tool they're familiar with.  
-- Deep financial-institution orientation — Navigator is built for compliance teams, not just investigators.  
-- Strong coverage of DeFi and NFT ecosystems.  
-- Published research and policy engagement builds credibility with regulators.  
+**Strengths:**
+
+- Strongest EU/UK regulatory compliance posture. When UK/EU regulators ask for blockchain evidence, Elliptic is often the tool they're familiar with.
+- Deep financial-institution orientation — Navigator is built for compliance teams, not just investigators.
+- Strong coverage of DeFi and NFT ecosystems.
+- Published research and policy engagement builds credibility with regulators.
 - Some on-premises deployment options.
 
-**Weaknesses:**  
-- US market share is notably weaker than Chainalysis or TRM. Federal LE is not Elliptic's home turf.  
-- Discovery (the intelligence layer) suffers from the same privacy concerns as TRM Orion — investigation content feeds into a vendor-operated graph.  
-- No reproducibility guarantee. Same attribution-drift vulnerability as Chainalysis.  
-- Court Mode, methodology disclosure, and expert witness support are not Elliptic's design priorities.  
+**Weaknesses:**
+
+- US market share is notably weaker than Chainalysis or TRM. Federal LE is not Elliptic's home turf.
+- Discovery (the intelligence layer) suffers from the same privacy concerns as TRM Orion — investigation content feeds into a vendor-operated graph.
+- No reproducibility guarantee. Same attribution-drift vulnerability as Chainalysis.
+- Court Mode, methodology disclosure, and expert witness support are not Elliptic's design priorities.
 - Complex modular pricing leads to customers paying for multiple products to get full coverage — a common complaint in G2 reviews.
 
 **Where ChainSight differentiates:** Court-mode and methodology engine (F26, F27, F29, F41). Sovereignty. Reproducibility Pack. BYOK — bring your Elliptic Lens key to ChainSight and route it through the capability router for attribution enrichment.
@@ -93,17 +99,19 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Partial transparency. Crystal Go is documented at approximately $1,200/year — the only major platform with an accessible price tier for individuals and small teams. Crystal Expert and Business are custom-quoted but positioned below the top three.
 
-**Strengths:**  
-- Crystal Go at $1,200/year is the only published accessible price point in the professional-grade market. This creates a real wedge in the SMB and solo-investigator segment.  
-- Strong coverage of CIS/Eastern European chains and exchanges — important for ransomware and darknet market cases.  
-- On-premises deployment available.  
+**Strengths:**
+
+- Crystal Go at $1,200/year is the only published accessible price point in the professional-grade market. This creates a real wedge in the SMB and solo-investigator segment.
+- Strong coverage of CIS/Eastern European chains and exchanges — important for ransomware and darknet market cases.
+- On-premises deployment available.
 - EU law enforcement subsidy programs in several jurisdictions.
 
-**Weaknesses:**  
-- Attribution depth below Chainalysis and TRM for US-based entity labels.  
-- AI capabilities are nascent compared to Chainalysis's Hexagate or TRM's ML scoring.  
-- No Reproducibility Pack. No court mode. No methodology disclosure in the Chainalysis sense.  
-- Community/certification program weaker than Chainalysis Links.  
+**Weaknesses:**
+
+- Attribution depth below Chainalysis and TRM for US-based entity labels.
+- AI capabilities are nascent compared to Chainalysis's Hexagate or TRM's ML scoring.
+- No Reproducibility Pack. No court mode. No methodology disclosure in the Chainalysis sense.
+- Community/certification program weaker than Chainalysis Links.
 - B2Broker ownership creates opaque governance questions for US federal customers.
 
 **Where ChainSight differentiates:** Court-defensibility, AI orchestration, and sovereignty are all gaps Crystal doesn't fill. At the pricing level, ChainSight's Investigator tier competes directly with Crystal Go — but with a fundamentally superior technical posture for investigators who need their work to hold up in court. Crystal is an acceptable data source as a BYOK provider for ChainSight.
@@ -116,17 +124,19 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Core platform free. Premium via ARKM token holdings (token price ~$0.10 as of April 2026, down 97% from ATH). Paid tiers: Standard $149/month, Pro $390/month, API $999/month (third-party estimates, not vendor-confirmed). Intel Exchange bounty mechanics for buying/selling attribution data.
 
-**Strengths:**  
-- 3 million registered users as of February 2026. By far the largest user base in this space. Most of it built on accessibility and free access.  
-- Entity labeling with crowd-sourced bounty model — the Intel Exchange creates an economic incentive to contribute attribution data, a model no other platform has built.  
-- Best consumer-facing UX in the market. The visualizer is genuinely well-designed.  
+**Strengths:**
+
+- 3 million registered users as of February 2026. By far the largest user base in this space. Most of it built on accessibility and free access.
+- Entity labeling with crowd-sourced bounty model — the Intel Exchange creates an economic incentive to contribute attribution data, a model no other platform has built.
+- Best consumer-facing UX in the market. The visualizer is genuinely well-designed.
 - No procurement barrier for researchers, journalists, and small-scale investigators.
 
-**Weaknesses:**  
-- Not a law enforcement product. The Intel Exchange model — where attribution data is bought and sold publicly — is deeply problematic for sensitive investigations. An investigator cannot risk their attribution data becoming tradeable intelligence.  
-- ARKM token-gated premium tiers create unpredictable cost exposure and are impossible to get through government procurement.  
-- No court mode. No methodology disclosure. No Reproducibility Pack. No chain-of-custody. The platform is built for research and trading intelligence, not court proceedings.  
-- Attribution data sourced from crowd contributions is unvetted. In court, opposing counsel will dismantle any finding built on anonymous crowd-sourced labels.  
+**Weaknesses:**
+
+- Not a law enforcement product. The Intel Exchange model — where attribution data is bought and sold publicly — is deeply problematic for sensitive investigations. An investigator cannot risk their attribution data becoming tradeable intelligence.
+- ARKM token-gated premium tiers create unpredictable cost exposure and are impossible to get through government procurement.
+- No court mode. No methodology disclosure. No Reproducibility Pack. No chain-of-custody. The platform is built for research and trading intelligence, not court proceedings.
+- Attribution data sourced from crowd contributions is unvetted. In court, opposing counsel will dismantle any finding built on anonymous crowd-sourced labels.
 - No on-premises option.
 
 **Where ChainSight differentiates:** Everything related to court-defensibility, sovereignty, and institutional-grade methodology. Arkham is a completely different product serving a different user. Not a primary competitor. Arkham data could be a BYOK source — their API provides labeled entity data that can be imported through the capability router and tagged as T2 attribution.
@@ -139,16 +149,18 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Not published. Third-party positioning at $16,000–$100,000/year, described as more flexible than Chainalysis/TRM for mid-market.
 
-**Strengths:**  
-- Predictive risk engine is a real product differentiator — not just retrospective tracing, but forward-looking detection.  
-- Strong APAC market position where Chainalysis is less dominant.  
-- Emerging US federal presence.  
+**Strengths:**
+
+- Predictive risk engine is a real product differentiator — not just retrospective tracing, but forward-looking detection.
+- Strong APAC market position where Chainalysis is less dominant.
+- Emerging US federal presence.
 - More flexible pricing and faster sales cycles than top-tier vendors.
 
-**Weaknesses:**  
-- Attribution depth below the top three for US-based entity coverage.  
-- No court mode, reproducibility, or methodology disclosure.  
-- Predictive engine (the main differentiator) raises the predictive policing concerns ChainSight commits against — building toward this capability would violate F41's anti-feature commitments.  
+**Weaknesses:**
+
+- Attribution depth below the top three for US-based entity coverage.
+- No court mode, reproducibility, or methodology disclosure.
+- Predictive engine (the main differentiator) raises the predictive policing concerns ChainSight commits against — building toward this capability would violate F41's anti-feature commitments.
 - No sovereign deployment option.
 
 **Where ChainSight differentiates:** Court-defensibility and sovereignty. Merkle Science, like Crystal, is a plausible BYOK attribution provider rather than a direct competitor.
@@ -161,14 +173,16 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Listed as transparent and scalable with "no hidden lock-ins" — but specific numbers not widely published. Positioned as accessible, likely in the Crystal/Scorechain price range.
 
-**Strengths:**  
-- Transparent pricing posture is a real differentiation in a market defined by opaque enterprise pricing.  
-- Multi-chain coverage.  
+**Strengths:**
+
+- Transparent pricing posture is a real differentiation in a market defined by opaque enterprise pricing.
+- Multi-chain coverage.
 - Law enforcement focus.
 
-**Weaknesses:**  
-- Brand recognition significantly below the top four.  
-- Attribution data depth unknown.  
+**Weaknesses:**
+
+- Brand recognition significantly below the top four.
+- Attribution data depth unknown.
 - No reproducibility or methodology disclosure features documented.
 
 **Where ChainSight differentiates:** Technical depth, court-defensibility, BYOK architecture, and sovereign deployment — none of which NOMINIS positions on. NOMINIS is plausible as a BYOK attribution provider.
@@ -181,16 +195,18 @@ This section doesn't just list competitors. It analyzes them as sales conversati
 
 **Pricing model:** Documented at EUR 500/month (~EUR 6,000/year), confirmed on Capterra and their website. This is the lowest published price point for a full-featured compliance platform.
 
-**Strengths:**  
-- Most transparent pricing in the market. EUR 500/month is genuinely accessible for smaller teams.  
-- Full platform at the base tier — no tiered feature stripping.  
-- Strong EU compliance orientation.  
+**Strengths:**
+
+- Most transparent pricing in the market. EUR 500/month is genuinely accessible for smaller teams.
+- Full platform at the base tier — no tiered feature stripping.
+- Strong EU compliance orientation.
 - Pay-as-you-go screening option (no annual commitment).
 
-**Weaknesses:**  
-- Compliance monitoring product, not primarily a forensics investigation product.  
-- No court mode, no methodology disclosure, no expert witness tools.  
-- Attribution depth for US federal investigation use cases is below the top three.  
+**Weaknesses:**
+
+- Compliance monitoring product, not primarily a forensics investigation product.
+- No court mode, no methodology disclosure, no expert witness tools.
+- Attribution depth for US federal investigation use cases is below the top three.
 - No sovereign deployment.
 
 **Where ChainSight differentiates:** Same as Crystal — at the pricing level, ChainSight's Investigator tier competes head-to-head with Scorechain on accessibility, but with a completely different technical depth oriented toward court-defensible investigation rather than transaction monitoring.
@@ -209,17 +225,17 @@ These are either niche products, regional players, or acquisition targets that h
 
 ### 1.10 Competitive landscape summary table
 
-| Vendor | Primary market | Price floor | On-prem | Reproducibility | BYOK | Court mode |
-|---|---|---|---|---|---|---|
-| **Chainalysis** | Federal LE, large FIs | ~$40K/seat/yr | Enterprise only | ❌ | ❌ | Partial |
-| **TRM Labs** | Fintechs, FIs, LE | ~£33K/license/yr | Limited | ❌ | ❌ | Partial |
-| **Elliptic** | Banks, EU FIs | ~$50K/yr | Some tiers | ❌ | ❌ | Partial |
-| **Crystal** | EU LE, SMB | ~$1,200/yr (Go) | Yes | ❌ | ❌ | ❌ |
-| **Arkham** | Researchers, traders | Free | ❌ | ❌ | ❌ | ❌ |
-| **Merkle Science** | APAC, mid-market | ~$16K/yr | ❌ | ❌ | ❌ | ❌ |
-| **NOMINIS** | LE, FIs | ~Transparent tiers | Unknown | ❌ | ❌ | ❌ |
-| **Scorechain** | VASPs, EU SMB | ~EUR 6K/yr | ❌ | ❌ | ❌ | ❌ |
-| **ChainSight (target)** | LE, PI, compliance | $149/seat/mo | ✅ (Phase 0) | ✅ (Phase 0) | ✅ (Phase 0) | ✅ (Phase 2) |
+| Vendor                  | Primary market        | Price floor        | On-prem         | Reproducibility | BYOK         | Court mode   |
+| ----------------------- | --------------------- | ------------------ | --------------- | --------------- | ------------ | ------------ |
+| **Chainalysis**         | Federal LE, large FIs | ~$40K/seat/yr      | Enterprise only | ❌              | ❌           | Partial      |
+| **TRM Labs**            | Fintechs, FIs, LE     | ~£33K/license/yr   | Limited         | ❌              | ❌           | Partial      |
+| **Elliptic**            | Banks, EU FIs         | ~$50K/yr           | Some tiers      | ❌              | ❌           | Partial      |
+| **Crystal**             | EU LE, SMB            | ~$1,200/yr (Go)    | Yes             | ❌              | ❌           | ❌           |
+| **Arkham**              | Researchers, traders  | Free               | ❌              | ❌              | ❌           | ❌           |
+| **Merkle Science**      | APAC, mid-market      | ~$16K/yr           | ❌              | ❌              | ❌           | ❌           |
+| **NOMINIS**             | LE, FIs               | ~Transparent tiers | Unknown         | ❌              | ❌           | ❌           |
+| **Scorechain**          | VASPs, EU SMB         | ~EUR 6K/yr         | ❌              | ❌              | ❌           | ❌           |
+| **ChainSight (target)** | LE, PI, compliance    | $149/seat/mo       | ✅ (Phase 0)    | ✅ (Phase 0)    | ✅ (Phase 0) | ✅ (Phase 2) |
 
 The competitive gap ChainSight fills: **no existing platform offers the combination of (a) accessible pricing, (b) court-defensible reproducibility, (c) BYOK architecture, and (d) sovereign deployment.** Every incumbent trades away at least two of these four. ChainSight is designed to hold all four simultaneously.
 
@@ -247,7 +263,7 @@ The BYOK + cache layer compounds this. The cache layer (G20, locked) means that 
 
 Tested against each competitor:
 
-- vs. Chainalysis: "Unlike Chainalysis, ChainSight works *with* your Chainalysis data, not instead of it — and every finding replays bit-for-bit in court, with methodology disclosed."
+- vs. Chainalysis: "Unlike Chainalysis, ChainSight works _with_ your Chainalysis data, not instead of it — and every finding replays bit-for-bit in court, with methodology disclosed."
 - vs. TRM: "Unlike TRM Orion, ChainSight is architecturally blind to your investigation data — the vendor cannot read your cases by design, not by policy."
 - vs. Elliptic: "Unlike Elliptic, ChainSight runs on your infrastructure with your data providers, producing court-defensible Reproducibility Packs that hold up under Daubert challenge."
 - vs. Crystal/Scorechain: "Unlike Crystal, ChainSight is built for investigators who have to testify — not just compliance teams who have to file reports."
@@ -287,28 +303,31 @@ Three archetypes to evaluate for Phase 0. Analysis follows.
 
 **Who they are:** A licensed private investigator, a CPA with a forensic accounting practice, or a former law enforcement agent who opened a solo practice. They work crypto-related cases: civil litigation support, insurance fraud, divorce proceedings involving hidden crypto, asset tracing for attorneys, victim recovery cases. They may also consult with law enforcement under contract.
 
-**The pain they have:**  
-- They're doing this manually — Etherscan, block explorers, spreadsheets. The work that takes ChainSight twenty minutes takes them two days.  
-- They have no reproducibility discipline. When opposing counsel asks "how did you reach that conclusion?", they produce a PDF and hope the judge doesn't ask follow-up questions.  
-- They can't afford Chainalysis ($40K/year is more than their per-case revenue). They know Crystal Go (~$1,200/year) exists but it doesn't give them court-mode workflow.  
-- They carry their methodology in their head, not in a system. If they die or are incapacitated, the case dies with them.  
+**The pain they have:**
+
+- They're doing this manually — Etherscan, block explorers, spreadsheets. The work that takes ChainSight twenty minutes takes them two days.
+- They have no reproducibility discipline. When opposing counsel asks "how did you reach that conclusion?", they produce a PDF and hope the judge doesn't ask follow-up questions.
+- They can't afford Chainalysis ($40K/year is more than their per-case revenue). They know Crystal Go (~$1,200/year) exists but it doesn't give them court-mode workflow.
+- They carry their methodology in their head, not in a system. If they die or are incapacitated, the case dies with them.
 - They desperately need to be certifiable as an expert witness but have no structured way to build that profile.
 
-**Why ChainSight wins:**  
-- Accessible pricing (Investigator tier, see Section 5) — within their budget.  
-- The Expert Witness Profile (F26) is a feature built exactly for them. It auto-attaches their CV to declarations, tracks their prior testimony, manages methodology defaults, and builds a cross-examination prep library.  
-- The Reproducibility Pack transforms their methodology from "trust me" to "here is the deterministic replay." This is what wins Daubert challenges.  
-- BYOK means they can use their existing Etherscan Pro key or the free Chainalysis Freemium tier and still get court-defensible workflow.  
+**Why ChainSight wins:**
+
+- Accessible pricing (Investigator tier, see Section 5) — within their budget.
+- The Expert Witness Profile (F26) is a feature built exactly for them. It auto-attaches their CV to declarations, tracks their prior testimony, manages methodology defaults, and builds a cross-examination prep library.
+- The Reproducibility Pack transforms their methodology from "trust me" to "here is the deterministic replay." This is what wins Daubert challenges.
+- BYOK means they can use their existing Etherscan Pro key or the free Chainalysis Freemium tier and still get court-defensible workflow.
 - SaaS Blind deployment requires zero IT procurement. They sign up, connect their keys, and start a case.
 
 **Contract size:** $149–$299/month (Investigator tier, annual = $1,788–$3,588). They are unlikely to pay more than $300/month without a team context.
 
 **Sales cycle:** 1–3 weeks. No procurement committee. No IT approval. Credit card transaction. Trial conversion driven by product quality.
 
-**What they'll need:**  
-- A free trial or heavily reduced pilot (30 days) to experience the workflow before committing.  
-- Simple documentation — they are not IT people.  
-- Possibly a 15-minute video walkthrough rather than a live demo.  
+**What they'll need:**
+
+- A free trial or heavily reduced pilot (30 days) to experience the workflow before committing.
+- Simple documentation — they are not IT people.
+- Possibly a 15-minute video walkthrough rather than a live demo.
 - Clear court-admissibility language they can cite in declarations.
 
 ---
@@ -317,26 +336,29 @@ Three archetypes to evaluate for Phase 0. Analysis follows.
 
 **Who they are:** A crypto exchange, a fintech, a digital asset hedge fund, or a broker-dealer with a 3–12 person compliance team. They are usually running TRM or Elliptic for transaction monitoring, and they need an investigation tool on top for cases that escalate beyond rule-based screening.
 
-**The pain they have:**  
-- They're paying $50K–$150K/year for TRM or Elliptic and still doing forensic investigation manually when a SAR or internal incident requires deeper tracing.  
-- Their compliance director worries that if a regulator or DOJ lawyer asks how they traced a specific fund flow, they can't produce a defensible methodology record.  
-- They have no court-mode tooling because they're a compliance team, not a LE unit — but regulatory enforcement has increasingly moved to adversarial proceedings where methodology gets challenged.  
+**The pain they have:**
+
+- They're paying $50K–$150K/year for TRM or Elliptic and still doing forensic investigation manually when a SAR or internal incident requires deeper tracing.
+- Their compliance director worries that if a regulator or DOJ lawyer asks how they traced a specific fund flow, they can't produce a defensible methodology record.
+- They have no court-mode tooling because they're a compliance team, not a LE unit — but regulatory enforcement has increasingly moved to adversarial proceedings where methodology gets challenged.
 - They can't add another $50K/year platform without board approval. They can add a $3,000/month team subscription.
 
-**Why ChainSight wins:**  
-- BYOK makes ChainSight "works with our existing TRM key" — immediate procurement objection resolved.  
-- The Reproducibility Pack is a compliance governance artifact: it proves, after the fact, exactly how an investigation reached its conclusion. This satisfies regulatory documentation requirements.  
-- Team tier provides multi-seat collaboration, Supervisor Mode (Phase 1), and shared case management — the compliance team workflow, not the solo PI workflow.  
+**Why ChainSight wins:**
+
+- BYOK makes ChainSight "works with our existing TRM key" — immediate procurement objection resolved.
+- The Reproducibility Pack is a compliance governance artifact: it proves, after the fact, exactly how an investigation reached its conclusion. This satisfies regulatory documentation requirements.
+- Team tier provides multi-seat collaboration, Supervisor Mode (Phase 1), and shared case management — the compliance team workflow, not the solo PI workflow.
 - Pricing fits a "department tool" budget rather than an enterprise platform budget.
 
 **Contract size:** $1,000–$3,000/month (3–10 seats). Annual = $12,000–$36,000. Likely paid as an annual contract.
 
 **Sales cycle:** 3–8 weeks. Requires sign-off from compliance director and possibly CFO. IT review of SaaS Blind security posture is likely. SOC 2 Type 1 (Phase 2) will be the blocker for some — document our F42 roadmap explicitly and get it signed before worrying about the cert.
 
-**What they'll need:**  
-- A structured pilot agreement (90 days, reduced pricing).  
-- Security questionnaire response — prepare a standard DDQ (Data Protection Questionnaire) covering the SaaS Blind architecture, key management, and the lack of vendor access.  
-- References from the first 1–2 customers (this is the Phase 1 problem, not Phase 0).  
+**What they'll need:**
+
+- A structured pilot agreement (90 days, reduced pricing).
+- Security questionnaire response — prepare a standard DDQ (Data Protection Questionnaire) covering the SaaS Blind architecture, key management, and the lack of vendor access.
+- References from the first 1–2 customers (this is the Phase 1 problem, not Phase 0).
 - Integration documentation for existing TRM/Chainalysis BYOK connection.
 
 ---
@@ -345,29 +367,32 @@ Three archetypes to evaluate for Phase 0. Analysis follows.
 
 **Who they are:** A state or local LE financial crimes unit (5–25 investigators), a regional HIDTA task force, a state AG cybercrime unit, or a county sheriff's financial crimes division. They investigate wire fraud, ransomware, pig butchering, drug proceeds, and NFT fraud. They submit cases to federal prosecutors.
 
-**The pain they have:**  
-- They're using free tools — Etherscan, limited free tiers — or sharing a Chainalysis Reactor seat that costs $40K/year and is often a bottleneck.  
-- Their court filings are getting increasingly challenged by defense counsel who hire expert witnesses to attack blockchain methodology. They are losing cases or settling when they should be winning.  
-- Their investigators have uneven skills — the two-person team that knows blockchain retires and the knowledge dies with them.  
-- They have no case management system designed for blockchain investigations — they're using Excel and Outlook.  
+**The pain they have:**
+
+- They're using free tools — Etherscan, limited free tiers — or sharing a Chainalysis Reactor seat that costs $40K/year and is often a bottleneck.
+- Their court filings are getting increasingly challenged by defense counsel who hire expert witnesses to attack blockchain methodology. They are losing cases or settling when they should be winning.
+- Their investigators have uneven skills — the two-person team that knows blockchain retires and the knowledge dies with them.
+- They have no case management system designed for blockchain investigations — they're using Excel and Outlook.
 - FedRAMP and CJIS compliance are requirements for any new software. They know they'll have to go through IT procurement, which takes months.
 
-**Why ChainSight wins:**  
-- The platform provides court-defensible methodology disclosure built-in, which directly addresses the "our cases are getting challenged" problem.  
-- Training & Sandbox Environment (F31, Phase 1) enables department-wide training on historical cases — they can train new investigators without endangering live cases.  
-- Supervisor Mode (F27) provides chain-of-command workflow that matches LE organizational structure.  
-- The BYOK model means they can use free or low-cost data providers (Etherscan, OpenSanctions) and gradually add commercial providers as budget allows.  
+**Why ChainSight wins:**
+
+- The platform provides court-defensible methodology disclosure built-in, which directly addresses the "our cases are getting challenged" problem.
+- Training & Sandbox Environment (F31, Phase 1) enables department-wide training on historical cases — they can train new investigators without endangering live cases.
+- Supervisor Mode (F27) provides chain-of-command workflow that matches LE organizational structure.
+- The BYOK model means they can use free or low-cost data providers (Etherscan, OpenSanctions) and gradually add commercial providers as budget allows.
 - On-Premises deployment (Phase 0) addresses their CJIS data residency concerns even before formal certification.
 
 **Contract size:** $2,000–$8,000/month (10–25 seats + annual contract). Annual = $24,000–$96,000. This is a real department-level budget item.
 
 **Sales cycle:** 3–9 months. Government procurement, IT security review, possibly a solicitation or sole-source justification. CJIS compliance documentation required. Legal review of MSA.
 
-**What they'll need:**  
-- A formal pilot agreement with defined success criteria.  
-- CJIS compliance documentation (this is a legal architecture question before the code question).  
-- SOC 2 Type 1 (Phase 2) for most; some can accept an on-prem deployment for Phase 0.  
-- Reference from another LE unit or a positive court ruling citing the platform.  
+**What they'll need:**
+
+- A formal pilot agreement with defined success criteria.
+- CJIS compliance documentation (this is a legal architecture question before the code question).
+- SOC 2 Type 1 (Phase 2) for most; some can accept an on-prem deployment for Phase 0.
+- Reference from another LE unit or a positive court ruling citing the platform.
 - A government-accessible procurement vehicle (even pre-GSA, a direct-award sole-source is possible for Phase 0 pilots under the Simplified Acquisition Threshold).
 
 ---
@@ -398,15 +423,15 @@ Three archetypes to evaluate for Phase 0. Analysis follows.
 
 **Archetype 1: The former federal agent turned PI**  
 A retired FBI, DEA, IRS-CI, or HSI special agent with a crypto specialty who opened a private practice. They know the Daubert standard intimately. They know what Chainalysis Reactor looks like — and they know its limitations. They want to produce better court exhibits than they could with government tools. They can also consult back to their former agency's cases, creating a backdoor to LE adoption.  
-*Outreach channel:* LinkedIn (search: "blockchain" + "FBI" or "IRS-CI" + "CFE" or "CCI"). ACFE conferences. Fraud Defense Network. InfraGard.
+_Outreach channel:_ LinkedIn (search: "blockchain" + "FBI" or "IRS-CI" + "CFE" or "CCI"). ACFE conferences. Fraud Defense Network. InfraGard.
 
 **Archetype 2: The forensic accountant at a boutique litigation support firm**  
 A CPA or CFE at a 2–5 person firm that handles civil litigation support — divorce cases, asset tracing, business valuation disputes, insurance fraud. They get crypto asset cases because no one else at the firm handles them. They're billing $300–$500/hour but spending half their time on manual blockchain work.  
-*Outreach channel:* ACFE (Association of Certified Fraud Examiners) — specifically the Crypto/Digital Assets SIG. CPA society digital asset working groups. LinkedIn (search: "forensic accountant" + "cryptocurrency" + "litigation support").
+_Outreach channel:_ ACFE (Association of Certified Fraud Examiners) — specifically the Crypto/Digital Assets SIG. CPA society digital asset working groups. LinkedIn (search: "forensic accountant" + "cryptocurrency" + "litigation support").
 
 **Archetype 3: The crypto-specialized private investigator**  
 A licensed PI who specifically markets crypto recovery and crypto fraud investigation. They work with victim attorneys, civil plaintiffs, and sometimes small LE agencies under contract. They are likely already using Etherscan Pro and possibly Crystal Go. They want to upgrade.  
-*Outreach channel:* NAPPS (National Association of Professional Process Servers) and NALI (National Association of Legal Investigators) have crypto-focused members. AML crypto investigation LinkedIn communities. ACFE Digital Assets forum.
+_Outreach channel:_ NAPPS (National Association of Professional Process Servers) and NALI (National Association of Legal Investigators) have crypto-focused members. AML crypto investigation LinkedIn communities. ACFE Digital Assets forum.
 
 ### 4.3 Outreach approach
 
@@ -418,7 +443,7 @@ Do not start with a sales email. Start with a content play.
 
 **Week 3:** From the demos, identify 3–5 candidates who are (a) working real cases, (b) have a court filing coming, and (c) expressed a specific pain the platform solves. Offer a 90-day pilot at $49/month (reduced from the $199/month standard Investigator rate). Frame it explicitly: "I need real cases to validate the platform. You get 90 days at a steep discount. I get feedback on real case workflows. After 90 days, convert to the standard rate or cancel — no hard feelings."
 
-*Why $49 instead of free:* The $49/month is a commitment signal, not a revenue event. At the Phase 0 infrastructure cost of $15–$40/month marginal per customer on Supabase + Fly.io, the founder is covering costs. More importantly, a customer who pays $49 has made a real decision to engage. A customer who pays nothing churns the moment the workflow gets frustrating.
+_Why $49 instead of free:_ The $49/month is a commitment signal, not a revenue event. At the Phase 0 infrastructure cost of $15–$40/month marginal per customer on Supabase + Fly.io, the founder is covering costs. More importantly, a customer who pays $49 has made a real decision to engage. A customer who pays nothing churns the moment the workflow gets frustrating.
 
 **Week 4–12:** Provide white-glove support for pilot customers. Every time they get stuck, fix it or document it as a Phase 0 bug. When a pilot customer produces a court exhibit using a Reproducibility Pack, ask for a one-paragraph written testimonial.
 
@@ -443,61 +468,61 @@ The pricing model follows four principles:
 ### 5.2 Tier pricing
 
 **Tier 1 — Investigator**  
-*Target:* Solo private investigator, solo forensic accountant, solo compliance analyst, independent researcher  
-*Deployment:* SaaS Blind only  
-*Seats:* 1  
-*Features:* Core case, IOC, trace (single-chain Ethereum Phase 0; multi-chain Phase 1), Transaction Inspector, Reproducibility Pack, Expert Witness Profile (F26), Chain of Custody (F29), BYOK data providers (up to 3 installs), BYOK LLM (bring your own Anthropic/OpenAI key)  
-*Price:* **$199/seat/month, billed annually** ($2,388/year)  
-*Monthly billed:* $249/month  
-*Pilot price:* $49/month for 90 days, converting to full rate  
+_Target:_ Solo private investigator, solo forensic accountant, solo compliance analyst, independent researcher  
+_Deployment:_ SaaS Blind only  
+_Seats:_ 1  
+_Features:_ Core case, IOC, trace (single-chain Ethereum Phase 0; multi-chain Phase 1), Transaction Inspector, Reproducibility Pack, Expert Witness Profile (F26), Chain of Custody (F29), BYOK data providers (up to 3 installs), BYOK LLM (bring your own Anthropic/OpenAI key)  
+_Price:_ **$199/seat/month, billed annually** ($2,388/year)  
+_Monthly billed:_ $249/month  
+_Pilot price:_ $49/month for 90 days, converting to full rate
 
 Rationale: $199/month annual is below the Crystal Go annualized cost ($100/month), signals professional-grade while remaining within a solo practitioner's discretionary budget. The $2,388/year full price is exactly what an expert who bills one additional hour per month on cases (at $200/hour billable) can justify instantly.
 
 ---
 
 **Tier 2 — Team**  
-*Target:* Small compliance team, small investigation firm, boutique forensic accounting practice, private-sector task force (2–25 seats)  
-*Deployment:* SaaS Blind or On-Premises (Phase 1 on-prem)  
-*Seats:* 2–25  
-*Features:* All Investigator features + multi-chain (Phase 1), cross-chain trace, Wallet History Analyzer (Phase 2), Supervisor Mode (F27) (Phase 1), Training & Sandbox (F31) (Phase 1), Stablecoin Freeze workflow (F33) (Phase 1), BYOK providers (unlimited installs), BYOK LLM (all providers), Reproducibility Pack export/import  
-*Price:* **$149/seat/month, billed annually (2–10 seats); $129/seat/month, billed annually (11–25 seats)**  
-*Setup fee (On-Prem):* $5,000 one-time  
-*Pilot:* 90-day pilot at $49/seat/month, 2-seat minimum ($98/month minimum)  
+_Target:_ Small compliance team, small investigation firm, boutique forensic accounting practice, private-sector task force (2–25 seats)  
+_Deployment:_ SaaS Blind or On-Premises (Phase 1 on-prem)  
+_Seats:_ 2–25  
+_Features:_ All Investigator features + multi-chain (Phase 1), cross-chain trace, Wallet History Analyzer (Phase 2), Supervisor Mode (F27) (Phase 1), Training & Sandbox (F31) (Phase 1), Stablecoin Freeze workflow (F33) (Phase 1), BYOK providers (unlimited installs), BYOK LLM (all providers), Reproducibility Pack export/import  
+_Price:_ **$149/seat/month, billed annually (2–10 seats); $129/seat/month, billed annually (11–25 seats)**  
+_Setup fee (On-Prem):_ $5,000 one-time  
+_Pilot:_ 90-day pilot at $49/seat/month, 2-seat minimum ($98/month minimum)
 
 Rationale: Per-seat decline as seats add reflects team adoption economics. The $5,000 on-prem setup fee covers the cost of the installer, documentation, and the migration-path support.
 
 ---
 
 **Tier 3 — Department**  
-*Target:* State/local LE department, regional task force, mid-size compliance organization, financial intelligence unit (25–200 seats)  
-*Deployment:* SaaS Blind or On-Premises  
-*Features:* All Team features + Court Mode + methodology toggle (Phase 3), Court Export Bundle (Phase 3), Retraction Workflow (F32) (Phase 2), Case Transfer/Handoff (F28) (Phase 2), Mobile read-only + Court Mode driver (F30a, F30b) (Phase 1), cross-case deconfliction within tenant (Phase 3), source-code escrow (optional add-on), SOC 2 Type 2 compliance attestation  
-*Price:* **Annual contract; pricing on request; indicative range $3,000–$12,000/month (25–200 seats)**  
-*Equivalent:* ~$36,000–$144,000/year annual contract  
-*Volume floor:* Minimum $3,000/month (25-seat minimum)  
-*Setup fee (On-Prem):* $15,000–$25,000 depending on deployment complexity  
+_Target:_ State/local LE department, regional task force, mid-size compliance organization, financial intelligence unit (25–200 seats)  
+_Deployment:_ SaaS Blind or On-Premises  
+_Features:_ All Team features + Court Mode + methodology toggle (Phase 3), Court Export Bundle (Phase 3), Retraction Workflow (F32) (Phase 2), Case Transfer/Handoff (F28) (Phase 2), Mobile read-only + Court Mode driver (F30a, F30b) (Phase 1), cross-case deconfliction within tenant (Phase 3), source-code escrow (optional add-on), SOC 2 Type 2 compliance attestation  
+_Price:_ **Annual contract; pricing on request; indicative range $3,000–$12,000/month (25–200 seats)**  
+_Equivalent:_ ~$36,000–$144,000/year annual contract  
+_Volume floor:_ Minimum $3,000/month (25-seat minimum)  
+_Setup fee (On-Prem):_ $15,000–$25,000 depending on deployment complexity
 
 Rationale: Department pricing moves to annual contract model consistent with government procurement cycles. The per-seat effective rate at 25 seats ($120/seat/month) represents a meaningful discount from Team tier while keeping minimum contract value above $36K/year — required to justify the sales cycle length.
 
 ---
 
 **Tier 4 — Agency**  
-*Target:* Federal LE field office, large financial institution compliance, large-scale investigation firm (200+ seats or enterprise-grade case volume)  
-*Deployment:* On-Premises preferred; SaaS Blind available  
-*Features:* All Department features + Federated Personal Attribution (Phase 4), cross-agency deconfliction federation (Phase 4), CRDT real-time collaboration (Phase 4), custom detectors, extended provider catalog, custom integrations, dedicated implementation support, Annual Business Review, source-code escrow included  
-*Price:* **Custom annual contract; indicative range $150,000–$600,000/year**  
-*Government contracting vehicle:* Phase 3 GSA Schedule; Phase 4 SEWP VI  
-*Pilot:* 90-day POC at cost; structured POC plan required  
+_Target:_ Federal LE field office, large financial institution compliance, large-scale investigation firm (200+ seats or enterprise-grade case volume)  
+_Deployment:_ On-Premises preferred; SaaS Blind available  
+_Features:_ All Department features + Federated Personal Attribution (Phase 4), cross-agency deconfliction federation (Phase 4), CRDT real-time collaboration (Phase 4), custom detectors, extended provider catalog, custom integrations, dedicated implementation support, Annual Business Review, source-code escrow included  
+_Price:_ **Custom annual contract; indicative range $150,000–$600,000/year**  
+_Government contracting vehicle:_ Phase 3 GSA Schedule; Phase 4 SEWP VI  
+_Pilot:_ 90-day POC at cost; structured POC plan required
 
 ---
 
 **Tier 5 — Classified**  
-*Target:* Federal agency HQ, intelligence community, national-level financial crime units, classified programs  
-*Deployment:* On-Premises Sovereign only; air-gapped variant available  
-*Features:* All Agency features + air-gapped deployment, offline license validation, physical-media update path, no outbound network requirements, NVIDIA NIM integration for classified AI inference, IL5/IL6 path (Phase 4+), CMMC Level 2 (Phase 4), Common Criteria (Phase 4+), custom SLA, dedicated CTO-level engineering contact  
-*Price:* **Site license; indicative $400,000–$2,000,000/year**  
-*Contracting path:* SEWP VI, CIO-SP4, OASIS+, direct GSA Schedule IT, defense-specific vehicles  
-*Notes:* This tier is Phase 3+ in practice — the certifications and security posture required take 12–18 months from Phase 0 to achieve.  
+_Target:_ Federal agency HQ, intelligence community, national-level financial crime units, classified programs  
+_Deployment:_ On-Premises Sovereign only; air-gapped variant available  
+_Features:_ All Agency features + air-gapped deployment, offline license validation, physical-media update path, no outbound network requirements, NVIDIA NIM integration for classified AI inference, IL5/IL6 path (Phase 4+), CMMC Level 2 (Phase 4), Common Criteria (Phase 4+), custom SLA, dedicated CTO-level engineering contact  
+_Price:_ **Site license; indicative $400,000–$2,000,000/year**  
+_Contracting path:_ SEWP VI, CIO-SP4, OASIS+, direct GSA Schedule IT, defense-specific vehicles  
+_Notes:_ This tier is Phase 3+ in practice — the certifications and security posture required take 12–18 months from Phase 0 to achieve.
 
 ---
 
@@ -524,7 +549,7 @@ The Supabase + Fly.io infrastructure stack means ChainSight's marginal cost per 
 
 - **Investigator tier pilot:** $49/month for 90 days. No setup fee. No contract. Cancel at any time. At day 85, conversion conversation: what worked, what didn’t, are you ready to move to annual? Conversion to annual = $199/month (³/₃ the pilot rate, reflecting real ongoing infrastructure and support cost). Conversion incentive: first month of annual subscription free if they convert before Day 91.
 
-  *Rationale for $49:* At $15–$40 marginal infrastructure cost, ChainSight still covers its costs on every pilot customer. At $49/month, a solo PI has made a real commitment (they’ll actually use it) but the barrier is low enough that a 30-minute demo will close it. $99/month is not wrong, but $49 removes the last hesitation from a solo practitioner evaluating an unknown platform. The standard rate of $199/month is maintained clearly so the discount is visible and the conversion conversation is straightforward.
+  _Rationale for $49:_ At $15–$40 marginal infrastructure cost, ChainSight still covers its costs on every pilot customer. At $49/month, a solo PI has made a real commitment (they’ll actually use it) but the barrier is low enough that a 30-minute demo will close it. $99/month is not wrong, but $49 removes the last hesitation from a solo practitioner evaluating an unknown platform. The standard rate of $199/month is maintained clearly so the discount is visible and the conversion conversation is straightforward.
 
 - **Team tier pilot:** $49/seat/month for 90 days. 2-seat minimum ($98/month minimum). Signed pilot agreement required (2-page document, not a full MSA). Conversion follows Team standard pricing ($149/seat/month annual). Pilot incentive: 2 months free if they convert to an annual contract before Day 91.
 
@@ -538,16 +563,16 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 ### 6.1 Structure overview
 
-| Segment | Time | What you show | What you say |
-|---|---|---|---|
-| Cold open — the problem | 0:00–1:30 | Nothing yet | State the problem they know |
-| The IOC drop | 1:30–3:00 | Paste a tx hash | Instant graph |
-| Transaction Inspector | 3:00–6:00 | Click a tx | Full structured breakdown |
-| Where-Did-The-Money-Go overlay | 6:00–8:30 | Fund flow visualization | AI narration |
-| Methodology toggle | 8:30–10:00 | Switch FIFO/LIFO/LIBR | Live recalculation |
-| Reproducibility Pack | 10:00–12:30 | Export and replay | "This holds up in court" |
-| The sovereignty pitch | 12:30–14:00 | Settings > Deployment | "The vendor cannot read this" |
-| The ask | 14:00–15:00 | Nothing technical | One question, one offer |
+| Segment                        | Time        | What you show           | What you say                  |
+| ------------------------------ | ----------- | ----------------------- | ----------------------------- |
+| Cold open — the problem        | 0:00–1:30   | Nothing yet             | State the problem they know   |
+| The IOC drop                   | 1:30–3:00   | Paste a tx hash         | Instant graph                 |
+| Transaction Inspector          | 3:00–6:00   | Click a tx              | Full structured breakdown     |
+| Where-Did-The-Money-Go overlay | 6:00–8:30   | Fund flow visualization | AI narration                  |
+| Methodology toggle             | 8:30–10:00  | Switch FIFO/LIFO/LIBR   | Live recalculation            |
+| Reproducibility Pack           | 10:00–12:30 | Export and replay       | "This holds up in court"      |
+| The sovereignty pitch          | 12:30–14:00 | Settings > Deployment   | "The vendor cannot read this" |
+| The ask                        | 14:00–15:00 | Nothing technical       | One question, one offer       |
 
 ### 6.2 The full script
 
@@ -555,11 +580,11 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "Before I show you the platform, let me ask you one question. The last time you had a blockchain finding challenged in court — or in a regulatory proceeding — how did it go? Not the outcome, but the methodology part. Did opposing counsel say your analysis was reproducible? Did they say it was transparent? Or did they say: 'We don't know how this tool reached this conclusion, and neither does the witness'?"
 
-*(Pause. Let them answer or react.)*
+_(Pause. Let them answer or react.)_
 
 "That's exactly the problem ChainSight was built to solve. Every finding reproducible. Every methodology disclosed. Every number traceable back to a specific provider response. Let me show you what that looks like in practice."
 
-*(Share screen. Open ChainSight to a blank case.)*
+_(Share screen. Open ChainSight to a blank case.)_
 
 ---
 
@@ -567,7 +592,7 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "I have a transaction hash from a public pig-butchering case. It's been reported in multiple news articles, so I can use it without any confidentiality concern."
 
-*(Paste the tx hash into the IOC intake field. The graph populates: address nodes, a transaction node in the center, edges showing value flow. This happens in about 3 seconds.)*
+_(Paste the tx hash into the IOC intake field. The graph populates: address nodes, a transaction node in the center, edges showing value flow. This happens in about 3 seconds.)_
 
 "That's the transaction-centric graph. Every ChainSight case puts transactions in the center — not addresses. The reason is that transactions are facts: they happened, they have hashes, they're immutable. Addresses are inferences — who controlled them is something we need to prove. Starting from the transaction means we start from what we know."
 
@@ -577,11 +602,11 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "Let me click on this transaction."
 
-*(The Transaction Inspector panel opens on the right. Show: the raw facts first — block height, timestamp, fee — then the decoded actions: ETH transferred, ERC-20 transfers, internal calls, contract interactions. Then show the AI summary.)*
+_(The Transaction Inspector panel opens on the right. Show: the raw facts first — block height, timestamp, fee — then the decoded actions: ETH transferred, ERC-20 transfers, internal calls, contract interactions. Then show the AI summary.)_
 
 "This is the Transaction Inspector. The top section is deterministic: block height, timestamp, fee — these are blockchain facts, they don't require any AI. The middle section decodes the contract interactions — what the transaction actually did. The bottom section is an AI-generated plain-language summary."
 
-*(Point to the citation tokens in the AI summary.)*
+_(Point to the citation tokens in the AI summary.)_
 
 "And here's what makes this different from other platforms. Every sentence in the AI summary has a citation token — a reference to the exact BeliefAtom that backs it. If the Critic Agent found no supporting evidence for a claim, the sentence isn't in the summary. This is what allows the platform to say 'every claim is provenanced.' Click any citation, you see exactly which data source said what."
 
@@ -591,11 +616,11 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "Let me trace this transaction forward."
 
-*(Trigger the AI trace. As the agent runs, the canvas populates with additional nodes — address hops, a token swap, a bridge crossing. A "Where-Did-The-Money-Go" overlay renders a Sankey-style fund flow diagram over the canvas.)*
+_(Trigger the AI trace. As the agent runs, the canvas populates with additional nodes — address hops, a token swap, a bridge crossing. A "Where-Did-The-Money-Go" overlay renders a Sankey-style fund flow diagram over the canvas.)_
 
 "This overlay answers the question a prosecutor always asks: where did the money actually go? From this wallet, through this DEX swap, across this bridge to a different chain, and into this exchange. The color coding shows each distinct flow. The numbers are fiat-converted at the exact block timestamp using the Math Service — not approximated, not copied from an LLM."
 
-*(Point to an address that's been attributed.)*
+_(Point to an address that's been attributed.)_
 
 "This address is attributed to [Exchange Name] — that attribution came from the Chainalysis key I connected to this demo account. If I had a TRM key, the attribution would route through TRM. If they disagreed, the platform would surface a Critic challenge and ask me to resolve it before promoting the attribution to court-grade."
 
@@ -605,7 +630,7 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "The accounting methodology is where cases get attacked. Did you use FIFO? LIFO? The Lowest Intermediate Balance Rule? Different jurisdictions and different cases call for different approaches."
 
-*(Click the Methodology menu. Toggle from FIFO to LIBR. Watch the value-attribution on the canvas recalculate live.)*
+_(Click the Methodology menu. Toggle from FIFO to LIBR. Watch the value-attribution on the canvas recalculate live.)_
 
 "ChainSight's math service runs all six major methodologies simultaneously. When you're ready to finalize your trace, you pick the methodology appropriate to your jurisdiction and your case theory. The platform shows the values under each methodology so you can make an informed decision. And when you export the Reproducibility Pack, it records exactly which methodology was used, why, and what the values would have been under alternative methodologies — so you can defend any challenge pre-emptively."
 
@@ -615,15 +640,15 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "This is the most important feature in the platform for court work."
 
-*(Click Export > Reproducibility Pack. A progress bar fills as the system bundles the case.)*
+_(Click Export > Reproducibility Pack. A progress bar fills as the system bundles the case.)_
 
 "This Pack contains: every provider API response cached at the time of this trace. Every rule version used. The model card for every LLM call. The complete BeliefAtom event log. And a shell script: `replay.sh`."
 
-*(The download completes. Open a terminal.)*
+_(The download completes. Open a terminal.)_
 
 "Watch what happens when I run the replay script."
 
-*(Run `./replay.sh`. The system reconstructs the case output. Show that the trace, the values, and the AI summaries are bit-for-bit identical to the original.)*
+_(Run `./replay.sh`. The system reconstructs the case output. Show that the trace, the values, and the AI summaries are bit-for-bit identical to the original.)_
 
 "Two years from now, in a courtroom, opposing counsel hands your Pack to their expert and says 'run this.' Their expert runs it. They get the same output. There's nothing to attack on methodology — the methodology is transparent, deterministic, and replays identically."
 
@@ -633,7 +658,7 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 **12:30–14:00 — The sovereignty pitch**
 
-*(Navigate to Settings > Deployment.)*
+_(Navigate to Settings > Deployment.)_
 
 "One more thing. Every other platform you've looked at is a cloud SaaS product. The vendor can read your case data. Some of them use it to improve their AI. Some of them have legal exposure if a counterparty serves them a subpoena. Your investigation data is potentially accessible by people who are not you."
 
@@ -647,9 +672,9 @@ A 15-minute demo from cold open to ask. Designed for any of the three Phase 0 pi
 
 "I have one question for you: do you have a case right now that I could help you work through on ChainSight? A real case — doesn't have to be active, could be something you recently closed or something you're currently stuck on."
 
-*(Wait for the answer. If yes: "Great. Let's set up a 90-day pilot. I'll walk you through the onboarding personally and be available every time you hit a problem. The pilot rate is $49/month. The only thing I ask is that you give me honest feedback on what works and what doesn't.")*
+_(Wait for the answer. If yes: "Great. Let's set up a 90-day pilot. I'll walk you through the onboarding personally and be available every time you hit a problem. The pilot rate is $49/month. The only thing I ask is that you give me honest feedback on what works and what doesn't.")_
 
-*(If they need more time: "Completely understandable. I'll send you a recording of this demo and a link to the pilot signup page. The pilot is 90 days, $49/month, cancel at any time. The only thing I ask is that you use it on a real case — not a test. Real cases reveal what the platform actually needs to do.")*
+_(If they need more time: "Completely understandable. I'll send you a recording of this demo and a link to the pilot signup page. The pilot is 90 days, $49/month, cancel at any time. The only thing I ask is that you use it on a real case — not a test. Real cases reveal what the platform actually needs to do.")_
 
 ---
 
@@ -735,11 +760,11 @@ Security certifications: We provide our security whitepaper, our penetration tes
 
 **What to say when a prospect raises this:**
 
-*For Investigator-tier customers (solo PI, forensic accountant):* "Your data is on Supabase US-region, encrypted with keys you control. Same infrastructure as many enterprise SaaS products you use today. If you need air-gapped or on-premises for a specific sensitive case, I can deploy an on-premises instance for you."
+_For Investigator-tier customers (solo PI, forensic accountant):_ "Your data is on Supabase US-region, encrypted with keys you control. Same infrastructure as many enterprise SaaS products you use today. If you need air-gapped or on-premises for a specific sensitive case, I can deploy an on-premises instance for you."
 
-*For Team-tier customers:* "Supabase US-region with your encryption keys. Our SOC 2 Type 1 audit is planned for Phase 2 — here's the roadmap document if you need to show it to your IT team. For customers who cannot accept the timeline, we offer on-premises deployment today."
+_For Team-tier customers:_ "Supabase US-region with your encryption keys. Our SOC 2 Type 1 audit is planned for Phase 2 — here's the roadmap document if you need to show it to your IT team. For customers who cannot accept the timeline, we offer on-premises deployment today."
 
-*For Department-tier customers (state/local LE):* "I'll be direct: for CJIS-sensitive workloads, the on-premises deployment is the right answer for you today — your data stays entirely on your infrastructure. SaaS Blind will be SOC 2 compliant in [projected Phase 2 date], which may also satisfy your requirements."
+_For Department-tier customers (state/local LE):_ "I'll be direct: for CJIS-sensitive workloads, the on-premises deployment is the right answer for you today — your data stays entirely on your infrastructure. SaaS Blind will be SOC 2 compliant in [projected Phase 2 date], which may also satisfy your requirements."
 
 **What not to say:** Do not present Supabase or Fly.io as equivalent to AWS GovCloud, FedRAMP-authorized infrastructure, or SOC 2 Type 2 platforms. They are not, yet. Overstating the compliance posture of the Phase 0 stack is the kind of misrepresentation that destroys trust permanently when discovered during IT review.
 
@@ -782,70 +807,70 @@ The goal of BYOK partnerships in Phase 0–1 is not revenue — it's credibility
 ### 8.1 Data provider partnerships
 
 **Etherscan (and the Etherscan family: BscScan, Arbiscan, Basescan, etc.)**
-*Relationship type:* Integration partner, no revenue share needed  
-*What to ask for:* API documentation access, a partner/developer API key at a favorable rate, listing on their developer partner page  
-*Who to approach:* Developer relations team at etherscan.io — open documentation at docs.etherscan.io makes this a self-service integration, but a formal partnership listing raises credibility  
-*Timeline:* Phase 0 — this is the first connector, already in the build plan
+_Relationship type:_ Integration partner, no revenue share needed  
+_What to ask for:_ API documentation access, a partner/developer API key at a favorable rate, listing on their developer partner page  
+_Who to approach:_ Developer relations team at etherscan.io — open documentation at docs.etherscan.io makes this a self-service integration, but a formal partnership listing raises credibility  
+_Timeline:_ Phase 0 — this is the first connector, already in the build plan
 
 **Blockchair**
-*Relationship type:* Integration partner  
-*What to ask for:* Developer API key, partner documentation, potential listing on their ecosystem page  
-*Approach:* business@blockchair.com; they have an explicit API partnership program with partner discounts
+_Relationship type:_ Integration partner  
+_What to ask for:_ Developer API key, partner documentation, potential listing on their ecosystem page  
+_Approach:_ business@blockchair.com; they have an explicit API partnership program with partner discounts
 
 **Allium**
-*Relationship type:* Strategic data partner — this is the single highest-leverage data partnership in Phase 1  
-*Why it matters:* Allium provides fast, indexed multi-chain data via SQL and APIs. An agency that needs to query "all transactions involving this address over the last 3 years" gets the answer in seconds from Allium vs. hours from live RPC calls. This is a critical capability for deep-trace investigations.  
-*What to ask for:* Integration partnership, developer access, co-marketing (listed as a supported BYOK provider on their partner page)  
-*Who to approach:* Allium has a partners page (allium.so/partners); contact through official partner inquiry form; also accessible through LinkedIn  
-*Timeline:* Phase 1
+_Relationship type:_ Strategic data partner — this is the single highest-leverage data partnership in Phase 1  
+_Why it matters:_ Allium provides fast, indexed multi-chain data via SQL and APIs. An agency that needs to query "all transactions involving this address over the last 3 years" gets the answer in seconds from Allium vs. hours from live RPC calls. This is a critical capability for deep-trace investigations.  
+_What to ask for:_ Integration partnership, developer access, co-marketing (listed as a supported BYOK provider on their partner page)  
+_Who to approach:_ Allium has a partners page (allium.so/partners); contact through official partner inquiry form; also accessible through LinkedIn  
+_Timeline:_ Phase 1
 
 **Alchemy**
-*Relationship type:* RPC provider integration partner  
-*What to ask for:* Partner developer access, listing in their dapp directory (they have an existing ChainSight-adjacent listing structure)  
-*Approach:* Alchemy's certified infrastructure alliance (alchemy.com/amplify) — this provides a credibility badge and marketing support for platforms built on Alchemy infrastructure  
-*Timeline:* Phase 0–1
+_Relationship type:_ RPC provider integration partner  
+_What to ask for:_ Partner developer access, listing in their dapp directory (they have an existing ChainSight-adjacent listing structure)  
+_Approach:_ Alchemy's certified infrastructure alliance (alchemy.com/amplify) — this provides a credibility badge and marketing support for platforms built on Alchemy infrastructure  
+_Timeline:_ Phase 0–1
 
 **Chainalysis**
-*Relationship type:* BYOK connector — this is potentially the most important commercial relationship  
-*Strategy:* Do not approach Chainalysis about a commercial partnership in Phase 0. Their business development team will ask questions that create complexity before you have customers. Instead: build a clean, well-documented connector; publish it; let early customers who have Chainalysis seats test it. Once 3–5 customers are using the Chainalysis connector successfully, approach their API team about a formal integration partnership.  
-*What to eventually ask for:* Partner listing on their developer ecosystem page; API documentation access; introduction to their government accounts team once you have LE reference customers  
-*Red line:* Never position as "Chainalysis alternative." Always position as "workflow layer that connects to your Chainalysis subscription." This keeps the door open.
+_Relationship type:_ BYOK connector — this is potentially the most important commercial relationship  
+_Strategy:_ Do not approach Chainalysis about a commercial partnership in Phase 0. Their business development team will ask questions that create complexity before you have customers. Instead: build a clean, well-documented connector; publish it; let early customers who have Chainalysis seats test it. Once 3–5 customers are using the Chainalysis connector successfully, approach their API team about a formal integration partnership.  
+_What to eventually ask for:_ Partner listing on their developer ecosystem page; API documentation access; introduction to their government accounts team once you have LE reference customers  
+_Red line:_ Never position as "Chainalysis alternative." Always position as "workflow layer that connects to your Chainalysis subscription." This keeps the door open.
 
 **TRM Labs**
-*Relationship type:* BYOK connector  
-*Strategy:* Same as Chainalysis — build the connector first, approach formally after customer validation. TRM has an API and an ecosystem program.  
-*What to eventually ask for:* Partner listing, potential co-sell with TRM for customers who want investigation tooling above TRM's standard compliance offering
+_Relationship type:_ BYOK connector  
+_Strategy:_ Same as Chainalysis — build the connector first, approach formally after customer validation. TRM has an API and an ecosystem program.  
+_What to eventually ask for:_ Partner listing, potential co-sell with TRM for customers who want investigation tooling above TRM's standard compliance offering
 
 **OFAC SDN / OpenSanctions / EU Restrictive Measures**
-*Relationship type:* Free public data source — integrate directly, no partnership required  
-*Notes:* OpenSanctions is open-source and ships as a self-hostable data feed. Perfect for the in-house baseline (F40). Integrate at Phase 0. No business development required.
+_Relationship type:_ Free public data source — integrate directly, no partnership required  
+_Notes:_ OpenSanctions is open-source and ships as a self-hostable data feed. Perfect for the in-house baseline (F40). Integrate at Phase 0. No business development required.
 
 ---
 
 ### 8.2 AI provider partnerships
 
 **Anthropic**
-*Relationship type:* BYOK LLM provider; potential partner  
-*What to ask for:* Access to the Anthropic developer partner program; potential listing as a verified integration; potentially a law enforcement-specific API tier or terms  
-*Who to approach:* Anthropic's enterprise and partner team (anthropic.com/enterprise). Focus the conversation on the court-defensibility angle — Anthropic has publicly discussed their commitment to responsible AI deployment in high-stakes contexts  
-*Why this matters:* The Verifier Agent architecture (every AI claim is citation-gated) is a model for responsible deployment that Anthropic actively wants to showcase. Pitch it as a case study in trustworthy AI deployment, not just as a reseller relationship.  
-*Timeline:* Phase 1
+_Relationship type:_ BYOK LLM provider; potential partner  
+_What to ask for:_ Access to the Anthropic developer partner program; potential listing as a verified integration; potentially a law enforcement-specific API tier or terms  
+_Who to approach:_ Anthropic's enterprise and partner team (anthropic.com/enterprise). Focus the conversation on the court-defensibility angle — Anthropic has publicly discussed their commitment to responsible AI deployment in high-stakes contexts  
+_Why this matters:_ The Verifier Agent architecture (every AI claim is citation-gated) is a model for responsible deployment that Anthropic actively wants to showcase. Pitch it as a case study in trustworthy AI deployment, not just as a reseller relationship.  
+_Timeline:_ Phase 1
 
 **OpenAI**
-*Relationship type:* BYOK LLM provider  
-*Approach:* Same pattern — focus on the court-defensibility and provenance architecture as a model for responsible enterprise AI. OpenAI has an enterprise partner program.  
-*Timeline:* Phase 1
+_Relationship type:_ BYOK LLM provider  
+_Approach:_ Same pattern — focus on the court-defensibility and provenance architecture as a model for responsible enterprise AI. OpenAI has an enterprise partner program.  
+_Timeline:_ Phase 1
 
 **Voyage AI**
-*Relationship type:* Embedding provider (default per engineering doc)  
-*What to ask for:* Partner/developer access; potential featured listing in their use-case gallery (forensic search over large evidence corpora is a strong showcase case for embedding quality)  
-*Approach:* Voyage AI is a smaller company (founded 2023); direct outreach to their team via LinkedIn or hello@voyageai.com is likely to land
+_Relationship type:_ Embedding provider (default per engineering doc)  
+_What to ask for:_ Partner/developer access; potential featured listing in their use-case gallery (forensic search over large evidence corpora is a strong showcase case for embedding quality)  
+_Approach:_ Voyage AI is a smaller company (founded 2023); direct outreach to their team via LinkedIn or hello@voyageai.com is likely to land
 
 **AWS (Textract)**
-*Relationship type:* Document intelligence BYOK provider  
-*What to ask for:* AWS ISV Partner Program listing — this is the standard mechanism for "works on AWS" partner certification  
-*Why it matters:* Many government customers are AWS GovCloud shops. An AWS ISV Partner listing signals that the platform has been vetted for AWS deployment, which reduces IT friction in federal procurement  
-*Timeline:* Phase 1–2
+_Relationship type:_ Document intelligence BYOK provider  
+_What to ask for:_ AWS ISV Partner Program listing — this is the standard mechanism for "works on AWS" partner certification  
+_Why it matters:_ Many government customers are AWS GovCloud shops. An AWS ISV Partner listing signals that the platform has been vetted for AWS deployment, which reduces IT friction in federal procurement  
+_Timeline:_ Phase 1–2
 
 ---
 
@@ -873,18 +898,18 @@ A solo developer in Phase 0 is operating from savings, freelance income, or a da
 
 The Phase 0 infrastructure is Supabase + Fly.io + GitHub — all existing founder accounts. This changes the financial floor materially compared to a greenfield infrastructure build:
 
-| Item | Monthly cost at launch | Notes |
-|---|---|---|
-| Supabase Pro | $25/month | Includes Postgres, pgvector, object storage, auth |
-| Fly.io (scale-to-zero) | $0–$50/month | Scales with actual usage; zero when no traffic |
-| GitHub (Actions) | $0–$21/month | Free tier covers most Phase 0 CI usage |
-| Etherscan V2 API (in-house baseline) | $0–$49/month | Free tier sufficient for pilot use |
-| Anthropic API (Tier C, BYOK default) | Pilot customers bring their own key; founder pays for demos | Budget $50–$100/month for demo and development calls |
-| Domain + DNS | ~$50/year | One-time plus annual renewal |
-| Business insurance (E&O + cyber) | ~$400–$700/month | Most significant Phase 0 cost; non-negotiable per F43 |
-| Legal (entity, MSA, trademark) | $5,000–$8,000 one-time | Clerky entity + attorney-reviewed MSA + USPTO filing |
-| **Total infrastructure** | **< $300/month** | Excluding insurance and one-time legal |
-| **Total with insurance** | **~$700–$1,000/month** | All-in monthly burn including E&O/cyber coverage |
+| Item                                 | Monthly cost at launch                                      | Notes                                                 |
+| ------------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------- |
+| Supabase Pro                         | $25/month                                                   | Includes Postgres, pgvector, object storage, auth     |
+| Fly.io (scale-to-zero)               | $0–$50/month                                                | Scales with actual usage; zero when no traffic        |
+| GitHub (Actions)                     | $0–$21/month                                                | Free tier covers most Phase 0 CI usage                |
+| Etherscan V2 API (in-house baseline) | $0–$49/month                                                | Free tier sufficient for pilot use                    |
+| Anthropic API (Tier C, BYOK default) | Pilot customers bring their own key; founder pays for demos | Budget $50–$100/month for demo and development calls  |
+| Domain + DNS                         | ~$50/year                                                   | One-time plus annual renewal                          |
+| Business insurance (E&O + cyber)     | ~$400–$700/month                                            | Most significant Phase 0 cost; non-negotiable per F43 |
+| Legal (entity, MSA, trademark)       | $5,000–$8,000 one-time                                      | Clerky entity + attorney-reviewed MSA + USPTO filing  |
+| **Total infrastructure**             | **< $300/month**                                            | Excluding insurance and one-time legal                |
+| **Total with insurance**             | **~$700–$1,000/month**                                      | All-in monthly burn including E&O/cyber coverage      |
 
 **What this means for runway:** A founder with $30,000 in personal savings has 30+ months of operational runway at this burn rate, before accounting for any customer revenue. A founder with $60,000 has 60+ months. This is not a venture-capital-or-bust situation — it is a bootstrappable product. Capital accelerates, but it is not required to keep the lights on.
 
@@ -916,6 +941,7 @@ The Supabase + Fly.io stack cannot support SOC 2 Type 1 directly. SOC 2 auditors
 4. **AWS KMS** replaces the Phase 0 KMS arrangement for SaaS Blind customers requiring AWS-native key management.
 
 **Migration cost estimate:**
+
 - Engineering time: 2–3 weeks of focused migration work (founder + first engineer)
 - AWS infrastructure vs. Supabase + Fly.io: expect monthly infrastructure costs to increase to $800–$2,000/month at 30-customer scale (AWS is more expensive but more auditable)
 - SOC 2 Type 1 audit: $25,000–$60,000 total (auditor fees + policy documentation + tooling like Vanta or Drata at $500–$1,500/month)
@@ -940,6 +966,7 @@ The Supabase + Fly.io stack cannot support SOC 2 Type 1 directly. SOC 2 auditors
 **Capital event:** Seed round of $3M–$8M at a $15M–$30M pre-money valuation. Lead investor should be a firm with federal tech portfolio experience (Paladin Capital, Lockheed Martin Ventures, In-Q-Tel if eligible, Shield Capital, Point72 Ventures). The pitch is: "Court-defensible blockchain investigation platform. $1.5M ARR. 5 LE customers. SOC 2 Type 1. On-prem sovereign deployment. Competing with platforms that start at $40K/seat."
 
 **Pre-seed → seed → A roadmap:**
+
 - Pre-seed ($500K–$1.5M): Bridge to first LE contracts; SOC 2 Type 1; first engineers
 - Seed ($3M–$8M): Scale sales team; SOC 2 Type 2; GSA Schedule application; FedRAMP Moderate sponsor identification
 - Series A ($15M–$30M): FedRAMP Moderate authorization; SEWP / CIO-SP contracting vehicle; international expansion; CMMC Level 2
@@ -956,23 +983,26 @@ The founder is the content strategy in Phase 0. This is not a full-time marketin
 
 **Content types and topics:**
 
-*Technical authority pieces (most valuable for conversion):*
+_Technical authority pieces (most valuable for conversion):_
+
 - "Why Blockchain Attribution Fails Daubert — and What Would Pass" — references specific case outcomes, names the problem, positions the Reproducibility Pack as the solution
 - "The Non-Determinism Problem in Blockchain Forensics" — explains ChainArgos's documented issue, shows how frozen provider responses solve it
 - "Six Methodologies, One Transaction: Why the Accounting Method Changes the Number" — FIFO vs LIBR walkthrough with a real transaction, shows methodology disclosure
 - "How to Prepare a Blockchain Expert Witness for Cross-Examination" — practical guide citing the Expert Witness Profile (F26) features
 
-*Positioning pieces (for credibility with decision-makers):*
+_Positioning pieces (for credibility with decision-makers):_
+
 - "The Case for Sovereign Blockchain Forensics: Why Federal LE Needs On-Prem" — references CJIS, FedRAMP, and the gap between policy-level privacy claims and technical guarantees
 - "BYOK Blockchain Forensics: Why Your Data Subscriptions Should Work Together" — explains the BYOK model, names Chainalysis and TRM explicitly as data sources (not competitors)
 
-*Community-building pieces (for peer networking):*
+_Community-building pieces (for peer networking):_
+
 - Training case walkthroughs using public incidents (Bybit, Ronin, Bitfinex) — these double as marketing for the sandbox environment (F31)
 - Methodology writeups on specific investigation patterns (pig butchering fund flow, ransomware layering, DeFi exploit reconstruction)
 
 **Publishing channels:** LinkedIn (primary for LE/compliance audience), personal website/blog (SEO foundation), ACFE Forum (community credibility), Medium (technical audience), targeted subreddits (r/blockchainforensics, r/cryptoforensics if they exist; create them if they don't).
 
-*Important note on case studies:* Never publish a real customer case study without explicit written permission from the customer. Even with permission, anonymize all identifying details unless the customer explicitly requests attribution. A single confidentiality violation destroys the entire trust story.
+_Important note on case studies:_ Never publish a real customer case study without explicit written permission from the customer. Even with permission, anonymize all identifying details unless the customer explicitly requests attribution. A single confidentiality violation destroys the entire trust story.
 
 ### 10.2 Phase 1–2 community investments
 
@@ -996,11 +1026,13 @@ The founder is the content strategy in Phase 0. This is not a full-time marketin
 
 ### 11.1 Government contracting vehicles
 
-*Phase 3:*
+_Phase 3:_
+
 - **GSA Multiple Award Schedule (MAS)** — specifically the IT Schedule 70 and the Security & Protection Category (NAICS 541511, 541512, 541519). The GSA Schedule is the broadest government procurement vehicle — 90%+ of federal agencies can order from it. Application takes 6–12 months. Start the application at Phase 2; target listing at Phase 3. Cost: $25,000–$75,000 in legal/consulting fees for the first listing.
 - **NASPO ValuePoint / NCPA / OMNIA Partners** — state and local government procurement vehicles. Broader reach than federal for the Department tier state/local LE customers. Easier to get listed than federal vehicles.
 
-*Phase 4:*
+_Phase 4:_
+
 - **SEWP V/VI (NASA Solutions for Enterprise-Wide Procurement)** — NASA-administered vehicle used by all federal agencies. Strong for IT products. High-value contracts ($250K+). Requires a current GSA Schedule or similar.
 - **CIO-SP4** — HHS-administered, all-agency IT services vehicle. Particularly strong for healthcare-adjacent and biodefense customers; also used widely for cybersecurity.
 - **OASIS+** — GSA-administered professional services vehicle. Relevant if ChainSight begins offering professional services (training, implementation, forensic consulting) alongside the product.
@@ -1011,13 +1043,14 @@ The founder is the content strategy in Phase 0. This is not a full-time marketin
 
 **Phase 2–3 channel strategy:**
 
-*Systems integrators (SIs) who serve government LE:*  
+_Systems integrators (SIs) who serve government LE:_  
 Booz Allen Hamilton, Leidos, SAIC, Peraton, ManTech — these firms have deep relationships with every federal LE agency and regularly bid on vehicle contracts that include software tools. The right relationship is "reseller + implementation partner" — they bundle ChainSight into their LE modernization proposals and provide implementation services. This requires:
+
 - A commercial listing on a government contracting vehicle (GSA Schedule minimum)
 - A formal channel partner agreement with defined margin (typically 15–20% of annual contract value for SIs)
 - A ChainSight-certified implementation track (a 3-day certification program for SI consultants)
 
-*Digital forensics training firms:*  
+_Digital forensics training firms:_  
 Telos, Cyber Readiness Institute, SANS (for training-adjacent distribution), HTCIA (High Technology Crime Investigation Association) — these organizations train investigators. A ChainSight integration with their training curriculum makes ChainSight the "platform the certified investigator knows" — which is how Chainalysis Reactor built its dominant position.
 
 ### 11.3 Integration partnerships
@@ -1039,23 +1072,27 @@ Telos, Cyber Readiness Institute, SANS (for training-adjacent distribution), HTC
 "ChainSight" is the working codename. The real naming decision factors:
 
 **Keep "ChainSight" if:**
+
 - The domain chainsight.com or chainsight.io is available at a reasonable price (< $10,000)
 - There are no existing trademarks in the cybersecurity / software / SaaS space that would create infringement risk
 - No competitor's product name is close enough to create confusion (Chain-anything is common in crypto; "sight" as a suffix is used in cybersecurity — check specifically for any OSINT or security tools with similar names)
 
 **Change the name if:**
+
 - The domain is taken at an unreasonable price
 - A trademark conflict exists in the IC 042 (Software as a Service) or IC 045 (Security/Investigation) classes
 - Advisors with federal procurement experience flag it as "sounds too crypto-generic" for government buyers
 
 **Alternative names to consider if renaming:**
-- Names that emphasize the methodology/court angle: *Provenance*, *TraceRecord*, *AuditChain*
-- Names that emphasize the sovereignty angle: *Sovereign Forensics*, *Fortaleza* (fortress in Spanish)
-- Names that are more neutral and professional for government context: *Meridian*, *Veridian*, *Stratum*
+
+- Names that emphasize the methodology/court angle: _Provenance_, _TraceRecord_, _AuditChain_
+- Names that emphasize the sovereignty angle: _Sovereign Forensics_, _Fortaleza_ (fortress in Spanish)
+- Names that are more neutral and professional for government context: _Meridian_, _Veridian_, _Stratum_
 
 ### 12.2 Domain acquisition
 
 Whether keeping ChainSight or rebranding:
+
 - Register the .com first, even if imperfect (chainsight.io or chainsight.co as fallback)
 - Register common misspellings (.net, .org as defensive registrations — $12/year each)
 - Do not use a domain that could be confused with an existing company (chainalysis.com exists; chainsight.com would not create confusion, but verify)
@@ -1069,6 +1106,7 @@ File USPTO trademark applications in Classes 42 (Software as a Service) and 45 (
 ### 12.4 Brand guidelines — Phase 1 work
 
 Brand guidelines are not Phase 0 work — they require customer validation first. Phase 1 design investments:
+
 - Logo (hire a professional designer at $1,000–$3,000 — do not use an AI generator for a logo going into government procurement)
 - Color palette and typography (must be accessible, professional, and functional in dense UI layouts — think less "crypto startup" and more "precision instrument")
 - Brand voice guidelines: plain English, no jargon, no marketing superlatives, transparent about limitations, specific rather than vague. The methodology transparency of the platform should be reflected in the brand voice.
@@ -1083,6 +1121,7 @@ A solo founder doing both engineering and commercial work in 90 days is a real c
 ### 13.1 What gets done in 90 days
 
 **Days 1–14: Foundation**
+
 - Incorporate the entity (Delaware C-Corp via Stripe Atlas or Clerky — $500–$800 total). Do this first. Contracts, bank accounts, and AWS tax exemptions all require it.
 - Open a business bank account (Mercury is the standard for startups; no fees, no minimum balance, wire and ACH support).
 - Register the domain. File trademark applications (hire a trademark attorney — use a flat-fee service like Trademark Engine or a solo practitioner referral, budget $2,000–$4,000 including legal fees).
@@ -1091,18 +1130,21 @@ A solo founder doing both engineering and commercial work in 90 days is a real c
 - Draft the Pilot Agreement: 2 pages, plain English, covers the 90-day terms, the conversion plan, and the feedback obligation.
 
 **Days 15–30: Outreach foundation**
+
 - Write the first technical content piece ("Why Blockchain Attribution Fails Daubert") and publish it
 - Create a personal LinkedIn post announcing the platform (not a full launch — a "building in public" post that describes the problem and invites interested investigators to talk)
 - Direct message the first 20 prospective pilot candidates using the archetype profiles in Section 4
 - Build a simple demo-ready environment: one Ethereum case with a realistic transaction set (use a publicly documented incident like a public pig-butchering case or Ronin Bridge), pre-loaded so the 15-minute demo in Section 6 works cleanly every time
 
 **Days 31–60: First conversations and pilot conversions**
+
 - Conduct 10–15 demos for interested prospects from the outreach
 - Close 3–5 pilot agreements at the $49/month pilot rate (Investigator tier)
 - Pilot customers begin active use — provide weekly check-in calls (30 minutes) to understand what's working and what isn't
 - Start the website: a single-page site with the positioning statement, a demo video (record the 15-minute demo script), a pilot signup form, and a link to the technical blog
 
 **Days 61–90: Feedback integration and first conversion**
+
 - First 60-day check-in with pilot customers: what would prevent them from converting to a paid annual subscription?
 - Complete at least one major product improvement driven by pilot feedback (this signals to pilots that their input is taken seriously)
 - Target: first pilot customer produces a usable work product (a Reproducibility Pack, a trace exported for a client report, or a court exhibit) using ChainSight
@@ -1128,17 +1170,20 @@ These are real commercial needs that are NOT Phase 0 work:
 Track these weekly from Day 1. No dashboard required in Phase 0 — a simple spreadsheet works. The discipline of tracking is more important than the tool.
 
 **Top-line commercial:**
+
 - **Pilot conversion rate:** Percentage of demo calls that convert to a pilot agreement. Target: >25%. If below 15%, the demo or the pricing is wrong.
 - **Pilot-to-paid conversion rate:** Percentage of 90-day pilots that convert to a paid subscription at 90 days. Target: >60%. Below 40% means the pilot customer didn't achieve enough value.
 - **MRR by week:** Running weekly calculation of monthly recurring revenue. Target trajectory: $0 → $1,000/month by Day 60 → $2,500/month by Day 90.
 
 **Product engagement (leading indicators of conversion):**
+
 - **Time-to-first-case:** How many days from pilot start until the pilot customer creates their first case and runs their first trace. Target: <3 days. A pilot customer who hasn't opened a case by Day 7 is at serious churn risk.
 - **Weekly active investigators:** Number of pilot accounts that logged in and ran at least one operation in the past 7 days. Target: >80% of pilot accounts are weekly active.
 - **Cases closed per pilot per month:** How many cases are pilot customers closing (marking as completed) in a month. Target: at least 2–3 cases per pilot per month. Cases closed = work product delivered = value received.
 - **Reproducibility Pack exports per pilot per month:** How many Packs are being exported (used as actual work product). Target: >1/month per active pilot by Day 60. This is the clearest signal that the platform is being used for real work, not just exploration.
 
 **AI and BYOK health:**
+
 - **AI utilization rate:** Percentage of case traces that use at least one AI agent call vs. manual-only. High AI utilization = the AI is adding value. Low AI utilization = either the AI is unreliable or the UX isn't surfacing it clearly.
 - **BYOK provider attach rate:** Percentage of pilot accounts that have connected at least one BYOK data provider (beyond the free defaults). Target: >70% by Day 60. Low attach rate means the BYOK setup process is too complex.
 - **Provider error rate:** Percentage of capability router calls that fail (provider API error, rate limit, quota exhaustion). Target: <2%. Higher indicates the capability router's fallback logic or the provider health check isn't working.
@@ -1157,23 +1202,27 @@ Track these weekly from Day 1. No dashboard required in Phase 0 — a simple spr
 ### 15.1 Where the BYOK pitch lands hardest
 
 **Best-fit BYOK scenarios (where the pitch is immediate and compelling):**
+
 - Customers who already have Chainalysis or TRM contracts. "Connect your existing key" removes the procurement objection entirely. These customers get additional value from their existing spend at a marginal cost.
 - Agencies with multi-provider environments (TRM for API screening + Chainalysis for investigation, for example). ChainSight unifies these through the capability router, with corroboration as the default.
 - Air-gapped or highly classified customers who cannot use a vendor-operated data pipeline. BYOK is the only model that works for them.
 
 **Weak-fit BYOK scenarios (where the pitch is harder):**
-- Customers with *zero* data subscriptions. They hear "BYOK" and think "so I have to buy everything separately." The in-house heuristics baseline (F40) answers this — "you can run with zero providers and still get real value" — but this requires demonstrating the baseline, not just describing it.
+
+- Customers with _zero_ data subscriptions. They hear "BYOK" and think "so I have to buy everything separately." The in-house heuristics baseline (F40) answers this — "you can run with zero providers and still get real value" — but this requires demonstrating the baseline, not just describing it.
 - Customers whose procurement team controls all vendor relationships. Connecting a new platform to Chainalysis's API may require IT approval of the new platform — it doesn't simplify procurement, it adds a step.
 - Solo investigators with budget constraints. They'll ask whether the in-house tier (free providers, no commercial subscriptions) is powerful enough for their cases. The honest answer: for simple cases, yes. For complex attribution-heavy investigations, you'll want at least one commercial attribution provider.
 
 ### 15.2 Where the sovereignty pitch is wasted
 
 **Low-impact sovereign deployment audiences:**
+
 - Small solo investigators. They don't have the infrastructure to run on-premises. For them, SaaS Blind with strong encryption guarantees is "sovereign enough."
 - Small private compliance teams at Series A–B fintechs. They're already running on AWS/GCP. Adding another self-hosted service to their stack is burden, not benefit.
 - Any customer whose IT department won't budget for an on-premises server infrastructure.
 
 **High-impact sovereign deployment audiences:**
+
 - Federal LE at any level — the CJIS requirements and classification sensitivity make data residency and vendor-access limitations critical.
 - Intelligence community (when they can even talk to you).
 - Large financial institutions with strict data governance (Tier-1 banks, large insurance companies with financial crime units).
@@ -1214,9 +1263,11 @@ The Supabase + Fly.io Phase 0 stack is a deliberate, defensible choice — but i
 ### 15.5 Where competitors will copy
 
 **What incumbents can copy easily:**
+
 - The BYOK pattern — Chainalysis or TRM could announce "connect your other providers to our platform" within a year if ChainSight demonstrates market traction. This is real risk. The response: by the time they copy, ChainSight has been in production with LE customers for 12+ months, and institutional inertia favors the incumbent of the new pattern.
 
 **What incumbents cannot copy quickly:**
+
 - The Reproducibility Pack format (an open specification with replay infrastructure). Building this into a legacy codebase that wasn't designed for it would require 2–3 years of refactoring.
 - The sovereign deployment architecture. Every incumbent's codebase is SaaS-native. Adding genuine on-prem sovereignty (not "we'll run it on your AWS account") to a SaaS-native architecture is architectural surgery, not a feature sprint.
 - The court-defensibility culture. Chainalysis's product culture is built around compliance (AML monitoring) and LE relationships. ChainSight's culture is built around court proceedings and methodology disclosure. These are fundamentally different orientations that affect every product decision.
@@ -1234,6 +1285,7 @@ Three commercial risks with credible mitigation paths.
 **Why this is the most credible kill risk:** Chainalysis has the resources ($100M+ in annual recurring revenue, well-capitalized), the customer relationships, and the API access to build this. They've been hiring AI engineers since 2023. Some version of this is likely.
 
 **Why it wouldn't necessarily be fatal:**
+
 1. Chainalysis's AI layer will not have a Reproducibility Pack. The non-determinism problem exists because Chainalysis's attribution data changes. They cannot solve this without fundamentally changing their data architecture — a multi-year project.
 2. Chainalysis's AI layer will not have sovereign deployment. It will be a SaaS-only feature, which excludes the federal LE customers who require on-prem.
 3. Chainalysis's AI layer will not support other attribution providers as BYOK. An investigator who wants to corroborate Chainalysis attribution with TRM will still need ChainSight.
@@ -1249,6 +1301,7 @@ Three commercial risks with credible mitigation paths.
 **Why this is credible:** FedRAMP High is the requirement for systems that process Controlled Unclassified Information (CUI) at the highest sensitivity level. Many federal LE systems handle information at this level. If the first federal target is at this level, the company is prematurely boxed out.
 
 **Why it's not necessarily fatal:**
+
 1. The on-premises sovereign deployment is a real alternative for agencies that require data sovereignty but cannot wait for FedRAMP. CJIS conformance documentation can be produced before Phase 1 ends for on-prem deployments.
 2. Not all federal LE operates at CUI/FedRAMP High requirements. State-level fusion centers, HIDTA task forces, and many local LE units can operate under more permissive authorization.
 3. The certification roadmap (F42) is explicit: FedRAMP Moderate by Phase 4, not Day 1. Customers who need FedRAMP High are Phase 4+ and Post-Phase-4 customers.
@@ -1264,11 +1317,13 @@ Three commercial risks with credible mitigation paths.
 **Why this is the highest-consequence kill risk:** Unlike the other two risks, this one is not recoverable quickly. A single high-profile false-positive in a criminal case creates a media narrative and a judicial perception problem that could take years to reverse. It also creates liability exposure under the E&O insurance structure.
 
 **Why the architecture helps — but doesn't fully prevent it:**
+
 - The tiering system (T0–T3) is designed to keep AI suggestions separate from court-grade conclusions.
 - The Critic Agent and Verifier are designed to prevent unverified AI claims from reaching reports.
 - But a pilot customer who bypasses the human-in-the-loop requirement (G1) by clicking "promote to court-grade" without actually verifying the attribution can still produce a wrong court filing.
 
 **Mitigation strategy — pre-emptive:**
+
 1. The MSA methodology disclaimer (F43) is non-negotiable. Every report contains language explicitly stating that the platform's findings are technical conclusions, not legal conclusions, and that the human investigator bears responsibility for their use.
 2. Pilot onboarding must include explicit training on the tiering system. A pilot customer who has been shown, in writing, that T2 attribution requires human verification before court-grade promotion has less ability to blame ChainSight when they skip that step.
 3. Phase 0 pilot target selection should prioritize civil investigation work (asset recovery, civil litigation support) over criminal prosecution support. Civil proceedings have more error tolerance — an erroneous finding gets corrected in discovery rather than triggering a criminal acquittal.
@@ -1301,23 +1356,23 @@ Issue a clear, direct statement: what the platform shows about the specific inte
 
 Concrete artifacts the founder must produce in 90 days. Estimated effort per artifact.
 
-| Artifact | Description | Estimated effort | When needed |
-|---|---|---|---|
-| **Corporate entity** | Delaware C-Corp via Stripe Atlas/Clerky | 4 hours + $500–$800 | Day 1 |
-| **Business insurance** | E&O + cyber liability (F43) | 8 hours (broker engagement) + $5K–$10K/year | Day 10 |
-| **Domain registration** | chainsight.com or equivalent, defensive registrations | 2 hours + $50–$200/year | Day 1 |
-| **Trademark filing** | USPTO Classes 42 + 45 with attorney clearance | 8 hours + $2,000–$4,000 legal | Day 10 |
-| **MSA template** | Based on F43 provisions, attorney-reviewed | 16 hours + $2,000–$4,000 legal | Day 20 |
-| **Pilot agreement** | 2-page simple pilot terms | 4 hours | Day 10 |
-| **Demo environment** | One pre-loaded Ethereum case with public data | 8 hours | Day 20 |
-| **Demo video (15 min)** | Screen recording of the Section 6 script | 6 hours | Day 30 |
-| **One-page website** | Positioning statement, demo video, pilot signup | 16 hours | Day 30 |
-| **Pricing sheet** | One page, tiers and pilot pricing | 4 hours | Day 15 |
-| **Outreach scripts** | LinkedIn DM, email outreach for each archetype | 6 hours | Day 15 |
-| **Technical blog post 1** | "Why Blockchain Attribution Fails Daubert" | 10 hours | Day 20 |
-| **Security questionnaire response** | Standard DDQ covering SaaS Blind architecture | 12 hours | Day 45 (needed when first Team/Dept pilot signs) |
-| **F42 certification roadmap** (published) | External-facing version of the internal F42 table | 4 hours | Day 30 |
-| **Pilot feedback log** | Simple spreadsheet for tracking pilot feedback | 2 hours | Day 30 |
+| Artifact                                  | Description                                           | Estimated effort                            | When needed                                      |
+| ----------------------------------------- | ----------------------------------------------------- | ------------------------------------------- | ------------------------------------------------ |
+| **Corporate entity**                      | Delaware C-Corp via Stripe Atlas/Clerky               | 4 hours + $500–$800                         | Day 1                                            |
+| **Business insurance**                    | E&O + cyber liability (F43)                           | 8 hours (broker engagement) + $5K–$10K/year | Day 10                                           |
+| **Domain registration**                   | chainsight.com or equivalent, defensive registrations | 2 hours + $50–$200/year                     | Day 1                                            |
+| **Trademark filing**                      | USPTO Classes 42 + 45 with attorney clearance         | 8 hours + $2,000–$4,000 legal               | Day 10                                           |
+| **MSA template**                          | Based on F43 provisions, attorney-reviewed            | 16 hours + $2,000–$4,000 legal              | Day 20                                           |
+| **Pilot agreement**                       | 2-page simple pilot terms                             | 4 hours                                     | Day 10                                           |
+| **Demo environment**                      | One pre-loaded Ethereum case with public data         | 8 hours                                     | Day 20                                           |
+| **Demo video (15 min)**                   | Screen recording of the Section 6 script              | 6 hours                                     | Day 30                                           |
+| **One-page website**                      | Positioning statement, demo video, pilot signup       | 16 hours                                    | Day 30                                           |
+| **Pricing sheet**                         | One page, tiers and pilot pricing                     | 4 hours                                     | Day 15                                           |
+| **Outreach scripts**                      | LinkedIn DM, email outreach for each archetype        | 6 hours                                     | Day 15                                           |
+| **Technical blog post 1**                 | "Why Blockchain Attribution Fails Daubert"            | 10 hours                                    | Day 20                                           |
+| **Security questionnaire response**       | Standard DDQ covering SaaS Blind architecture         | 12 hours                                    | Day 45 (needed when first Team/Dept pilot signs) |
+| **F42 certification roadmap** (published) | External-facing version of the internal F42 table     | 4 hours                                     | Day 30                                           |
+| **Pilot feedback log**                    | Simple spreadsheet for tracking pilot feedback        | 2 hours                                     | Day 30                                           |
 
 **Total estimated commercial effort in 90 days:** ~110 hours = roughly 4–5 hours per week. This is achievable alongside engineering work. The items with the highest leverage are the MSA/pilot agreement (required to close any deal), the demo environment (required for any demo), and the outreach scripts (required for any outreach).
 
@@ -1331,61 +1386,61 @@ Specific questions for the founder that affect commercial decisions. These are n
 
 Does the founder have any existing professional relationships with potential pilot customers? A former colleague who is now at an LE unit, a forensic accountant they know personally, a compliance professional from a previous job?
 
-*Why it matters:* The Phase 0 outreach plan assumes cold outreach. If the founder has warm relationships, the pilot recruitment timeline compresses from 60–90 days to 2–3 weeks. Knowing these relationships exist also changes which pilot archetype to prioritize — a warm Department-tier contact may be worth pursuing even if the sales cycle is longer, because the reference value is higher.
+_Why it matters:_ The Phase 0 outreach plan assumes cold outreach. If the founder has warm relationships, the pilot recruitment timeline compresses from 60–90 days to 2–3 weeks. Knowing these relationships exist also changes which pilot archetype to prioritize — a warm Department-tier contact may be worth pursuing even if the sales cycle is longer, because the reference value is higher.
 
 ### Q2: Willingness to relocate (or travel) for federal work
 
 Federal LE sales in the US are heavily concentrated in Washington DC, Quantico, and the suburban Virginia/Maryland federal corridor. A founder located outside this geography faces a real disadvantage in building the LE relationships that lead to Department and Agency tier contracts.
 
-*Why it matters:* If the founder is willing to spend 2–3 days per month in DC for the first 12 months, the federal LE pipeline becomes significantly more accessible. If not, the initial focus should be private-sector and state/local LE, with federal sales deferred to Phase 2–3 when a government affairs hire can carry the DC relationship-building.
+_Why it matters:_ If the founder is willing to spend 2–3 days per month in DC for the first 12 months, the federal LE pipeline becomes significantly more accessible. If not, the initial focus should be private-sector and state/local LE, with federal sales deferred to Phase 2–3 when a government affairs hire can carry the DC relationship-building.
 
 ### Q3: Runway
 
 How many months of personal runway does the founder have before the platform needs to generate income? This sets the urgency of the commercial timeline.
 
-*Why it matters:* If runway is 6 months, the Phase 0 commercial plan needs to close paying customers by month 3, which means the demo environment and outreach need to start on Day 1 of engineering, not after 8 weeks of build. If runway is 18 months, there is more time for product quality to develop before commercial pressure kicks in.
+_Why it matters:_ If runway is 6 months, the Phase 0 commercial plan needs to close paying customers by month 3, which means the demo environment and outreach need to start on Day 1 of engineering, not after 8 weeks of build. If runway is 18 months, there is more time for product quality to develop before commercial pressure kicks in.
 
 ### Q4: Legal entity formation status
 
 Has the founding company been formally incorporated? Is there outside capital already committed? Are there cofounders?
 
-*Why it matters:* If there are cofounders, the equity split, IP assignment, and vesting schedule all need to be documented before the first customer conversation. If there's existing capital, the pre-seed raise timing and structure changes. If the entity isn't formed, the MSA and pilot agreement are legally unenforceable.
+_Why it matters:_ If there are cofounders, the equity split, IP assignment, and vesting schedule all need to be documented before the first customer conversation. If there's existing capital, the pre-seed raise timing and structure changes. If the entity isn't formed, the MSA and pilot agreement are legally unenforceable.
 
 ### Q5: Specific prospect in mind
 
 Does the founder have a specific person — by name, not archetype — who they believe would be the first Phase 0 pilot customer? A specific prosecutor, a specific PI, a specific compliance director?
 
-*Why it matters:* If yes, optimize the demo, the pilot pricing, and the onboarding experience for that specific person's workflow first. The platform built around one real user is more valuable than the platform built around three imagined users.
+_Why it matters:_ If yes, optimize the demo, the pilot pricing, and the onboarding experience for that specific person's workflow first. The platform built around one real user is more valuable than the platform built around three imagined users.
 
 ### Q6: Network in the LE/compliance/PI world
 
 Beyond direct relationships, does the founder have any indirect network in these communities? A former law school classmate who is a prosecutor, a family member in LE, a previous employer with LE connections?
 
-*Why it matters:* The first 5 pilot customers are almost always sourced from the founder's network — not from cold LinkedIn outreach. Understanding the actual network allows the commercial plan to be targeted rather than generic.
+_Why it matters:_ The first 5 pilot customers are almost always sourced from the founder's network — not from cold LinkedIn outreach. Understanding the actual network allows the commercial plan to be targeted rather than generic.
 
 ### Q7: Technology transfer or prior IP
 
 Is any component of ChainSight built on prior employer IP, open-source code with restrictive licenses, or code from a previous company where the founder had IP assignment obligations?
 
-*Why it matters:* IP cleanliness is a diligence item in every investor round and every government contract award. A question about this at Series A or at a GSA Schedule award is much worse to answer retroactively than to address proactively. The answer should be documented by counsel before the first investor pitch.
+_Why it matters:_ IP cleanliness is a diligence item in every investor round and every government contract award. A question about this at Series A or at a GSA Schedule award is much worse to answer retroactively than to address proactively. The answer should be documented by counsel before the first investor pitch.
 
 ### Q8: Conference and community presence
 
 Does the founder currently attend, speak at, or participate in any of the relevant conferences and communities? ACFE Annual Conference? HTCIA? DefCon? BSides? Crypto-specific events?
 
-*Why it matters:* The fastest path to the first 5 pilot customers is through in-person relationships at the two or three conferences where the target customers congregate. If the founder isn't yet present in those communities, the commercial plan should budget for conference attendance in months 1–3.
+_Why it matters:_ The fastest path to the first 5 pilot customers is through in-person relationships at the two or three conferences where the target customers congregate. If the founder isn't yet present in those communities, the commercial plan should budget for conference attendance in months 1–3.
 
 ### Q9: Comfort with public visibility
 
 Building a forensics platform for law enforcement and the courts requires the founder to be visible and credible — publishing content, doing demos, speaking at events. Some technical founders are uncomfortable with this visibility.
 
-*Why it matters:* If the founder is uncomfortable with personal brand building, the content strategy in Section 10 needs to be adapted (fewer bylined pieces, more anonymous technical documentation) and a part-time content/marketing collaborator should be budgeted earlier than Phase 2.
+_Why it matters:_ If the founder is uncomfortable with personal brand building, the content strategy in Section 10 needs to be adapted (fewer bylined pieces, more anonymous technical documentation) and a part-time content/marketing collaborator should be budgeted earlier than Phase 2.
 
 ### Q10: Revenue targets for investor readiness
 
 At what revenue level does the founder want to raise external capital? $100K ARR? $500K ARR? $1M ARR? Different investors (angels, pre-seed funds, seed funds) have different revenue expectations at first check.
 
-*Why it matters:* If the target is angel investment at $0 ARR, the commercial story needs to be early and compelling — the investor is buying vision. If the target is seed at $500K ARR, the first 12 months of commercial execution are entirely about hitting that ARR number. These are different time horizons and different strategies.
+_Why it matters:_ If the target is angel investment at $0 ARR, the commercial story needs to be early and compelling — the investor is buying vision. If the target is seed at $500K ARR, the first 12 months of commercial execution are entirely about hitting that ARR number. These are different time horizons and different strategies.
 
 ---
 
@@ -1401,7 +1456,7 @@ The platform is real. The differentiators are locked. The commercial path is bui
 
 ---
 
-*Document generated:* June 2026  
-*Supersedes:* No prior commercial document; extends F46 (packaging), F45 (community), F44 (EOL/escrow), F43 (legal/insurance), F42 (certifications), F41 (bias/fairness), F40 (in-house heuristics), G8 (BYOK neutrality)  
-*Next commercial artifacts:* Pilot Agreement template, MSA template, Demo script recording, Outreach scripts per Section 4  
-*This document references:* chainsight_v1_0_engineering.md, chainsight_v0_8_addendum.md, chainsight_v0_7_deployment_model_addendum.md, chainsight_v0_3_byok_addendum.md, chainsight_v0_8_consolidated.md, chainsight_v0_9_ai_strategy.md, chainsight_v0_7_gap_analysis.md
+_Document generated:_ June 2026  
+_Supersedes:_ No prior commercial document; extends F46 (packaging), F45 (community), F44 (EOL/escrow), F43 (legal/insurance), F42 (certifications), F41 (bias/fairness), F40 (in-house heuristics), G8 (BYOK neutrality)  
+_Next commercial artifacts:_ Pilot Agreement template, MSA template, Demo script recording, Outreach scripts per Section 4  
+_This document references:_ chainsight_v1_0_engineering.md, chainsight_v0_8_addendum.md, chainsight_v0_7_deployment_model_addendum.md, chainsight_v0_3_byok_addendum.md, chainsight_v0_8_consolidated.md, chainsight_v0_9_ai_strategy.md, chainsight_v0_7_gap_analysis.md

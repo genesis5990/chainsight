@@ -32,6 +32,7 @@ Selecting **Analyze this transaction** opens the **Transaction Inspector** — a
 The Inspector is structured as a series of stacked sections that fill in progressively as the analysis completes. The investigator sees the popup populate over 2–8 seconds depending on complexity, with each section flagged as it lands. They can scroll, copy any value, or click any referenced entity to pivot the canvas to it.
 
 **Header strip**
+
 - Tx hash (truncated, click to copy full)
 - Chain
 - Block height + timestamp
@@ -51,20 +52,20 @@ This is the Narrative Agent's output, gated by the Verifier (B6), with every cla
 
 A clean two-column display of canonical facts pulled from chain data (all T0 — cryptographic ground truth):
 
-| Field | Value |
-|---|---|
-| From | `0xdef...a4c2` *(EOA, no contract code)* |
-| To (top-level) | `0xE5...Uniswap Universal Router` *(attributed)* |
-| Value | 0 ETH *(token swap; native value is in the calldata)* |
-| Gas used | 168,432 |
-| Gas price | 12.4 gwei |
-| Effective fee | 0.0021 ETH ($7.13 at tx time) |
-| Nonce | 1,847 |
-| Input data | `0x3593564c...` *(decoded below)* |
-| Status | Success |
-| Block | 20,512,338 |
-| Position in block | 87 |
-| Tx type | EIP-1559 (Type 2) |
+| Field             | Value                                                 |
+| ----------------- | ----------------------------------------------------- |
+| From              | `0xdef...a4c2` _(EOA, no contract code)_              |
+| To (top-level)    | `0xE5...Uniswap Universal Router` _(attributed)_      |
+| Value             | 0 ETH _(token swap; native value is in the calldata)_ |
+| Gas used          | 168,432                                               |
+| Gas price         | 12.4 gwei                                             |
+| Effective fee     | 0.0021 ETH ($7.13 at tx time)                         |
+| Nonce             | 1,847                                                 |
+| Input data        | `0x3593564c...` _(decoded below)_                     |
+| Status            | Success                                               |
+| Block             | 20,512,338                                            |
+| Position in block | 87                                                    |
+| Tx type           | EIP-1559 (Type 2)                                     |
 
 Each value is one-click-copyable and one-click-pivots-the-canvas-to-it (for addresses).
 
@@ -132,12 +133,12 @@ For bridges, the decoded action shows source-side and destination-side details, 
 
 Each address involved (sender, top-level recipient, every transfer source/destination, every contract called) gets a quick attribution panel:
 
-| Address | Attribution | Source | Risk |
-|---|---|---|---|
-| `0xdef...a4c2` | *Unattributed EOA* | — | 🟡 Medium (mixer-adjacent, see notes) |
-| `0xE5...0aD` | Uniswap Universal Router v1.2 | Chainalysis + Arkham (corroborated) | 🟢 Low (clean infrastructure) |
-| `0x88e6...5640` | Uniswap V3 USDT/WETH 0.05% Pool | Multi-source | 🟢 Low |
-| `0x123...bf90` | *Unattributed EOA* | — | 🟡 Medium (newly created, no history) |
+| Address         | Attribution                     | Source                              | Risk                                  |
+| --------------- | ------------------------------- | ----------------------------------- | ------------------------------------- |
+| `0xdef...a4c2`  | _Unattributed EOA_              | —                                   | 🟡 Medium (mixer-adjacent, see notes) |
+| `0xE5...0aD`    | Uniswap Universal Router v1.2   | Chainalysis + Arkham (corroborated) | 🟢 Low (clean infrastructure)         |
+| `0x88e6...5640` | Uniswap V3 USDT/WETH 0.05% Pool | Multi-source                        | 🟢 Low                                |
+| `0x123...bf90`  | _Unattributed EOA_              | —                                   | 🟡 Medium (newly created, no history) |
 
 Each row shows where the attribution came from (per Pillar 3 — BYOK provider provenance) and aggregates risk across providers. When providers disagree (e.g. Chainalysis says one thing, TRM says another), the Inspector flags it inline and surfaces the disagreement as a Critic Challenge.
 
@@ -149,7 +150,7 @@ The Inspector knows what case it's in. This section places the transaction in ca
 - "Cumulative taint from source at this hop: **87.3%** under FIFO, **91.1%** under LIBR"
 - "This transaction shares its sending address with **3 other transactions** in this case"
 - "The recipient address appears in **Wallet: Suspect's Ledger Nano** (analyzed yesterday)"
-- "A memo exists on this transaction: *'Confirmed via subpoena #2024-0184'* — open"
+- "A memo exists on this transaction: _'Confirmed via subpoena #2024-0184'_ — open"
 - "**Important** marker set by Investigator Doe on 2026-06-12"
 
 Clicking any line navigates the canvas to the referenced context.
@@ -196,14 +197,14 @@ If the Critic has nothing to say: `✅ Critic has no open challenges on this tra
 
 Concrete things the investigator can do now, each a single click:
 
-- ⭐  **Mark as Important** (adds to the case's important sidebar; emits a BeliefAtom)
-- 📎  **Attach a memo** (opens the memo editor with the tx pre-filled)
-- 🎨  **Add to active path** (extends the currently-selected TracePath through this transaction)
-- 🔗  **Trace forward 3 hops** (runs Tracer Agent forward from the recipient)
-- 🔙  **Trace backward 3 hops** (runs Tracer Agent backward from the sender)
-- 📑  **Draft subpoena request** (if recipient is attributed to a regulated VASP, auto-drafts the subpoena package)
-- ❄️  **Add to freeze opportunity list** (if recipient is an exchange deposit and the funds are still there)
-- 📤  **Export this analysis as a PDF exhibit**
+- ⭐ **Mark as Important** (adds to the case's important sidebar; emits a BeliefAtom)
+- 📎 **Attach a memo** (opens the memo editor with the tx pre-filled)
+- 🎨 **Add to active path** (extends the currently-selected TracePath through this transaction)
+- 🔗 **Trace forward 3 hops** (runs Tracer Agent forward from the recipient)
+- 🔙 **Trace backward 3 hops** (runs Tracer Agent backward from the sender)
+- 📑 **Draft subpoena request** (if recipient is attributed to a regulated VASP, auto-drafts the subpoena package)
+- ❄️ **Add to freeze opportunity list** (if recipient is an exchange deposit and the funds are still there)
+- 📤 **Export this analysis as a PDF exhibit**
 
 ### 8.3 What the AI actually does (the iceberg)
 
@@ -293,22 +294,22 @@ The same Critic Agent reviews the comparison and surfaces structural similaritie
 
 ### 8.8 Integration with locked features
 
-| System | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Every analysis emits a BeliefAtom; every reference inside the analysis cites BeliefAtoms; the analysis itself is a BeliefAtom of type `transaction_analysis_performed` |
-| **Reproducibility (Pillar 2)** | Provider responses cached; rule versions pinned; model card recorded; saved analyses are part of the Pack; replay reproduces the exact analysis word for word |
-| **BYOK Marketplace (Pillar 3)** | Inspector uses installed providers for chain data, attribution, market data, contract intelligence — capability-based, not vendor-named |
-| **Transaction-centric graph (v0.5 F6)** | The Inspector is *the* primary inspection primitive for TransactionNodes; this feature is what makes the address-tx-address structure feel useful instead of pedantic |
-| **Canvas UX** | Right-click menu and Enter shortcut from the canvas; popup follows the design language; suggested actions match the rest of the platform's vocabulary |
-| **PSR** | "Add to active path" extends a TracePath through this transaction; "Save analysis" attaches the analysis to the path's evidence trail |
-| **Obfuscation Detection (v0.5 F4)** | Findings surface in Section 6 of the Inspector; the Inspector is where investigators first see most findings |
-| **Document Ingest (v0.5 F2)** | If a memo on this transaction references a document, the Inspector links to the document at the right page and bounding box |
-| **Wallet History Analyzer (v0.5 F7)** | Inspections inside an analyzed wallet's sub-graph reference the wallet by name in Section 5 |
-| **Court Mode (v0.5 F3)** | An Inspector view is a valid courtroom frame — "let me show you the analysis of this specific transaction" jumps to the Inspector for the selected tx |
-| **Critic Agent (B5)** | Reviews every analysis; Section 7 is the Critic's visible output |
-| **Narrative Agent (B6)** | Drafts Section 1 (the summary); Verifier gates it |
-| **Math Service** | Computes every numeric value in the analysis; LLM never types a number |
-| **Deconfliction (v0.5 F1)** | If the transaction's addresses overlap with another active case, the Inspector flags it inline at the top with a deconfliction badge |
+| System                                  | Touchpoint                                                                                                                                                             |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**             | Every analysis emits a BeliefAtom; every reference inside the analysis cites BeliefAtoms; the analysis itself is a BeliefAtom of type `transaction_analysis_performed` |
+| **Reproducibility (Pillar 2)**          | Provider responses cached; rule versions pinned; model card recorded; saved analyses are part of the Pack; replay reproduces the exact analysis word for word          |
+| **BYOK Marketplace (Pillar 3)**         | Inspector uses installed providers for chain data, attribution, market data, contract intelligence — capability-based, not vendor-named                                |
+| **Transaction-centric graph (v0.5 F6)** | The Inspector is _the_ primary inspection primitive for TransactionNodes; this feature is what makes the address-tx-address structure feel useful instead of pedantic  |
+| **Canvas UX**                           | Right-click menu and Enter shortcut from the canvas; popup follows the design language; suggested actions match the rest of the platform's vocabulary                  |
+| **PSR**                                 | "Add to active path" extends a TracePath through this transaction; "Save analysis" attaches the analysis to the path's evidence trail                                  |
+| **Obfuscation Detection (v0.5 F4)**     | Findings surface in Section 6 of the Inspector; the Inspector is where investigators first see most findings                                                           |
+| **Document Ingest (v0.5 F2)**           | If a memo on this transaction references a document, the Inspector links to the document at the right page and bounding box                                            |
+| **Wallet History Analyzer (v0.5 F7)**   | Inspections inside an analyzed wallet's sub-graph reference the wallet by name in Section 5                                                                            |
+| **Court Mode (v0.5 F3)**                | An Inspector view is a valid courtroom frame — "let me show you the analysis of this specific transaction" jumps to the Inspector for the selected tx                  |
+| **Critic Agent (B5)**                   | Reviews every analysis; Section 7 is the Critic's visible output                                                                                                       |
+| **Narrative Agent (B6)**                | Drafts Section 1 (the summary); Verifier gates it                                                                                                                      |
+| **Math Service**                        | Computes every numeric value in the analysis; LLM never types a number                                                                                                 |
+| **Deconfliction (v0.5 F1)**             | If the transaction's addresses overlap with another active case, the Inspector flags it inline at the top with a deconfliction badge                                   |
 
 ### 8.9 The product-defining moment
 
@@ -330,11 +331,11 @@ That's the demo moment. **"Show me the transaction" becomes one click.**
 
 ### 8.10 Build phasing
 
-| Phase | Inspector additions |
-|---|---|
-| **Phase 1** | Inspector data model; basic structured-facts display; raw decoded action for known contracts (Uniswap, common ERC-20 transfers, common bridge contracts) |
-| **Phase 2** | Full plain-language summary via Narrative Agent + Verifier; counterparty intelligence with multi-provider corroboration; case-context section; suggested-actions panel; streaming UI |
-| **Phase 3** | Obfuscation findings section; Critic notes section; compare-two-transactions mode; saved-analysis persistence and reproducibility; export as PDF exhibit |
+| Phase       | Inspector additions                                                                                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1** | Inspector data model; basic structured-facts display; raw decoded action for known contracts (Uniswap, common ERC-20 transfers, common bridge contracts)                                                       |
+| **Phase 2** | Full plain-language summary via Narrative Agent + Verifier; counterparty intelligence with multi-provider corroboration; case-context section; suggested-actions panel; streaming UI                           |
+| **Phase 3** | Obfuscation findings section; Critic notes section; compare-two-transactions mode; saved-analysis persistence and reproducibility; export as PDF exhibit                                                       |
 | **Phase 4** | Inspector personalization (compact mode learned per investigator); cross-case context surfacing when overlaps exist; voice-assistant integration ("read this analysis aloud") for accessibility and Court Mode |
 
 ---

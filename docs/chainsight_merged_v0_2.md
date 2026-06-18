@@ -25,7 +25,7 @@ The 14 domains, the mind map, and the schema document are unchanged in intent:
 12. UTXO vs account-model graphing
 13. Multi-methodology accounting (FIFO/LIFO/weighted)
 14. Evidence & case management
-15. *(plus)* persistent, trainable AI doing real work independently
+15. _(plus)_ persistent, trainable AI doing real work independently
 
 Those modules survive intact. What follows is **layered on top**.
 
@@ -80,12 +80,12 @@ The [ChainArgos analysis on determinism](https://medium.com/chainargos/blockchai
 
 We solve this by **explicit tiering** of every operation:
 
-| Tier | What it is | Examples | Behavior |
-|---|---|---|---|
-| **T0 — Cryptographic** | Provable from chain data alone | UTXO lineage, EVM transfer logs, signatures, block timestamps | Always deterministic. Same inputs → same outputs forever. |
-| **T1 — Heuristic-deterministic** | Rule-based on chain data, but rules can change | Common-input clustering, change-output detection, router decoders | Deterministic **given a pinned rule version**. Rule versions are immutable artifacts. |
-| **T2 — Attribution-deterministic** | Depends on external label data | Entity attribution from BYOK feeds, OSINT tags | Deterministic **given a pinned data snapshot**. Snapshots are mandatory for court output. |
-| **T3 — Probabilistic** | ML / LLM inference | Behavioral fingerprinting, narrative drafting, hypothesis generation | Explicitly flagged. Never the sole basis for a court-grade atom. |
+| Tier                               | What it is                                     | Examples                                                             | Behavior                                                                                  |
+| ---------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **T0 — Cryptographic**             | Provable from chain data alone                 | UTXO lineage, EVM transfer logs, signatures, block timestamps        | Always deterministic. Same inputs → same outputs forever.                                 |
+| **T1 — Heuristic-deterministic**   | Rule-based on chain data, but rules can change | Common-input clustering, change-output detection, router decoders    | Deterministic **given a pinned rule version**. Rule versions are immutable artifacts.     |
+| **T2 — Attribution-deterministic** | Depends on external label data                 | Entity attribution from BYOK feeds, OSINT tags                       | Deterministic **given a pinned data snapshot**. Snapshots are mandatory for court output. |
+| **T3 — Probabilistic**             | ML / LLM inference                             | Behavioral fingerprinting, narrative drafting, hypothesis generation | Explicitly flagged. Never the sole basis for a court-grade atom.                          |
 
 **Every BeliefAtom carries its tier.** A T3 atom alone never moves to "court_grade" — it has to be corroborated by a T0/T1/T2 chain. This is how we get the [Chainalysis "data accuracy flywheel"](https://www.chainalysis.com/blog/chainalysis-data-accuracy/) property: any conclusion can be reconstructed step-by-step from frozen inputs.
 
@@ -169,15 +169,15 @@ Per the [DFIR-Metric benchmark research](https://www.themoonlight.io/en/review/d
 
 Headline metrics:
 
-| Metric | Definition | Target |
-|---|---|---|
-| Trace recall | % of ground-truth path edges recovered | ≥0.95 |
-| Trace precision | % of recovered edges that are correct | ≥0.98 |
-| Attribution accuracy | % entity labels correct vs. ground truth | ≥0.97 |
-| Reproducibility | identical output on replay | 1.000 |
-| Methodology consistency | identical math across two runs of same method | 1.000 |
-| Court-grade rate | % atoms qualifying for court-grade flag | tracked, not targeted |
-| Critic catch rate | % of seeded errors the Critic flags | ≥0.90 |
+| Metric                  | Definition                                    | Target                |
+| ----------------------- | --------------------------------------------- | --------------------- |
+| Trace recall            | % of ground-truth path edges recovered        | ≥0.95                 |
+| Trace precision         | % of recovered edges that are correct         | ≥0.98                 |
+| Attribution accuracy    | % entity labels correct vs. ground truth      | ≥0.97                 |
+| Reproducibility         | identical output on replay                    | 1.000                 |
+| Methodology consistency | identical math across two runs of same method | 1.000                 |
+| Court-grade rate        | % atoms qualifying for court-grade flag       | tracked, not targeted |
+| Critic catch rate       | % of seeded errors the Critic flags           | ≥0.90                 |
 
 ---
 
@@ -186,7 +186,7 @@ Headline metrics:
 Investigator data is some of the most sensitive data on earth. Victim PII, suspect identifiers, KYC docs, MLAT correspondence. We add:
 
 - **Per-case encryption keys** stored in HSM/KMS, derivable only with case-team auth
-- **Differential privacy** ([DP for compliance research](https://pubmed.ncbi.nlm.nih.gov/41911223/)) on any cross-case statistics — investigators can ask "how often does this typology pattern appear?" without learning *which* cases
+- **Differential privacy** ([DP for compliance research](https://pubmed.ncbi.nlm.nih.gov/41911223/)) on any cross-case statistics — investigators can ask "how often does this typology pattern appear?" without learning _which_ cases
 - **Need-to-know access** — agents only get the case context they need for the current task; the full case file never goes to the LLM unless the operator opts in
 - **Air-gapped tenant option** — for sensitive LE work, full deployment in a customer-controlled environment with no outbound LLM calls (forces local models, which is fine because B6 design works with any capable model)
 - **Cross-border data residency** — case data tagged with jurisdiction, processing pinned to compliant regions
@@ -199,23 +199,23 @@ Investigator data is some of the most sensitive data on earth. Victim PII, suspe
 
 Mapping every accuracy-spine addition (B) onto your 14 domains (A):
 
-| Your domain (A) | Accuracy spine addition (B) |
-|---|---|
-| 1. Case intake | B8 governs PII handling; B1 starts the SBS as soon as IOCs are entered |
-| 2. Time frame | B3 snapshots market context at intake — frozen forever |
-| 3. Chain scope | B2 tiers every chain-detection inference; B1 records each as a belief atom |
-| 4. Tx volume estimate | B4 computes expected confidence-at-depth before any expensive work |
-| 5. Visual trace | B4 confidence decay rendered as edge fading; B1 atoms visible on hover |
-| 6. Token swaps | B6 calculator tool owns all value math; B2 tier-marks router decoders |
-| 7. Bridges | B5 Critic runs adversarial bridge-correlation patterns; B2 distinguishes message-id (T1) from heuristic (T3) matches |
-| 8. Accounting & fees | B6 forces all math through the deterministic calculator; B3 freezes the methodology version used |
-| 9. Attribution & OSINT | B2 separates source tiers; B6 forces every attribution to dereference to a snapshot row; B5 challenges low-confidence attributions |
-| 10. Collaboration & viz | B4 confidence rendering is visible to all collaborators; B1 challenges show as comment-like objects |
-| 11. Reporting | B3 reproducibility pack is the report's other half; B6 verifier post-checks the narrative |
-| 12. UTXO vs account graphing | B2 makes UTXO traces T0, account-model + clustering T1; clear separation in the UI |
-| 13. Multi-methodology accounting | B3 pins which methodology, B6 calculator runs the math, B1 records the result as an atom |
-| 14. Evidence storage | B3 reproducibility pack lives here; B8 governs key management |
-| 15. AI persistence | B1 SBS + B5 Critic + B6 gates + B7 flywheel = trustable persistent AI |
+| Your domain (A)                  | Accuracy spine addition (B)                                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Case intake                   | B8 governs PII handling; B1 starts the SBS as soon as IOCs are entered                                                             |
+| 2. Time frame                    | B3 snapshots market context at intake — frozen forever                                                                             |
+| 3. Chain scope                   | B2 tiers every chain-detection inference; B1 records each as a belief atom                                                         |
+| 4. Tx volume estimate            | B4 computes expected confidence-at-depth before any expensive work                                                                 |
+| 5. Visual trace                  | B4 confidence decay rendered as edge fading; B1 atoms visible on hover                                                             |
+| 6. Token swaps                   | B6 calculator tool owns all value math; B2 tier-marks router decoders                                                              |
+| 7. Bridges                       | B5 Critic runs adversarial bridge-correlation patterns; B2 distinguishes message-id (T1) from heuristic (T3) matches               |
+| 8. Accounting & fees             | B6 forces all math through the deterministic calculator; B3 freezes the methodology version used                                   |
+| 9. Attribution & OSINT           | B2 separates source tiers; B6 forces every attribution to dereference to a snapshot row; B5 challenges low-confidence attributions |
+| 10. Collaboration & viz          | B4 confidence rendering is visible to all collaborators; B1 challenges show as comment-like objects                                |
+| 11. Reporting                    | B3 reproducibility pack is the report's other half; B6 verifier post-checks the narrative                                          |
+| 12. UTXO vs account graphing     | B2 makes UTXO traces T0, account-model + clustering T1; clear separation in the UI                                                 |
+| 13. Multi-methodology accounting | B3 pins which methodology, B6 calculator runs the math, B1 records the result as an atom                                           |
+| 14. Evidence storage             | B3 reproducibility pack lives here; B8 governs key management                                                                      |
+| 15. AI persistence               | B1 SBS + B5 Critic + B6 gates + B7 flywheel = trustable persistent AI                                                              |
 
 ---
 
@@ -243,18 +243,18 @@ Concrete things that change in the build:
 
 ## Part E — Net additions to the tech stack
 
-| Concern | Tool / pattern |
-|---|---|
-| Belief state store | Postgres + event sourcing (or EventStoreDB) |
-| Math service | Python service with `decimal`-based fixed-point arithmetic; gRPC interface |
-| Reproducibility snapshots | Content-addressed S3 (or IPFS) with optional public-chain anchoring |
-| Critic agent | Same agent framework as others (Letta/LangGraph), separate model + temperature + skeptical system prompt |
-| Ground truth regression | Custom harness; nightly run; block-on-regression CI gate |
-| Verifier agent | Smaller, cheaper model (e.g. fine-tuned Llama 3.1 8B) running citation-token check |
-| Differential privacy | OpenDP or Google's DP library for cross-case analytics queries |
-| HSM/KMS | AWS KMS / GCP KMS / on-prem Thales for air-gap tier |
-| Per-case keys | Envelope encryption with case-scoped DEKs |
-| Tamper-evident audit | Postgres + S3 Object Lock; periodic Merkle-root anchor to public chain |
+| Concern                   | Tool / pattern                                                                                           |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Belief state store        | Postgres + event sourcing (or EventStoreDB)                                                              |
+| Math service              | Python service with `decimal`-based fixed-point arithmetic; gRPC interface                               |
+| Reproducibility snapshots | Content-addressed S3 (or IPFS) with optional public-chain anchoring                                      |
+| Critic agent              | Same agent framework as others (Letta/LangGraph), separate model + temperature + skeptical system prompt |
+| Ground truth regression   | Custom harness; nightly run; block-on-regression CI gate                                                 |
+| Verifier agent            | Smaller, cheaper model (e.g. fine-tuned Llama 3.1 8B) running citation-token check                       |
+| Differential privacy      | OpenDP or Google's DP library for cross-case analytics queries                                           |
+| HSM/KMS                   | AWS KMS / GCP KMS / on-prem Thales for air-gap tier                                                      |
+| Per-case keys             | Envelope encryption with case-scoped DEKs                                                                |
+| Tamper-evident audit      | Postgres + S3 Object Lock; periodic Merkle-root anchor to public chain                                   |
 
 ---
 
@@ -293,7 +293,7 @@ Anchoring SHA-256 hashes of case manifests to a public blockchain provides tampe
 The B7 ground-truth flywheel is most powerful when learnings flow across tenants. But LE agencies will not share case data. The differential-privacy layer (B8) lets us extract patterns without exposing cases — but is that compelling enough to ship as a default-opt-in, or do we need separate signed agreements per agency?
 
 **G4. The "freeze decision" interface.**
-B's whole point is autonomous accuracy, but B's whole point is also that *the freeze button stays with the human*. What does the UI for that decision look like? My current thinking: a one-pager auto-generated at the moment a freeze opportunity is detected, showing (a) the trace, (b) the confidence with intervals, (c) the Critic's open challenges, (d) the methodology used, (e) the responsible-VASP info, (f) the SLA clock. Investigator clicks one of three buttons: Freeze, Don't Freeze, Escalate to Supervisor. Every click is logged to SBS.
+B's whole point is autonomous accuracy, but B's whole point is also that _the freeze button stays with the human_. What does the UI for that decision look like? My current thinking: a one-pager auto-generated at the moment a freeze opportunity is detected, showing (a) the trace, (b) the confidence with intervals, (c) the Critic's open challenges, (d) the methodology used, (e) the responsible-VASP info, (f) the SLA clock. Investigator clicks one of three buttons: Freeze, Don't Freeze, Escalate to Supervisor. Every click is logged to SBS.
 
 ---
 

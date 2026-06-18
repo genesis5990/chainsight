@@ -1,6 +1,6 @@
 # ChainSight v0.4 — Canvas UX & Investigator Markup Addendum
 
-> **Product principle (locked):** *"So Easy a Caveman Can Do It" on the frontend; uncompromising sophistication on the backend.*
+> **Product principle (locked):** _"So Easy a Caveman Can Do It" on the frontend; uncompromising sophistication on the backend._
 >
 > Every interaction in this addendum is one click, one drag, or one keystroke on the surface. Behind every interaction is a Belief Atom write, a Math Service call, a Critic review, and a reproducibility log entry. The investigator never sees that machinery — they see a graph that responds the way they expect a graph to respond.
 
@@ -148,6 +148,7 @@ Second, **prosecutors and judges respond to visual proof**. The same overlay the
 The canvas ships with a curated icon set. Every icon has semantic meaning, and the meaning is enforced — investigators don't get to make up icons that mean different things in different cases. Categories:
 
 **Entity-type icons (auto-applied by attribution)**
+
 - 🏦 Centralized exchange
 - 💱 DEX / AMM
 - 🌉 Bridge contract
@@ -164,6 +165,7 @@ The canvas ships with a curated icon set. Every icon has semantic meaning, and t
 - ❓ Unattributed (placeholder until labeled)
 
 **Activity-type icons (auto-applied by tx classification)**
+
 - ➡️ Plain transfer
 - 🔄 Swap
 - 🌉 Bridge in / Bridge out (directional)
@@ -182,6 +184,7 @@ The canvas ships with a curated icon set. Every icon has semantic meaning, and t
 - 🤝 Atomic swap leg
 
 **Investigator-applied icons (semantic markers)**
+
 - 🎯 Pivot point ("this is where the trail turned")
 - 🚪 Off-ramp ("funds exited to fiat or stable here")
 - 🪤 Trap ("this is a known LE-controlled or honeypot address")
@@ -195,6 +198,7 @@ The canvas ships with a curated icon set. Every icon has semantic meaning, and t
 - 🔗 Cross-references another case
 
 **Severity icons (auto + manual)**
+
 - 🔴 Critical
 - 🟠 High
 - 🟡 Medium
@@ -293,19 +297,19 @@ The graph is **directly manipulable**. Investigators don't write queries to buil
 
 ### 5.2 The shortcut sheet (one-page printable)
 
-| Key | Action |
-|---|---|
-| `I` | Mark selected entity as Important |
-| `M` | Attach a Memo |
-| `T` | Add a Tag |
-| `P` | Start a Path from selected node |
-| `Shift+click` | Extend the current Path |
-| `E` | Expand neighborhood by one hop |
-| `H` | Hide selected from current view |
-| `F` | Focus / re-center on selected |
-| `1`–`9` | Apply preset filter (taint level, methodology, confidence) |
-| `Space` | Toggle the "Where did the money go?" overlay |
-| `?` | Open shortcut help |
+| Key           | Action                                                     |
+| ------------- | ---------------------------------------------------------- |
+| `I`           | Mark selected entity as Important                          |
+| `M`           | Attach a Memo                                              |
+| `T`           | Add a Tag                                                  |
+| `P`           | Start a Path from selected node                            |
+| `Shift+click` | Extend the current Path                                    |
+| `E`           | Expand neighborhood by one hop                             |
+| `H`           | Hide selected from current view                            |
+| `F`           | Focus / re-center on selected                              |
+| `1`–`9`       | Apply preset filter (taint level, methodology, confidence) |
+| `Space`       | Toggle the "Where did the money go?" overlay               |
+| `?`           | Open shortcut help                                         |
 
 Printable as a one-page reference card the investigator keeps on their desk. **Easy on the front.**
 
@@ -334,17 +338,17 @@ The investigator zooms in and out fluidly; the platform never makes them pick a 
 
 For every "easy" action the investigator takes, here is what the backend does. The investigator never sees this. The reports prove it happened.
 
-| Investigator action (front) | Backend (the iceberg below) |
-|---|---|
-| Marks a tx as Important (`I`) | Writes `InvestigatorMark`, writes corresponding `BeliefAtom` (T0, investigator-asserted), logs to audit trail, notifies Suggestion Agent (which may re-rank suggestions), notifies Critic Agent (which may close related challenges), updates the Important sidebar, propagates to any linked path's importance scoring |
-| Drags two nodes together to merge | Critic Agent receives merge proposal, runs cluster-coherence check against rule version pinned to the case, looks for conflicting attributions across installed providers, computes confidence delta if merged, returns approve/reject/challenge; on approve, writes a `is_same_entity_as` BeliefAtom with the investigator as provenance; on challenge, surfaces the conflicting evidence and requires resolution |
-| Toggles the "Where did the money go?" overlay | Reads precomputed `EdgeValueAnnotation` rows for every edge in the visible viewport under the active methodology, renders gradient on every edge, no math runs in the browser; backend math service already computed every methodology at case level (G7) |
-| Attaches a memo with "subpoena #2024-0184 confirms this is John X" | Memo persisted, NER extracts "John X" and "subpoena #2024-0184", links memo to the existing SubpoenaRequest object if found, surfaces a "consider promoting to court-grade attribution" prompt to the investigator, Narrative Agent indexes the memo for next report draft, Critic Agent re-evaluates any open challenges on this entity |
-| Drag-selects a region of the graph | Frontend captures node IDs, sends to backend pathfinder service, asks "are there coherent sub-paths in this selection?", pathfinder returns candidate paths, modal asks the investigator to confirm path framing, accepted paths become draft TracePaths with full PSR machinery |
-| Right-clicks → "Trace outgoing" | Tracer Agent receives task with case context, reads SBS for prior beliefs on this node, reads installed provider capabilities to know what data it can fetch, plans expansion under budget constraints, fans out across capability router calls (parallelized across providers per Pillar 3), every hop emits a BeliefAtom, every value computed by Math Service, every step reviewed by Critic in parallel (Pillar 1), every external call logged for reproducibility (Pillar 2) |
-| Changes the active methodology in the overlay | No tracer re-run; the case-level math is already precomputed for all methodologies (G7); frontend swaps the rendered annotation set; the variance table updates; the report exporter knows which methodology view was active when the investigator hit "generate" |
-| Drops a PDF onto a node | Document intelligence service (a BYOK capability — Textract / Document AI / Unstructured) extracts text, runs through PII detector, attaches as memo attachment, NER pulls referenced entities, asks investigator "looks like this PDF references addresses 0xabc and 0xdef — add them to the case?" |
-| Adds a Tag to a marked tx | Tag persisted, tag indexed for filter, Suggestion Agent learns "this investigator considers `obfuscation-attempt` tag → high importance", future suggestions weighted accordingly (B7 flywheel feeding back) |
+| Investigator action (front)                                        | Backend (the iceberg below)                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Marks a tx as Important (`I`)                                      | Writes `InvestigatorMark`, writes corresponding `BeliefAtom` (T0, investigator-asserted), logs to audit trail, notifies Suggestion Agent (which may re-rank suggestions), notifies Critic Agent (which may close related challenges), updates the Important sidebar, propagates to any linked path's importance scoring                                                                                                                                                           |
+| Drags two nodes together to merge                                  | Critic Agent receives merge proposal, runs cluster-coherence check against rule version pinned to the case, looks for conflicting attributions across installed providers, computes confidence delta if merged, returns approve/reject/challenge; on approve, writes a `is_same_entity_as` BeliefAtom with the investigator as provenance; on challenge, surfaces the conflicting evidence and requires resolution                                                                |
+| Toggles the "Where did the money go?" overlay                      | Reads precomputed `EdgeValueAnnotation` rows for every edge in the visible viewport under the active methodology, renders gradient on every edge, no math runs in the browser; backend math service already computed every methodology at case level (G7)                                                                                                                                                                                                                         |
+| Attaches a memo with "subpoena #2024-0184 confirms this is John X" | Memo persisted, NER extracts "John X" and "subpoena #2024-0184", links memo to the existing SubpoenaRequest object if found, surfaces a "consider promoting to court-grade attribution" prompt to the investigator, Narrative Agent indexes the memo for next report draft, Critic Agent re-evaluates any open challenges on this entity                                                                                                                                          |
+| Drag-selects a region of the graph                                 | Frontend captures node IDs, sends to backend pathfinder service, asks "are there coherent sub-paths in this selection?", pathfinder returns candidate paths, modal asks the investigator to confirm path framing, accepted paths become draft TracePaths with full PSR machinery                                                                                                                                                                                                  |
+| Right-clicks → "Trace outgoing"                                    | Tracer Agent receives task with case context, reads SBS for prior beliefs on this node, reads installed provider capabilities to know what data it can fetch, plans expansion under budget constraints, fans out across capability router calls (parallelized across providers per Pillar 3), every hop emits a BeliefAtom, every value computed by Math Service, every step reviewed by Critic in parallel (Pillar 1), every external call logged for reproducibility (Pillar 2) |
+| Changes the active methodology in the overlay                      | No tracer re-run; the case-level math is already precomputed for all methodologies (G7); frontend swaps the rendered annotation set; the variance table updates; the report exporter knows which methodology view was active when the investigator hit "generate"                                                                                                                                                                                                                 |
+| Drops a PDF onto a node                                            | Document intelligence service (a BYOK capability — Textract / Document AI / Unstructured) extracts text, runs through PII detector, attaches as memo attachment, NER pulls referenced entities, asks investigator "looks like this PDF references addresses 0xabc and 0xdef — add them to the case?"                                                                                                                                                                              |
+| Adds a Tag to a marked tx                                          | Tag persisted, tag indexed for filter, Suggestion Agent learns "this investigator considers `obfuscation-attempt` tag → high importance", future suggestions weighted accordingly (B7 flywheel feeding back)                                                                                                                                                                                                                                                                      |
 
 **This is the "Caveman" principle in operation.** One key. Dozens of structured outcomes. Every outcome court-defensible.
 
@@ -352,19 +356,19 @@ For every "easy" action the investigator takes, here is what the backend does. T
 
 ## Part 7 — Integration with the locked design
 
-| Existing pillar / module | What changes |
-|---|---|
-| **Pillar 1 — Belief State** | InvestigatorMark, Memo, Tag each emit BeliefAtoms with the investigator as provenance and T0 tier. The state of the canvas is always reconstructable from the SBS. |
-| **Pillar 2 — Reproducibility** | All marks, memos, tags, color overrides, and the active methodology at report-generation time are captured in the Reproducibility Pack. The exact canvas state that produced a report is replayable. |
-| **Pillar 3 — BYOK Marketplace** | Iconography for entity types depends on attribution providers (icons reflect labels from whichever providers the agency has installed). Document intelligence is itself a BYOK capability. |
-| **PSR (v0.3)** | Marked entities become natural anchors for path selection. "Generate report from marked items" is a one-button PSR workflow that uses marks as the path scope. |
-| **Suggestion Agent (G6)** | Reads marks, memos, tags, and color overrides as signals when proposing new paths. The investigator's exploration directly steers AI suggestions. |
-| **Math Service (G7)** | Owns EdgeValueAnnotation precomputation; the overlay is a read-only view of its output; nothing in the browser does math. |
-| **Critic Agent (B5)** | Reviews investigator-asserted marks for internal consistency (e.g. "you marked this as `clean exchange withdrawal` but the source is a flagged mixer — confirm?") |
-| **Narrative Agent (B6)** | Reads marks, memos, and tags when drafting; the report writes itself around the investigator's annotations |
-| **Verifier Agent (B6)** | Confirms every report sentence linked to a marked entity has a memo/citation backing it |
-| **G5 path immutability** | Marks on a finalized path are immutable; new observations spawn a fork |
-| **G7 case-level math** | The overlay always shows the case-canonical math; per-path projections render their share with the variance disclosure rules |
+| Existing pillar / module        | What changes                                                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pillar 1 — Belief State**     | InvestigatorMark, Memo, Tag each emit BeliefAtoms with the investigator as provenance and T0 tier. The state of the canvas is always reconstructable from the SBS.                                   |
+| **Pillar 2 — Reproducibility**  | All marks, memos, tags, color overrides, and the active methodology at report-generation time are captured in the Reproducibility Pack. The exact canvas state that produced a report is replayable. |
+| **Pillar 3 — BYOK Marketplace** | Iconography for entity types depends on attribution providers (icons reflect labels from whichever providers the agency has installed). Document intelligence is itself a BYOK capability.           |
+| **PSR (v0.3)**                  | Marked entities become natural anchors for path selection. "Generate report from marked items" is a one-button PSR workflow that uses marks as the path scope.                                       |
+| **Suggestion Agent (G6)**       | Reads marks, memos, tags, and color overrides as signals when proposing new paths. The investigator's exploration directly steers AI suggestions.                                                    |
+| **Math Service (G7)**           | Owns EdgeValueAnnotation precomputation; the overlay is a read-only view of its output; nothing in the browser does math.                                                                            |
+| **Critic Agent (B5)**           | Reviews investigator-asserted marks for internal consistency (e.g. "you marked this as `clean exchange withdrawal` but the source is a flagged mixer — confirm?")                                    |
+| **Narrative Agent (B6)**        | Reads marks, memos, and tags when drafting; the report writes itself around the investigator's annotations                                                                                           |
+| **Verifier Agent (B6)**         | Confirms every report sentence linked to a marked entity has a memo/citation backing it                                                                                                              |
+| **G5 path immutability**        | Marks on a finalized path are immutable; new observations spawn a fork                                                                                                                               |
+| **G7 case-level math**          | The overlay always shows the case-canonical math; per-path projections render their share with the variance disclosure rules                                                                         |
 
 ---
 
@@ -392,12 +396,12 @@ That's the workflow. Easy on the front. Sophisticated on the back. Court-defensi
 
 These features slot cleanly into the existing phases:
 
-| Phase | Additions from this addendum |
-|---|---|
-| **Phase 1 (months 2–3)** | InvestigatorMark data model, Important sidebar v1, basic memo system, semantic color palette, shortcut keys, drag-to-reposition, direct manipulation primitives |
-| **Phase 2 (months 4–6)** | EdgeValueAnnotation precomputation, "Where did the money go?" overlay, full iconography library with auto-attribution-driven application, memo templates, document-drop integration, Narrative Agent reading marks/memos |
-| **Phase 3 (months 7–9)** | LOD zoom, methodology-switch real-time recoloring, drag-to-merge with Critic review, custom agency iconography, Suggestion Agent reading marks/memos as signals |
-| **Phase 4 (months 10–12)** | Multi-investigator real-time mark coordination (CRDT), memo cross-references across cases (with consent), printed shortcut card / training mode |
+| Phase                      | Additions from this addendum                                                                                                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 1 (months 2–3)**   | InvestigatorMark data model, Important sidebar v1, basic memo system, semantic color palette, shortcut keys, drag-to-reposition, direct manipulation primitives                                                          |
+| **Phase 2 (months 4–6)**   | EdgeValueAnnotation precomputation, "Where did the money go?" overlay, full iconography library with auto-attribution-driven application, memo templates, document-drop integration, Narrative Agent reading marks/memos |
+| **Phase 3 (months 7–9)**   | LOD zoom, methodology-switch real-time recoloring, drag-to-merge with Critic review, custom agency iconography, Suggestion Agent reading marks/memos as signals                                                          |
+| **Phase 4 (months 10–12)** | Multi-investigator real-time mark coordination (CRDT), memo cross-references across cases (with consent), printed shortcut card / training mode                                                                          |
 
 ---
 

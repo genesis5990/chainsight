@@ -34,11 +34,11 @@ This matches our needs exactly. Most of the 30+ AI features in ChainSight are re
 
 ### 1.2 The heterogeneous stack — three tiers
 
-| Tier | Purpose | Model class | Examples (defaults) |
-|---|---|---|---|
-| **Tier A — Specialist SLMs** | High-volume repetitive tasks: extraction, classification, decoding, summarization, routing | Fine-tuned 1-12B SLMs | Phi-4 (14B), Qwen 3.5 (8B), Llama 4 Scout, custom LoRA adapters |
-| **Tier B — General workers** | Medium-complexity reasoning: narrative drafting, attribution synthesis, suggestion ranking | Mid-tier open or commercial | DeepSeek V4 Pro, Qwen 3.5 32B, Claude Sonnet 4.6, GPT-5.4 mini |
-| **Tier C — Frontier reasoners** | Ambiguity resolution, long-horizon orchestration, adversarial reasoning | Frontier closed or top open | Claude Opus 4.6/4.7, GPT-5.4/5.5, Gemini 3.1 Pro, DeepSeek V4 Pro Max |
+| Tier                            | Purpose                                                                                    | Model class                 | Examples (defaults)                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------- | --------------------------------------------------------------------- |
+| **Tier A — Specialist SLMs**    | High-volume repetitive tasks: extraction, classification, decoding, summarization, routing | Fine-tuned 1-12B SLMs       | Phi-4 (14B), Qwen 3.5 (8B), Llama 4 Scout, custom LoRA adapters       |
+| **Tier B — General workers**    | Medium-complexity reasoning: narrative drafting, attribution synthesis, suggestion ranking | Mid-tier open or commercial | DeepSeek V4 Pro, Qwen 3.5 32B, Claude Sonnet 4.6, GPT-5.4 mini        |
+| **Tier C — Frontier reasoners** | Ambiguity resolution, long-horizon orchestration, adversarial reasoning                    | Frontier closed or top open | Claude Opus 4.6/4.7, GPT-5.4/5.5, Gemini 3.1 Pro, DeepSeek V4 Pro Max |
 
 **The orchestrator decides which tier handles each call.** Routing is based on task type, confidence requirements, latency budget, and the agency's configured cost preferences. Most calls go to Tier A; the orchestrator promotes to Tier B or C when the task signals require it.
 
@@ -46,24 +46,24 @@ This matches our needs exactly. Most of the 30+ AI features in ChainSight are re
 
 Every named agent from prior addenda maps to a tier:
 
-| Agent | Default tier | Why |
-|---|---|---|
-| Orchestrator (planner) | **Tier C** | Long-horizon reasoning, must keep coherent thread across many specialists |
-| Intake Agent | Tier A | Schema-constrained extraction from complaints and affidavits |
-| Scope Agent | Tier A | Constrained estimation with rule support |
-| Tracer Agent | Tier B | Hop-by-hop reasoning with tool calls; can elevate to Tier C for hard branches |
-| Bridge Agent | Tier A | Specialized message-correlation; very repetitive |
-| Swap Agent | Tier A | Calldata decoding with known ABIs |
-| Attribution Agent | Tier B | Synthesis across multiple providers; surfaces disagreement |
-| OSINT Agent | Tier B | Open-domain search + extraction |
-| Accounting Agent | Tier A (rule-based; no LLM for math) | Math runs in deterministic Math Service; LLM only formats |
-| Narrative Agent | **Tier C** | Court-grade drafting; must navigate methodology, evidence chain, methodology disclosure |
-| Watcher Agent | Tier A | Rule evaluation |
-| Critic Agent | **Tier C** | Adversarial reasoning, must catch what other agents miss |
-| Suggestion Agent | Tier B | Ranked retrieval with explainable rationale |
-| Verifier Agent | Tier A | Citation-token enforcement; small specialized SLM is perfect |
-| Inspector | Mixed | Decoded action: Tier A; plain-language summary: Tier B; Critic notes: Tier C |
-| Extraction Agent (documents) | Tier A | Schema extraction from PDFs |
+| Agent                        | Default tier                         | Why                                                                                     |
+| ---------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------- |
+| Orchestrator (planner)       | **Tier C**                           | Long-horizon reasoning, must keep coherent thread across many specialists               |
+| Intake Agent                 | Tier A                               | Schema-constrained extraction from complaints and affidavits                            |
+| Scope Agent                  | Tier A                               | Constrained estimation with rule support                                                |
+| Tracer Agent                 | Tier B                               | Hop-by-hop reasoning with tool calls; can elevate to Tier C for hard branches           |
+| Bridge Agent                 | Tier A                               | Specialized message-correlation; very repetitive                                        |
+| Swap Agent                   | Tier A                               | Calldata decoding with known ABIs                                                       |
+| Attribution Agent            | Tier B                               | Synthesis across multiple providers; surfaces disagreement                              |
+| OSINT Agent                  | Tier B                               | Open-domain search + extraction                                                         |
+| Accounting Agent             | Tier A (rule-based; no LLM for math) | Math runs in deterministic Math Service; LLM only formats                               |
+| Narrative Agent              | **Tier C**                           | Court-grade drafting; must navigate methodology, evidence chain, methodology disclosure |
+| Watcher Agent                | Tier A                               | Rule evaluation                                                                         |
+| Critic Agent                 | **Tier C**                           | Adversarial reasoning, must catch what other agents miss                                |
+| Suggestion Agent             | Tier B                               | Ranked retrieval with explainable rationale                                             |
+| Verifier Agent               | Tier A                               | Citation-token enforcement; small specialized SLM is perfect                            |
+| Inspector                    | Mixed                                | Decoded action: Tier A; plain-language summary: Tier B; Critic notes: Tier C            |
+| Extraction Agent (documents) | Tier A                               | Schema extraction from PDFs                                                             |
 
 Tier A handles 70-80% of all model calls by volume. Tier B handles 15-25%. Tier C handles the few-percent that are most consequential.
 
@@ -77,11 +77,11 @@ This is what makes the BYOK economics realistic. An agency paying frontier-LLM r
 
 Out-of-the-box defaults the agency can override:
 
-| Tier | Default model | License | Hosting |
-|---|---|---|---|
-| Tier A specialists | Phi-4 (14B), Qwen 3.5 8B, custom LoRAs per task | Open (MIT, Apache 2.0) | ChainSight-hosted via vLLM in confidential enclaves |
-| Tier B workers | DeepSeek V4 Pro (37B active MoE) or Claude Sonnet 4.6 | DeepSeek MIT / Anthropic API | DeepSeek self-hosted via vLLM; Claude via BYOK API |
-| Tier C frontier | Claude Opus 4.6 (orchestrator + Critic + Narrative) | Anthropic API | BYOK Anthropic |
+| Tier               | Default model                                         | License                      | Hosting                                             |
+| ------------------ | ----------------------------------------------------- | ---------------------------- | --------------------------------------------------- |
+| Tier A specialists | Phi-4 (14B), Qwen 3.5 8B, custom LoRAs per task       | Open (MIT, Apache 2.0)       | ChainSight-hosted via vLLM in confidential enclaves |
+| Tier B workers     | DeepSeek V4 Pro (37B active MoE) or Claude Sonnet 4.6 | DeepSeek MIT / Anthropic API | DeepSeek self-hosted via vLLM; Claude via BYOK API  |
+| Tier C frontier    | Claude Opus 4.6 (orchestrator + Critic + Narrative)   | Anthropic API                | BYOK Anthropic                                      |
 
 Per the research, **Claude Opus is the strongest pick for long-horizon orchestration and high-stakes judgment** ([Mindstudio analysis](https://www.mindstudio.ai/blog/best-ai-models-agentic-workflows-2026), [Klavis comparison](https://www.klavis.ai/blog/claude-opus-4-5-vs-gemini-3-pro-vs-gpt-5-the-ultimate-agentic-ai-showdown-for-developers)) — exactly what ChainSight's Critic and Orchestrator need. Constraint-fidelity matters more than speed for these roles.
 
@@ -93,11 +93,11 @@ Phi-4 and Qwen 3.5 at Tier A are well-supported, MIT/Apache-licensed, and proven
 
 Out-of-the-box defaults, all self-hosted, no external API dependencies:
 
-| Tier | Default model | Hardware |
-|---|---|---|
-| Tier A specialists | Phi-4 + Qwen 3.5 8B + custom LoRAs | Single workstation (DGX Spark, Mac M-series) or 2×H100 |
-| Tier B workers | DeepSeek V4 Pro (37B active MoE) or Qwen 3.5 32B | 2×H100 PCIe server or 4×A100 |
-| Tier C frontier | DeepSeek V4 Pro Max, Llama 4 70B, or Qwen 3.5 397B | 8×H100 cluster |
+| Tier               | Default model                                      | Hardware                                               |
+| ------------------ | -------------------------------------------------- | ------------------------------------------------------ |
+| Tier A specialists | Phi-4 + Qwen 3.5 8B + custom LoRAs                 | Single workstation (DGX Spark, Mac M-series) or 2×H100 |
+| Tier B workers     | DeepSeek V4 Pro (37B active MoE) or Qwen 3.5 32B   | 2×H100 PCIe server or 4×A100                           |
+| Tier C frontier    | DeepSeek V4 Pro Max, Llama 4 70B, or Qwen 3.5 397B | 8×H100 cluster                                         |
 
 For sovereign deployments, **all model weights are pre-loaded during installation** and run via [NVIDIA NIM, Ollama, or vLLM](https://www.cuilabs.io/articles/sovereign-infrastructure-guide). No external connectivity required. ChainSight ships the configuration recipes for each hardware tier.
 
@@ -125,15 +125,15 @@ The defaults are picked for three reasons:
 
 Every model role in the platform can be swapped, individually or in bulk:
 
-| Role | Swappable to |
-|---|---|
-| Orchestrator (Tier C) | Any frontier API (Anthropic, OpenAI, Google, xAI, AWS Bedrock, Azure OpenAI) or self-hosted open frontier model |
-| Tier B workers | Any open or commercial mid-tier model, self-hosted or API |
-| Tier A specialists | Any small model (BYOK API or self-hosted via Ollama/vLLM/NIM) |
-| Verifier | Any small instruction-following model |
-| Embeddings | Any embedding provider (OpenAI, Voyage, Cohere, Mistral, BGE self-hosted) |
-| Document intelligence | Already addressed in v0.5 F2 (Textract, Document AI, Form Recognizer, Unstructured, Tesseract self-hosted) |
-| Speech-to-text (interviews) | Whisper self-hosted, AssemblyAI, Deepgram, Rev.ai |
+| Role                        | Swappable to                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Orchestrator (Tier C)       | Any frontier API (Anthropic, OpenAI, Google, xAI, AWS Bedrock, Azure OpenAI) or self-hosted open frontier model |
+| Tier B workers              | Any open or commercial mid-tier model, self-hosted or API                                                       |
+| Tier A specialists          | Any small model (BYOK API or self-hosted via Ollama/vLLM/NIM)                                                   |
+| Verifier                    | Any small instruction-following model                                                                           |
+| Embeddings                  | Any embedding provider (OpenAI, Voyage, Cohere, Mistral, BGE self-hosted)                                       |
+| Document intelligence       | Already addressed in v0.5 F2 (Textract, Document AI, Form Recognizer, Unstructured, Tesseract self-hosted)      |
+| Speech-to-text (interviews) | Whisper self-hosted, AssemblyAI, Deepgram, Rev.ai                                                               |
 
 The agency picks per-role:
 
@@ -352,16 +352,16 @@ The platform's edge over generic LLMs comes from **specialist SLMs fine-tuned on
 
 Per the [SLM specialization recipe](https://research.nvidia.com/labs/lpr/slm-agents/), each high-volume agentic task gets its own fine-tuned specialist:
 
-| Specialist | Task | Training data |
-|---|---|---|
-| **Calldata Decoder SLM** | Decode arbitrary contract calldata into structured action | Public ABI database + known function selectors + 100k+ historical decoded txs |
-| **Token Swap Specialist** | Decode router calldata to swap structure (path, slippage, fees) | Uniswap/Raydium/Curve/etc. historical swap data |
-| **Bridge Correlator SLM** | Match source-side and destination-side bridge transactions | Historical bridge message correlations across LayerZero/Wormhole/CCTP/Across |
-| **Entity Extractor SLM** | Extract addresses, tx hashes, names, amounts from PDFs | Subpoena returns + bank statements + court orders with labeled extractions |
-| **Sub-poena Format Parser** | Parse exchange subpoena return formats | One per major exchange: Binance, Coinbase, Kraken, etc. |
-| **Obfuscation Pattern Detector** | Recognize peel chains, chain hops, mixer patterns from sub-graph features | Curated positive/negative examples per detector type |
-| **Attribution Synthesizer** | Reconcile multi-provider attribution into a unified atom with confidence | Provider responses + investigator-confirmed ground truth |
-| **Verifier SLM** | Check that every sentence in a draft cites a BeliefAtom | Generated training data: drafts + manual verification labels |
+| Specialist                       | Task                                                                      | Training data                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Calldata Decoder SLM**         | Decode arbitrary contract calldata into structured action                 | Public ABI database + known function selectors + 100k+ historical decoded txs |
+| **Token Swap Specialist**        | Decode router calldata to swap structure (path, slippage, fees)           | Uniswap/Raydium/Curve/etc. historical swap data                               |
+| **Bridge Correlator SLM**        | Match source-side and destination-side bridge transactions                | Historical bridge message correlations across LayerZero/Wormhole/CCTP/Across  |
+| **Entity Extractor SLM**         | Extract addresses, tx hashes, names, amounts from PDFs                    | Subpoena returns + bank statements + court orders with labeled extractions    |
+| **Sub-poena Format Parser**      | Parse exchange subpoena return formats                                    | One per major exchange: Binance, Coinbase, Kraken, etc.                       |
+| **Obfuscation Pattern Detector** | Recognize peel chains, chain hops, mixer patterns from sub-graph features | Curated positive/negative examples per detector type                          |
+| **Attribution Synthesizer**      | Reconcile multi-provider attribution into a unified atom with confidence  | Provider responses + investigator-confirmed ground truth                      |
+| **Verifier SLM**                 | Check that every sentence in a draft cites a BeliefAtom                   | Generated training data: drafts + manual verification labels                  |
 
 Each specialist is a LoRA or QLoRA adapter on top of a base SLM (Phi-4 14B for reasoning-heavy specialists; Qwen 3.5 8B for high-throughput specialists; Llama 3.2 3B for routing/classification). Training data is 10k-100k examples per specialist, per the [established SLM specialization pattern](https://arxiv.org/pdf/2510.03847.pdf).
 
@@ -426,6 +426,7 @@ The combined effect (per [Zylos research](https://zylos.ai/research/2026-01-27-l
 For completeness, the model providers wired in Phase 0-2 (matching the BYOK Provider Marketplace pattern from v0.3):
 
 **Commercial APIs**
+
 - Anthropic (Claude Opus 4.6/4.7, Claude Sonnet 4.6, Claude Haiku)
 - OpenAI (GPT-5.4, GPT-5.5, GPT-5 mini, GPT-5 Codex, o-series reasoning models)
 - Google Vertex AI (Gemini 3.1 Pro, Gemini 3.1 Flash, Gemini Nano)
@@ -437,6 +438,7 @@ For completeness, the model providers wired in Phase 0-2 (matching the BYOK Prov
 - Together AI, Fireworks AI, Anyscale (hosted open-source models)
 
 **Self-hosted (via Ollama, vLLM, NVIDIA NIM, llama.cpp, OpenVINO)**
+
 - DeepSeek V4 Pro / V4 Pro Max (MIT license)
 - Llama 4 Scout (long context), Llama 4 Maverick, Llama 4 70B
 - Qwen 3.5 / 3.6 family (Apache 2.0)
@@ -449,6 +451,7 @@ For completeness, the model providers wired in Phase 0-2 (matching the BYOK Prov
 - Any other model loadable via the supported runtimes
 
 **Embedding providers**
+
 - OpenAI Embeddings
 - Voyage AI
 - Cohere
@@ -546,14 +549,14 @@ Mitigation: F41 anti-feature commitments are in the MSA, in marketing collateral
 
 ## Part 10 — Phasing the AI work
 
-| Phase | AI deliverables |
-|---|---|
-| **Phase 0** | Capability router LLM extension; default models wired (Anthropic for hosted, Llama 4 for on-prem defaults); Model Configuration UI with bulk-action presets; per-role and per-case AI toggles; cost telemetry stub for LLM spend; AI-off mode fully functional; Verifier Agent prototype |
-| **Phase 1** | First specialist SLMs (Calldata Decoder, Bridge Correlator, Entity Extractor); domain-grounded RAG indexes (typologies, methodologies, jurisdiction rules); fine-tuning pipeline (LoRA/QLoRA on PEFT); cost telemetry with per-role breakdown |
-| **Phase 2** | Full specialist SLM lineup (8-12 fine-tuned specialists per the F45 catalog); Critic Agent in parallel; Narrative Agent with Verifier gating; ground-truth flywheel feeding back into fine-tuning; community-contributed detector library v1 |
-| **Phase 3** | Per-agency LoRA adapter program (agencies fine-tune their own specialists on-prem); model migration tooling for base-model upgrades; reasoning-model integration (Claude Opus 4.7+, o-series, DeepSeek reasoning) for complex Critic challenges; full transparency report on AI accuracy and FPR per F41 |
-| **Phase 4** | Multi-language specialist SLMs (jurisdiction-specific extraction); voice-assistant integration for Court Mode; advanced model-routing (the orchestrator learns which tier each task should go to from outcome data); Community Detector Library quarterly publishing cadence |
-| **Post-Phase-4** | Continuous improvement against the ground-truth flywheel; integration with whatever the 2027+ frontier looks like; potential federated learning across consenting customers |
+| Phase            | AI deliverables                                                                                                                                                                                                                                                                                          |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0**      | Capability router LLM extension; default models wired (Anthropic for hosted, Llama 4 for on-prem defaults); Model Configuration UI with bulk-action presets; per-role and per-case AI toggles; cost telemetry stub for LLM spend; AI-off mode fully functional; Verifier Agent prototype                 |
+| **Phase 1**      | First specialist SLMs (Calldata Decoder, Bridge Correlator, Entity Extractor); domain-grounded RAG indexes (typologies, methodologies, jurisdiction rules); fine-tuning pipeline (LoRA/QLoRA on PEFT); cost telemetry with per-role breakdown                                                            |
+| **Phase 2**      | Full specialist SLM lineup (8-12 fine-tuned specialists per the F45 catalog); Critic Agent in parallel; Narrative Agent with Verifier gating; ground-truth flywheel feeding back into fine-tuning; community-contributed detector library v1                                                             |
+| **Phase 3**      | Per-agency LoRA adapter program (agencies fine-tune their own specialists on-prem); model migration tooling for base-model upgrades; reasoning-model integration (Claude Opus 4.7+, o-series, DeepSeek reasoning) for complex Critic challenges; full transparency report on AI accuracy and FPR per F41 |
+| **Phase 4**      | Multi-language specialist SLMs (jurisdiction-specific extraction); voice-assistant integration for Court Mode; advanced model-routing (the orchestrator learns which tier each task should go to from outcome data); Community Detector Library quarterly publishing cadence                             |
+| **Post-Phase-4** | Continuous improvement against the ground-truth flywheel; integration with whatever the 2027+ frontier looks like; potential federated learning across consenting customers                                                                                                                              |
 
 ---
 

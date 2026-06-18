@@ -4,7 +4,7 @@
 >
 > All the sophistication — HSM encryption, capability mapping, scope binding, health checks, audit logging, budget enforcement — happens invisibly after the investigator clicks Save.
 
-This extends the BYOK Provider Marketplace from v0.3 by locking down the credential-entry UX specifically. The marketplace catalog and capability router are unchanged; only the human-facing step of *adding a key* is being nailed down here.
+This extends the BYOK Provider Marketplace from v0.3 by locking down the credential-entry UX specifically. The marketplace catalog and capability router are unchanged; only the human-facing step of _adding a key_ is being nailed down here.
 
 ---
 
@@ -131,31 +131,31 @@ This is useful when:
 
 The registry ships with a canonical mapping table so bulk paste "just works." A few examples:
 
-| Provider | Recognized env var names (any of these) |
-|---|---|
-| Etherscan | `ETHERSCAN_API_KEY`, `ETHERSCAN_KEY`, `ETHERSCAN_TOKEN` |
-| Blockchair | `BLOCKCHAIR_API_KEY`, `BLOCKCHAIR_KEY` |
-| Blockchain.com | `BLOCKCHAIN_COM_API_KEY`, `BLOCKCHAIN_API_KEY` |
-| TRM Labs | `TRM_API_KEY`, `TRM_LABS_KEY`, `TRMLABS_API_KEY` |
-| Chainalysis | `CHAINALYSIS_API_KEY`, `CHAINALYSIS_KEY`, `CA_API_KEY` |
-| Elliptic | `ELLIPTIC_API_KEY`, `ELLIPTIC_KEY` |
-| Crystal | `CRYSTAL_API_KEY`, `CRYSTAL_BLOCKCHAIN_KEY` |
-| Merkle Science | `MERKLE_SCIENCE_API_KEY`, `MERKLE_KEY` |
-| Arkham | `ARKHAM_API_KEY`, `ARKHAM_KEY` |
-| Allium | `ALLIUM_API_KEY`, `ALLIUM_KEY` |
-| Dune | `DUNE_API_KEY`, `DUNE_KEY` |
-| Goldsky | `GOLDSKY_API_KEY` |
-| Alchemy | `ALCHEMY_API_KEY`, `ALCHEMY_KEY` |
-| Infura | `INFURA_API_KEY`, `INFURA_PROJECT_ID` |
-| QuickNode | `QUICKNODE_API_KEY`, `QUICKNODE_ENDPOINT` |
-| Anthropic | `ANTHROPIC_API_KEY` |
-| OpenAI | `OPENAI_API_KEY`, `OAI_KEY` |
-| CoinGecko | `COINGECKO_API_KEY`, `CG_API_KEY` |
-| Kaiko | `KAIKO_API_KEY` |
-| OpenSanctions | `OPENSANCTIONS_API_KEY` |
-| Sumsub | `SUMSUB_API_KEY`, `SUMSUB_SECRET_KEY` (paired) |
-| Twilio | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (paired) |
-| Resend | `RESEND_API_KEY` |
+| Provider       | Recognized env var names (any of these)                 |
+| -------------- | ------------------------------------------------------- |
+| Etherscan      | `ETHERSCAN_API_KEY`, `ETHERSCAN_KEY`, `ETHERSCAN_TOKEN` |
+| Blockchair     | `BLOCKCHAIR_API_KEY`, `BLOCKCHAIR_KEY`                  |
+| Blockchain.com | `BLOCKCHAIN_COM_API_KEY`, `BLOCKCHAIN_API_KEY`          |
+| TRM Labs       | `TRM_API_KEY`, `TRM_LABS_KEY`, `TRMLABS_API_KEY`        |
+| Chainalysis    | `CHAINALYSIS_API_KEY`, `CHAINALYSIS_KEY`, `CA_API_KEY`  |
+| Elliptic       | `ELLIPTIC_API_KEY`, `ELLIPTIC_KEY`                      |
+| Crystal        | `CRYSTAL_API_KEY`, `CRYSTAL_BLOCKCHAIN_KEY`             |
+| Merkle Science | `MERKLE_SCIENCE_API_KEY`, `MERKLE_KEY`                  |
+| Arkham         | `ARKHAM_API_KEY`, `ARKHAM_KEY`                          |
+| Allium         | `ALLIUM_API_KEY`, `ALLIUM_KEY`                          |
+| Dune           | `DUNE_API_KEY`, `DUNE_KEY`                              |
+| Goldsky        | `GOLDSKY_API_KEY`                                       |
+| Alchemy        | `ALCHEMY_API_KEY`, `ALCHEMY_KEY`                        |
+| Infura         | `INFURA_API_KEY`, `INFURA_PROJECT_ID`                   |
+| QuickNode      | `QUICKNODE_API_KEY`, `QUICKNODE_ENDPOINT`               |
+| Anthropic      | `ANTHROPIC_API_KEY`                                     |
+| OpenAI         | `OPENAI_API_KEY`, `OAI_KEY`                             |
+| CoinGecko      | `COINGECKO_API_KEY`, `CG_API_KEY`                       |
+| Kaiko          | `KAIKO_API_KEY`                                         |
+| OpenSanctions  | `OPENSANCTIONS_API_KEY`                                 |
+| Sumsub         | `SUMSUB_API_KEY`, `SUMSUB_SECRET_KEY` (paired)          |
+| Twilio         | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (paired)      |
+| Resend         | `RESEND_API_KEY`                                        |
 
 For providers requiring **paired credentials** (e.g. Sumsub's API key + secret, Twilio's SID + token, AWS IAM, OAuth client ID + secret), the parser groups them automatically. The validation step confirms the pair works together before saving either.
 
@@ -174,18 +174,18 @@ Clicking "Map to a provider" opens a dropdown of catalog providers; once mapped,
 
 Everything from the BYOK addendum still happens — just invisibly:
 
-| Behind the Save button | What actually happens |
-|---|---|
-| Credential encryption | Key encrypted with envelope encryption using the agency's per-tenant KMS DEK; never written to disk in cleartext, never logged |
-| Storage | `AgencyProviderInstall` row created in Postgres with `credential_ref` pointing to the encrypted blob; the key itself is in HSM/KMS, not the database |
-| Health check | Test endpoint called immediately; result stored in `last_health_check` |
-| Scope assignment | Default scope set to `agency_wide` (configurable later in the install detail view) |
-| Capability mapping | The provider's declared capabilities are linked to the platform's capability router; routes update on the next request |
-| Priority | Default priority = highest existing priority + 1 within the same capability set, so a newly added key never displaces a working one without explicit admin action |
-| Budget | Default budget = unlimited; admin can cap later from the install detail view |
-| Rate limiting | Default to the provider's documented free/paid tier limits from the registry; admin can override |
-| Audit log | Every key add, edit, rotation, scope change, and removal logged immutably with admin identity, timestamp, and originating IP |
-| Telemetry | First call through the new key emits a `provider_first_use` event for monitoring |
+| Behind the Save button | What actually happens                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Credential encryption  | Key encrypted with envelope encryption using the agency's per-tenant KMS DEK; never written to disk in cleartext, never logged                                    |
+| Storage                | `AgencyProviderInstall` row created in Postgres with `credential_ref` pointing to the encrypted blob; the key itself is in HSM/KMS, not the database              |
+| Health check           | Test endpoint called immediately; result stored in `last_health_check`                                                                                            |
+| Scope assignment       | Default scope set to `agency_wide` (configurable later in the install detail view)                                                                                |
+| Capability mapping     | The provider's declared capabilities are linked to the platform's capability router; routes update on the next request                                            |
+| Priority               | Default priority = highest existing priority + 1 within the same capability set, so a newly added key never displaces a working one without explicit admin action |
+| Budget                 | Default budget = unlimited; admin can cap later from the install detail view                                                                                      |
+| Rate limiting          | Default to the provider's documented free/paid tier limits from the registry; admin can override                                                                  |
+| Audit log              | Every key add, edit, rotation, scope change, and removal logged immutably with admin identity, timestamp, and originating IP                                      |
+| Telemetry              | First call through the new key emits a `provider_first_use` event for monitoring                                                                                  |
 
 The admin sees: "Etherscan connected — handling 14 capabilities." The platform sees: 11 backend changes, all auditable.
 
@@ -193,15 +193,15 @@ The admin sees: "Etherscan connected — handling 14 capabilities." The platform
 
 ## Part 5 — Edge cases handled silently
 
-| Situation | What the admin sees |
-|---|---|
-| Admin pastes a key that's already installed | "This key is already saved as `Etherscan — main`. Update the existing entry?" |
-| Admin pastes a key for a provider not yet in the catalog | "We don't recognize this provider yet. [Request integration]" — sends a roadmap ticket to ChainSight, logged for the admin |
-| Admin pastes a key that authenticates but lacks required permissions | "Key works but doesn't have access to entity attribution. [What you'd need to upgrade]" |
-| Admin pastes a malformed key (wrong length, wrong charset) | "Doesn't look like an Etherscan key (should be 34 hex chars). Save anyway?" |
-| Admin pastes a key during an active case | New key takes effect immediately for new calls; in-flight calls finish on the old install; no case disruption |
-| Admin's organization has multiple Etherscan keys (overflow for rate-limit pooling) | "Already have Etherscan — Main. Add this as Etherscan — Overflow?" — multiple installs of same provider are first-class |
-| Provider rotates their auth scheme (e.g. moves from API key to OAuth) | Catalog update prompts admin to re-auth; old install marked `auth_outdated`; case work continues until the deprecation deadline |
+| Situation                                                                          | What the admin sees                                                                                                             |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Admin pastes a key that's already installed                                        | "This key is already saved as `Etherscan — main`. Update the existing entry?"                                                   |
+| Admin pastes a key for a provider not yet in the catalog                           | "We don't recognize this provider yet. [Request integration]" — sends a roadmap ticket to ChainSight, logged for the admin      |
+| Admin pastes a key that authenticates but lacks required permissions               | "Key works but doesn't have access to entity attribution. [What you'd need to upgrade]"                                         |
+| Admin pastes a malformed key (wrong length, wrong charset)                         | "Doesn't look like an Etherscan key (should be 34 hex chars). Save anyway?"                                                     |
+| Admin pastes a key during an active case                                           | New key takes effect immediately for new calls; in-flight calls finish on the old install; no case disruption                   |
+| Admin's organization has multiple Etherscan keys (overflow for rate-limit pooling) | "Already have Etherscan — Main. Add this as Etherscan — Overflow?" — multiple installs of same provider are first-class         |
+| Provider rotates their auth scheme (e.g. moves from API key to OAuth)              | Catalog update prompts admin to re-auth; old install marked `auth_outdated`; case work continues until the deprecation deadline |
 
 None of these require a wizard. They're inline prompts handled in the same modal.
 
@@ -250,12 +250,12 @@ Importing this exported file walks the admin through re-entering each redacted s
 
 ## Part 8 — Where this updates the locked design
 
-| Document | What changes |
-|---|---|
-| **v0.3 BYOK addendum** | Part 3 "Provider Marketplace UI" — section 3.4 "Key entry flow" is replaced by the spec in this addendum (single, bulk, and `.env`-file modes) |
-| **v0.4 consolidated** | Pillar 3 (BYOK Marketplace) wording updated to emphasize that key entry is `.env`-equivalent in friction |
-| **v0.4 canvas UX addendum** | The "So Easy a Caveman Can Do It" principle now applies to the admin surface too, not just the investigator canvas |
-| **Build phasing** | Bulk-paste and `.env` file upload land in Phase 0 alongside single-key entry; no later phase. This is too important to defer. |
+| Document                    | What changes                                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v0.3 BYOK addendum**      | Part 3 "Provider Marketplace UI" — section 3.4 "Key entry flow" is replaced by the spec in this addendum (single, bulk, and `.env`-file modes) |
+| **v0.4 consolidated**       | Pillar 3 (BYOK Marketplace) wording updated to emphasize that key entry is `.env`-equivalent in friction                                       |
+| **v0.4 canvas UX addendum** | The "So Easy a Caveman Can Do It" principle now applies to the admin surface too, not just the investigator canvas                             |
+| **Build phasing**           | Bulk-paste and `.env` file upload land in Phase 0 alongside single-key entry; no later phase. This is too important to defer.                  |
 
 ---
 

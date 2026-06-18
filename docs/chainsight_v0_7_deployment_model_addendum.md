@@ -83,6 +83,7 @@ The migration path is documented and supported as a first-class workflow, not an
 Building a Managed SaaS that the vendor genuinely cannot read is harder than it sounds. Most SaaS products that claim end-to-end encryption either lie about it or break it silently. We commit to doing it correctly, which requires specific technical choices:
 
 **Encryption hierarchy:**
+
 - Agency KMS root key (never leaves agency control)
 - Per-tenant DEKs derived from the root key (envelope-encrypted)
 - Per-case DEKs derived from the tenant DEK (also envelope-encrypted)
@@ -91,17 +92,20 @@ Building a Managed SaaS that the vendor genuinely cannot read is harder than it 
 Every encryption operation traces back to a key the agency controls. The vendor's database contains ciphertext only.
 
 **Encrypted indexes:**
+
 - Searchable symmetric encryption (SSE) schemes for keyword search over case data
 - Order-preserving encryption (OPE) where needed for range queries
 - Bloom-filtered indexes for deconfliction (already designed this way in v0.5 F1)
 - Acknowledged tradeoffs: encrypted search leaks some access patterns; we document what does and doesn't leak
 
 **Trusted execution:**
-- Hot-path operations that *must* touch plaintext (e.g. Belief State Service reads/writes during active investigation) run in confidential computing enclaves
+
+- Hot-path operations that _must_ touch plaintext (e.g. Belief State Service reads/writes during active investigation) run in confidential computing enclaves
 - The enclave attests its code to the agency before receiving the data-encryption key
 - The agency can verify the attestation and refuse if it doesn't match the published code hash
 
 **Verifiable builds:**
+
 - Every release is built reproducibly from public source
 - Release binaries are signed
 - The signing certificate's public key is committed to a transparency log
@@ -117,7 +121,7 @@ On-Premises deployment requires every component to run without vendor connectivi
 - **No mandatory cloud services** — every dependency has a self-hostable form
 - **No mandatory third-party SaaS** in the critical path — the platform works with only the BYOK providers the agency chose to wire
 
-Where vendor connectivity *would* add value (auto-update channels, telemetry-driven support, federated deconfliction, cross-agency Personal Attribution networks), it remains **strictly opt-in** with the agency in full control of the toggle.
+Where vendor connectivity _would_ add value (auto-update channels, telemetry-driven support, federated deconfliction, cross-agency Personal Attribution networks), it remains **strictly opt-in** with the agency in full control of the toggle.
 
 ### 2.3 What "blind support" means in practice
 
@@ -140,6 +144,7 @@ This is structurally similar to how the better cloud providers handle "customer-
 Adding to the three pillars locked in v0.6:
 
 ### Pillar 4 — Sovereign Deployment
+
 ChainSight ships in two modes from day one. **On-Premises Sovereign** runs entirely inside the agency's infrastructure with no vendor connectivity. **Managed SaaS Blind** uses vendor-operated infrastructure with architectural guarantees that the vendor cannot read agency case data. Both modes are BYOK. Both modes give the agency full operational privacy. Migration between modes is a first-class workflow.
 
 **The four pillars together** — Belief State (accuracy), Reproducibility Pack (court-defensibility), BYOK Provider & Storage Marketplace (commercial leverage), and Sovereign Deployment (trust) — define why ChainSight exists when Chainalysis, TRM, and Elliptic already do.
@@ -155,6 +160,7 @@ Sovereign deployment changes how licensing works.
 ### 4.1 The two license families
 
 **On-Premises Sovereign License**
+
 - Perpetual license for the version delivered, plus a support/update subscription
 - Offline license activation (cryptographic license certificates signed by the vendor, validated locally — no phone-home required)
 - License keys carry feature flags and seat counts the agency provisions internally
@@ -162,6 +168,7 @@ Sovereign deployment changes how licensing works.
 - Air-gapped update path: signed packages delivered via physical media or one-way diode
 
 **Managed SaaS Blind License**
+
 - Subscription model (per-seat / per-case / per-tier)
 - Billing telemetry is the absolute minimum — count of active seats, billing-tier flag, gross volume buckets for capacity planning
 - No usage-data resale, ever. Codified in the master agreement.
@@ -185,33 +192,43 @@ These are anti-patterns common to enterprise software that we commit against in 
 This decision touches almost every prior addendum. The most important downstream implications:
 
 ### 5.1 BYOK Provider & Storage Marketplace (Pillar 3)
+
 Already designed for both modes. No changes required — the capability router, the agency-held credentials, the encrypted-storage abstraction, and the storage backend interchangeability (cloud / on-prem / hybrid) were all built with sovereignty in mind. **G9** (BYOK + Storage) and Pillar 4 are mutually reinforcing.
 
 ### 5.2 The Cache Layer (Feature 9)
+
 Already designed per-agency-scoped, with case-level isolation. On-Premises: cache lives in agency infrastructure (Redis on agency hardware). SaaS Blind: cache lives in vendor infrastructure but encrypted with per-tenant DEKs the vendor cannot read. No design changes required.
 
 ### 5.3 Belief State Service (Pillar 1)
+
 On-Premises: runs on agency hardware. SaaS Blind: runs in confidential computing enclaves with per-tenant DEKs. The schema doesn't change; the deployment surface does.
 
 ### 5.4 Reproducibility Packs (Pillar 2)
+
 Both modes produce identical Reproducibility Packs. The Pack format itself is deployment-neutral — that's why a case can migrate between modes. No changes required.
 
 ### 5.5 AI orchestration
+
 On-Premises: BYOK LLM calls through the agency's keys (Anthropic, OpenAI, etc.) OR fully local inference on agency GPUs (Llama, Qwen, fine-tuned variants). Air-gapped: local-only. SaaS Blind: BYOK LLM calls through the agency's keys, brokered through the vendor's enclave layer so the vendor still doesn't see the content. The architecture supports all of this — the prompt orchestrator was already capability-routed (Pillar 3).
 
 ### 5.6 Document storage (v0.5 F2)
+
 Already designed with swappable storage backends. On-Premises: agency picks MinIO / Ceph / NFS. SaaS Blind: vendor-managed object storage with per-tenant envelope encryption the vendor cannot read. No changes required.
 
 ### 5.7 Cross-agency federation (deconfliction, personal attribution sharing)
+
 These are inherently multi-deployment features. The federated index uses privacy-preserving primitives (hashed indicators, Bloom filters, differential privacy) so even cross-agency information exchange respects sovereignty. On-Premises agencies can opt into the federation through dedicated outbound endpoints; SaaS Blind agencies participate through the vendor's federation service, which still cannot read case content because the exchanged indicators are hashed.
 
 ### 5.8 Court Mode (v0.5 F3)
+
 Already designed to run from the frozen Reproducibility Pack with no network calls during presentation. Identical in both modes. The Court Export Bundle is portable to any courtroom machine.
 
 ### 5.9 Personal Attribution (v0.6 F25)
+
 Already designed with agency-scoped privacy. The four visibility tiers (private / specific users / team / org) work identically in both modes. Cross-agency federation is the only tier that differs in mechanism between On-Prem and SaaS Blind — the privacy-preserving primitives handle both.
 
 ### 5.10 Updates and maintenance
+
 - **On-Premises**: agency-controlled update cadence; signed packages; verifiable builds; rollback supported
 - **SaaS Blind**: vendor-managed but per-tenant pinned versions; agencies can defer updates; rollouts staged with explicit per-tenant opt-in
 
@@ -243,12 +260,12 @@ This is what closes the federal and intelligence-community deals that the incumb
 
 Locked through v0.7:
 
-| # | Pillar | What it guarantees |
-|---|---|---|
-| **1** | Belief State Service | Accuracy — every AI claim is provenanced, tiered, challengeable |
-| **2** | Reproducibility Pack | Court-defensibility — every report replays bit-for-bit forever |
+| #     | Pillar                                            | What it guarantees                                                                            |
+| ----- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **1** | Belief State Service                              | Accuracy — every AI claim is provenanced, tiered, challengeable                               |
+| **2** | Reproducibility Pack                              | Court-defensibility — every report replays bit-for-bit forever                                |
 | **3** | BYOK Provider & Storage Marketplace + Cache Layer | Commercial leverage — agencies use their existing data deals; spend is controlled and visible |
-| **4** | Sovereign Deployment (On-Prem + SaaS Blind) | Trust — agencies retain operational privacy regardless of deployment mode |
+| **4** | Sovereign Deployment (On-Prem + SaaS Blind)       | Trust — agencies retain operational privacy regardless of deployment mode                     |
 
 The top-level product principle ("So Easy a Caveman Can Do It / Uncompromising sophistication beneath") still sits above all four as the design tiebreaker.
 
@@ -258,13 +275,13 @@ The top-level product principle ("So Easy a Caveman Can Do It / Uncompromising s
 
 Sovereign Deployment is not a Phase 4 feature. It is Phase 0.
 
-| Phase | Sovereignty additions |
-|---|---|
+| Phase       | Sovereignty additions                                                                                                                                                                                                                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Phase 0** | **Both deployment modes ship from day one**. On-Premises installer (Docker Compose + Helm chart for Kubernetes); SaaS Blind backend with per-tenant envelope encryption + agency-held KMS root keys; offline license validation; signed releases with Sigstore-backed transparency log; minimal-by-default telemetry with opt-in toggles. |
-| **Phase 1** | Air-gapped deployment hardening (signed package update path, no outbound paths required); audited support access workflow (scoped time-boxed tokens, real-time agency-visible action logs); reproducible builds documented and verified by an external auditor. |
-| **Phase 2** | Confidential computing pilot in SaaS Blind (Nitro Enclaves first because broadest cloud availability); per-tenant pinned versions in SaaS so each agency controls their own update cadence; verifiable-build verification tooling shipped to customers. |
-| **Phase 3** | Confidential computing across the SaaS Blind hot path (Belief State, Math Service, Inspector orchestration); SOC2 Type 2 completed; FedRAMP work begun in earnest now that the architecture supports both Moderate and High. |
-| **Phase 4** | FedRAMP High; CJIS conformance; IL5/IL6 path for the most sensitive federal customers; cross-deployment federation primitives (privacy-preserving deconfliction + personal attribution sharing between On-Prem and SaaS Blind tenants). |
+| **Phase 1** | Air-gapped deployment hardening (signed package update path, no outbound paths required); audited support access workflow (scoped time-boxed tokens, real-time agency-visible action logs); reproducible builds documented and verified by an external auditor.                                                                           |
+| **Phase 2** | Confidential computing pilot in SaaS Blind (Nitro Enclaves first because broadest cloud availability); per-tenant pinned versions in SaaS so each agency controls their own update cadence; verifiable-build verification tooling shipped to customers.                                                                                   |
+| **Phase 3** | Confidential computing across the SaaS Blind hot path (Belief State, Math Service, Inspector orchestration); SOC2 Type 2 completed; FedRAMP work begun in earnest now that the architecture supports both Moderate and High.                                                                                                              |
+| **Phase 4** | FedRAMP High; CJIS conformance; IL5/IL6 path for the most sensitive federal customers; cross-deployment federation primitives (privacy-preserving deconfliction + personal attribution sharing between On-Prem and SaaS Blind tenants).                                                                                                   |
 
 ---
 
@@ -285,7 +302,7 @@ The thirteen documents in the design pack now include this addendum:
 11. `chainsight_v0_5_addendum_3.md`
 12. `chainsight_v0_6_addendum.md`
 13. `chainsight_v0_6_consolidated.md`
-14. `chainsight_v0_7_deployment_model_addendum.md` *(this file)*
+14. `chainsight_v0_7_deployment_model_addendum.md` _(this file)_
 
 The v0.7 consolidated reference will follow when the next batch of locked decisions warrants it. Until then, this file is the canonical statement of the deployment model.
 

@@ -2,7 +2,7 @@
 
 > **Audience:** Solo developer + AI agents building ChainSight. This document is the canonical data engineering reference, one of eight discipline outputs feeding the v1.0 integrated index. Read the [v1.0 engineering document](chainsight_v1_0_engineering.md) first.
 >
-> **Status:** Deep-pass design. DDL is write-ready for Phase 0. Sections marked *[Best-guess]* represent choices stable enough to build on but worth revisiting after the first pilot.
+> **Status:** Deep-pass design. DDL is write-ready for Phase 0. Sections marked _[Best-guess]_ represent choices stable enough to build on but worth revisiting after the first pilot.
 >
 > **Locked decisions cited by ID:** G10 (transaction-centric graph), F23 (cache layer), F24 (UTXO clustering), F25 (personal attribution), F29 (chain of custody), B1 (Belief State), B3 (Reproducibility Pack), B8 (encryption), v0.3 BYOK, v0.5 F2 (document ingest with swappable storage).
 
@@ -10,18 +10,18 @@
 
 ## Stack Reality (Confirmed by Founder)
 
-| Layer | SaaS Blind v1 (Phase 0–1) | On-Prem Sovereign | Migrate-to target (Phase 2) |
-|---|---|---|---|
-| **Postgres** | Supabase managed Postgres 16 | Self-hosted Postgres 16 | AWS RDS PostgreSQL 16 |
-| **Auth** | Supabase Auth (JWT, `auth.uid()`) | Ory Kratos or custom | AWS Cognito or self-managed |
-| **pgvector** | Supabase Postgres (built-in) | pgvector extension | AWS RDS (pgvector supported) |
-| **Object storage** | Supabase Storage | MinIO / Ceph / NFS | AWS S3 |
-| **Realtime** | Supabase Realtime (notifications, presence) | Custom WebSocket / NATS | AWS AppSync or custom |
-| **Graph store** | Memgraph on Fly.io volumes | Memgraph on customer hardware | Memgraph on AWS EC2 |
-| **Cache** | Upstash Redis or Fly.io Redis | Self-hosted Redis | AWS ElastiCache |
-| **Cold storage** | Supabase Storage (Parquet) | MinIO (Parquet) | AWS S3 (Parquet) |
-| **App hosting** | Fly.io (API, workers, math service) | Docker / K8s / Helm | AWS EKS |
-| **CI/CD** | GitHub Actions | GitHub Actions (self-hosted runners) | GitHub Actions |
+| Layer              | SaaS Blind v1 (Phase 0–1)                   | On-Prem Sovereign                    | Migrate-to target (Phase 2)  |
+| ------------------ | ------------------------------------------- | ------------------------------------ | ---------------------------- |
+| **Postgres**       | Supabase managed Postgres 16                | Self-hosted Postgres 16              | AWS RDS PostgreSQL 16        |
+| **Auth**           | Supabase Auth (JWT, `auth.uid()`)           | Ory Kratos or custom                 | AWS Cognito or self-managed  |
+| **pgvector**       | Supabase Postgres (built-in)                | pgvector extension                   | AWS RDS (pgvector supported) |
+| **Object storage** | Supabase Storage                            | MinIO / Ceph / NFS                   | AWS S3                       |
+| **Realtime**       | Supabase Realtime (notifications, presence) | Custom WebSocket / NATS              | AWS AppSync or custom        |
+| **Graph store**    | Memgraph on Fly.io volumes                  | Memgraph on customer hardware        | Memgraph on AWS EC2          |
+| **Cache**          | Upstash Redis or Fly.io Redis               | Self-hosted Redis                    | AWS ElastiCache              |
+| **Cold storage**   | Supabase Storage (Parquet)                  | MinIO (Parquet)                      | AWS S3 (Parquet)             |
+| **App hosting**    | Fly.io (API, workers, math service)         | Docker / K8s / Helm                  | AWS EKS                      |
+| **CI/CD**          | GitHub Actions                              | GitHub Actions (self-hosted runners) | GitHub Actions               |
 
 **Migration commitment:** SaaS Blind v1 runs on Supabase through Phase 1. During Phase 2, when SOC 2 Type 1 prep begins, the operational store migrates to AWS RDS + S3 + EKS. The schema and access patterns are designed to be portable from day one — no Supabase-isms baked into application logic that would block migration.
 
@@ -63,12 +63,12 @@ The capability router (locked in v0.3 BYOK) means no code ever calls Etherscan d
 
 Chain data providers fall into three categories with distinct ingest patterns:
 
-| Category | Examples | Ingest pattern | Latency |
-|---|---|---|---|
-| **Indexed REST APIs** | Etherscan, Blockchair, Solscan, Tronscan | Pull on demand; pagination for history | 100ms–2s |
-| **Multi-chain data warehouses** | Allium, Dune, Goldsky, Covalent | SQL/REST pull; batch friendly; Parquet export | 1s–30s |
-| **Archive RPC nodes** | Alchemy, Infura, QuickNode, self-hosted Erigon/Reth | eth_getTransactionByHash, debug_traceTransaction, eth_getLogs | 50ms–500ms |
-| **Streaming providers** | Allium Kafka, QuickNode Streams, Blocknative | Push; Kafka consumer pattern | sub-second |
+| Category                        | Examples                                            | Ingest pattern                                                | Latency    |
+| ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- | ---------- |
+| **Indexed REST APIs**           | Etherscan, Blockchair, Solscan, Tronscan            | Pull on demand; pagination for history                        | 100ms–2s   |
+| **Multi-chain data warehouses** | Allium, Dune, Goldsky, Covalent                     | SQL/REST pull; batch friendly; Parquet export                 | 1s–30s     |
+| **Archive RPC nodes**           | Alchemy, Infura, QuickNode, self-hosted Erigon/Reth | eth_getTransactionByHash, debug_traceTransaction, eth_getLogs | 50ms–500ms |
+| **Streaming providers**         | Allium Kafka, QuickNode Streams, Blocknative        | Push; Kafka consumer pattern                                  | sub-second |
 
 Phase 0 uses only the first three (pull-based). Streaming is deferred to Phase 3 (Watcher Agent).
 
@@ -80,9 +80,9 @@ The capability router (defined in `/packages/capability-router`) returns a typed
 // packages/shared-types/src/provider.ts
 
 interface ProviderResponse<T> {
-  capability: string;                  // "get_tx_by_hash", "get_address_history", etc.
-  provider_install_id: string;         // UUID of the AgencyProviderInstall
-  payload: T;                          // typed by capability
+  capability: string; // "get_tx_by_hash", "get_address_history", etc.
+  provider_install_id: string; // UUID of the AgencyProviderInstall
+  payload: T; // typed by capability
   fetched_at: Date;
   response_time_ms: number;
   raw_headers: Record<string, string>; // for cache-control, rate-limit, etc.
@@ -118,10 +118,10 @@ Each job is typed by capability:
 interface IngestJob {
   job_type: 'pull_tx' | 'pull_address_history' | 'pull_block' | 'pull_logs';
   chain: ChainId;
-  case_id: string;         // null for global_chain_data scope pulls
+  case_id: string; // null for global_chain_data scope pulls
   agency_id: string;
   args: Record<string, unknown>;
-  priority: number;        // 1 (high, investigator-triggered) to 10 (low, background)
+  priority: number; // 1 (high, investigator-triggered) to 10 (low, background)
   idempotency_key: string; // prevents duplicate ingest on retry
 }
 ```
@@ -155,20 +155,20 @@ These are the DTOs that flow between ingest and storage — not the Postgres DDL
 // Unified transaction representation (handles both UTXO and account model)
 interface CanonicalTransaction {
   chain: ChainId;
-  tx_hash: string;           // hex, lowercase
+  tx_hash: string; // hex, lowercase
   block_height: number;
   block_hash: string;
-  timestamp: Date;           // from block header, UTC
+  timestamp: Date; // from block header, UTC
   status: 'success' | 'failed' | 'pending' | 'reorged_out';
-  fee_native: bigint;        // in chain's smallest unit (satoshis, wei, lamports)
-  fee_fiat_usd: string;      // Decimal string, computed at block time
+  fee_native: bigint; // in chain's smallest unit (satoshis, wei, lamports)
+  fee_fiat_usd: string; // Decimal string, computed at block time
 
   // Account model fields (EVM, Solana, Tron)
   from_address?: string;
   to_address?: string;
   value_native?: bigint;
   value_fiat_usd?: string;
-  input_data?: string;       // hex
+  input_data?: string; // hex
   internal_calls?: CanonicalInternalCall[];
   log_events?: CanonicalLogEvent[];
 
@@ -178,11 +178,11 @@ interface CanonicalTransaction {
   is_coinbase?: boolean;
 
   // Cross-chain context
-  l2_batch_ref?: string;     // for L2 txs, the L1 batch tx hash
+  l2_batch_ref?: string; // for L2 txs, the L1 batch tx hash
   rollup_sequencer?: string; // address of the sequencer that ordered this tx
 
   // Metadata
-  raw_provider_id: string;   // which provider supplied this
+  raw_provider_id: string; // which provider supplied this
   fetched_at: Date;
   normalization_version: string; // semver of the normalizer used
 }
@@ -199,19 +199,19 @@ interface CanonicalUTXOInput {
 
 interface CanonicalUTXOOutput {
   vout: number;
-  address: string | null;  // null for OP_RETURN
+  address: string | null; // null for OP_RETURN
   value_native: bigint;
   script_type: string;
   is_op_return: boolean;
   op_return_data: string | null;
-  spent_by_txid: string | null;  // null if unspent
+  spent_by_txid: string | null; // null if unspent
   spent_at_height: number | null;
 }
 
 interface CanonicalAddress {
   chain: ChainId;
   address: string;
-  normalized_address: string;  // checksum for EVM, bech32 for BTC
+  normalized_address: string; // checksum for EVM, bech32 for BTC
   address_type: 'eoa' | 'contract' | 'multisig' | 'utxo' | 'program';
   first_seen_block: number | null;
   last_seen_block: number | null;
@@ -248,15 +248,15 @@ Reorgs are the primary data-integrity risk in chain ingestion. The strategy:
 
 **Finality model by chain:**
 
-| Chain | Finality model | Safe confirmation depth | Reorg risk |
-|---|---|---|---|
-| Ethereum (PoS) | Deterministic at 2 epochs (~12 min) | 32 blocks for economic finality | Very low post-merge |
-| Bitcoin | Probabilistic | 6 blocks (standard), 100 for coinbase | Low but non-zero |
-| Base / Arbitrum / Optimism | Deterministic on L1 batch posting | 1 block on L2, ~15 min on L1 | Near-zero for sequenced txs |
-| Solana | Deterministic at ~32 slots (~13 sec) | 32 slots | Low |
-| Tron | DPOS finality | 19 blocks | Low |
+| Chain                      | Finality model                       | Safe confirmation depth               | Reorg risk                  |
+| -------------------------- | ------------------------------------ | ------------------------------------- | --------------------------- |
+| Ethereum (PoS)             | Deterministic at 2 epochs (~12 min)  | 32 blocks for economic finality       | Very low post-merge         |
+| Bitcoin                    | Probabilistic                        | 6 blocks (standard), 100 for coinbase | Low but non-zero            |
+| Base / Arbitrum / Optimism | Deterministic on L1 batch posting    | 1 block on L2, ~15 min on L1          | Near-zero for sequenced txs |
+| Solana                     | Deterministic at ~32 slots (~13 sec) | 32 slots                              | Low                         |
+| Tron                       | DPOS finality                        | 19 blocks                             | Low                         |
 
-*[Best-guess]* The 20-block history window is generous for Ethereum but tight for a deep Bitcoin reorg. Revisit after Bitcoin integration.
+_[Best-guess]_ The 20-block history window is generous for Ethereum but tight for a deep Bitcoin reorg. Revisit after Bitcoin integration.
 
 ### 1.7 Streaming ingest (Phase 3)
 
@@ -288,6 +288,7 @@ When the router detects that a provider is near its rate limit, it falls back to
 ### 2.1 Purpose and scope
 
 Cold storage holds **global chain data** — confirmed transaction records, block headers, log events, UTXO sets — that are:
+
 - Immutable once finalized (modulo reorgs, handled in Section 1.6)
 - Too large for Postgres long-term
 - Needed for bulk analytical queries (wallet history, tracing fan-out, batch attribution)
@@ -309,13 +310,13 @@ bucket: chain-data          (Supabase Storage SaaS / MinIO On-Prem / S3 Phase 2)
   canonical/                normalized Parquet, partitioned by chain/date
   reorg-archive/            superseded blocks, kept for audit
 
-bucket: repro-packs         
+bucket: repro-packs
   {agency_id}/{case_id}/{pack_id}/
 
 bucket: audit-log           (Object Lock / immutable write policy on S3/MinIO)
   {agency_id}/YYYY/MM/DD/
 
-bucket: backups             
+bucket: backups
   postgres/{YYYY-MM-DD}/
   redis/{YYYY-MM-DD}/
 ```
@@ -463,7 +464,7 @@ schema log_events {
 
 ### 2.5 Compression
 
-**Zstandard (zstd) level 3** on all Parquet datasets. Better ratio than Snappy for text-heavy chain data, faster decompression than gzip, natively supported by DuckDB, Spark, and PyArrow. *[Best-guess]* Bitcoin UTXO outputs may compress better with Brotli — benchmark before finalizing the Bitcoin pipeline.
+**Zstandard (zstd) level 3** on all Parquet datasets. Better ratio than Snappy for text-heavy chain data, faster decompression than gzip, natively supported by DuckDB, Spark, and PyArrow. _[Best-guess]_ Bitcoin UTXO outputs may compress better with Brotli — benchmark before finalizing the Bitcoin pipeline.
 
 ### 2.6 Read patterns and query access
 
@@ -695,12 +696,14 @@ CREATE INDEX ON :ClusterNode(case_id);
 **Key query patterns:**
 
 1. **Tx-by-hash lookup:**
+
 ```cypher
 MATCH (t:TransactionNode {chain: $chain, tx_hash: $hash})
 RETURN t;
 ```
 
 2. **k-hop neighborhood expansion (3 address-hops = depth 6 in Cypher):**
+
 ```cypher
 MATCH path = (seed:AddressNode {id: $seed_id})-[*1..6]-(n)
 WHERE ALL(node IN nodes(path) WHERE node.case_id = $case_id)
@@ -709,6 +712,7 @@ LIMIT 5000;
 ```
 
 3. **Constrained k-shortest-paths:**
+
 ```cypher
 MATCH (source:AddressNode {chain: $chain, normalized_address: $src, case_id: $case_id}),
       (dest:AddressNode   {chain: $chain, normalized_address: $dst, case_id: $case_id})
@@ -722,6 +726,7 @@ RETURN path, weight ORDER BY weight LIMIT $k;
 ```
 
 4. **Time-range graph slice (Court Mode View A):**
+
 ```cypher
 MATCH (t:TransactionNode {case_id: $case_id})
 WHERE t.block_timestamp >= $start AND t.block_timestamp <= $end
@@ -769,6 +774,7 @@ A sidecar process streams snapshots to Supabase Storage (`backups/memgraph/`) im
 ### 4.1 Schema conventions
 
 **Supabase Postgres specifics:**
+
 - The `auth.users` table is managed by Supabase Auth. The `public.users` table (below) stores application-level user metadata and links to `auth.users.id`.
 - RLS (Row-Level Security) is enabled on **every table** that holds case or agency data. The RLS policies are the primary multi-tenant isolation boundary — not just an optional hardening layer. See Section 5 for the full policy set.
 - `auth.uid()` returns the UUID of the currently authenticated Supabase Auth user. This is the join key between Supabase Auth and `public.users`.
@@ -776,6 +782,7 @@ A sidecar process streams snapshots to Supabase Storage (`backups/memgraph/`) im
 - All tables live in the `public` schema unless otherwise noted.
 
 **General conventions:**
+
 - UUID primary keys, generated by the application layer (not `gen_random_uuid()`) where determinism matters.
 - `created_at` and `updated_at` on every table, `timestamptz` (UTC).
 - Row-level encryption at the **application layer** using libsodium (NaCl secretbox) for sensitive fields. Encrypted columns store `bytea` prefixed `\x01` (version byte). Postgres never holds plaintext for sensitive fields. Non-sensitive fields (IDs, hashes, enums, timestamps) are stored unencrypted so RLS predicates and indexes work.
@@ -1851,14 +1858,12 @@ const ENC_VERSION = 0x01; // xchacha20poly1305
 export async function encryptField(
   plaintext: string | Uint8Array,
   caseId: string,
-  kmsClient: KMSClient
+  kmsClient: KMSClient,
 ): Promise<Buffer> {
-  const dek = await kmsClient.getDecryptedDEK(caseId);  // 32 bytes, from Redis DEK cache
+  const dek = await kmsClient.getDecryptedDEK(caseId); // 32 bytes, from Redis DEK cache
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
 
-  const pt = typeof plaintext === 'string'
-    ? sodium.from_string(plaintext)
-    : plaintext;
+  const pt = typeof plaintext === 'string' ? sodium.from_string(plaintext) : plaintext;
 
   const ciphertext = sodium.crypto_secretbox_easy(pt, nonce, dek);
 
@@ -1873,7 +1878,7 @@ export async function encryptField(
 export async function decryptField(
   encrypted: Buffer,
   caseId: string,
-  kmsClient: KMSClient
+  kmsClient: KMSClient,
 ): Promise<Buffer> {
   if (encrypted[0] !== ENC_VERSION) {
     throw new Error(`Unknown encryption version: ${encrypted[0]}`);
@@ -1919,17 +1924,15 @@ import { createClient } from '@supabase/supabase-js';
 
 // For authenticated user operations (RLS applies)
 export function getUserClient(userToken: string) {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${userToken}` } } }
-  );
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+    global: { headers: { Authorization: `Bearer ${userToken}` } },
+  });
 }
 
 // For server-side agent/worker operations (bypasses RLS)
 export const serviceClient = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 ```
 
@@ -2074,7 +2077,7 @@ async function createUser(params: {
   password: string;
   agency_id: string;
   role: UserRole;
-  invited_by: string;  // user_id of the inviting admin
+  invited_by: string; // user_id of the inviting admin
 }) {
   // Step 1: Create Supabase Auth user (sets auth.uid())
   const { data: authUser, error } = await serviceClient.auth.admin.createUser({
@@ -2086,13 +2089,11 @@ async function createUser(params: {
 
   // Step 2: Create public.users row (links auth.uid() to agency)
   // Uses service role to bypass RLS for the initial insert
-  await serviceClient
-    .from('users')
-    .insert({
-      id: authUser.user.id,   // same UUID as auth.users.id
-      agency_id: params.agency_id,
-      role: params.role,
-    });
+  await serviceClient.from('users').insert({
+    id: authUser.user.id, // same UUID as auth.users.id
+    agency_id: params.agency_id,
+    role: params.role,
+  });
 
   // Step 3: Create default case_access entries if needed
   // Step 4: Log to audit_log_entries
@@ -2104,6 +2105,7 @@ The `public.users.id` is always the same UUID as `auth.users.id`. This makes `au
 ### 5.8 RLS and the migration to AWS RDS
 
 When the operational store migrates from Supabase to AWS RDS (Phase 2):
+
 - All RLS policies are preserved verbatim — AWS RDS Postgres supports RLS identically.
 - The `auth.uid()` function needs a replacement. On AWS, the API layer injects the user ID via `SET LOCAL app.current_user_id = '{uuid}'` at the start of each transaction, and the helper functions are updated to use `current_setting('app.current_user_id')::uuid` instead of `auth.uid()`.
 
@@ -2124,7 +2126,7 @@ The application layer (Fly.io API) adds this before every authenticated query:
 // apps/api/src/db/aws-rds.ts (Phase 2 migration)
 async function withUserContext<T>(
   userId: string,
-  fn: (client: PoolClient) => Promise<T>
+  fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   const client = await pool.connect();
   try {
@@ -2159,24 +2161,28 @@ function computeBeliefAtomContentHash(atom: {
   subject_type: string;
   subject_ref: string;
   predicate: string;
-  object_hash: string;    // sha256 of the decrypted object JSON
+  object_hash: string; // sha256 of the decrypted object JSON
   confidence: number;
   tier: string;
   created_by: string | null;
   created_by_agent: string | null;
   created_at: Date;
 }): string {
-  const canonical = JSON.stringify({
-    case_id: atom.case_id,
-    subject_type: atom.subject_type,
-    subject_ref: atom.subject_ref,
-    predicate: atom.predicate,
-    object_hash: atom.object_hash,
-    confidence: atom.confidence.toFixed(4),
-    tier: atom.tier,
-    created_by: atom.created_by ?? atom.created_by_agent ?? 'system',
-    created_at: atom.created_at.toISOString()
-  }, null, 0);  // No whitespace, keys in insertion order (consistent)
+  const canonical = JSON.stringify(
+    {
+      case_id: atom.case_id,
+      subject_type: atom.subject_type,
+      subject_ref: atom.subject_ref,
+      predicate: atom.predicate,
+      object_hash: atom.object_hash,
+      confidence: atom.confidence.toFixed(4),
+      tier: atom.tier,
+      created_by: atom.created_by ?? atom.created_by_agent ?? 'system',
+      created_at: atom.created_at.toISOString(),
+    },
+    null,
+    0,
+  ); // No whitespace, keys in insertion order (consistent)
   return sha256(canonical);
 }
 ```
@@ -2196,11 +2202,11 @@ await beliefStateService.emit({
   object: {
     challenge_reason: 'alternative_explanation_stronger',
     challenge_text: 'The Binance attribution is unsupported...',
-    resolution_required_before_court_grade: true
+    resolution_required_before_court_grade: true,
   },
   confidence: 0.85,
   tier: 'T2',
-  created_by_agent: 'critic_agent'
+  created_by_agent: 'critic_agent',
 });
 
 // Mark challenged atom (service_role update, not available to authenticated users)
@@ -2211,6 +2217,7 @@ await serviceClient
 ```
 
 **Supersession:**
+
 ```sql
 -- Atomic supersession (service_role transaction)
 BEGIN;
@@ -2255,12 +2262,9 @@ async function promoteToCourtGrade(atomId: string, signingUserId: string) {
     .eq('id', atomId)
     .single();
 
-  if (atom.data.confidence < 0.85)
-    throw new BeliefStateError('confidence_too_low');
-  if (!['T0','T1','T2'].includes(atom.data.tier))
-    throw new BeliefStateError('tier_ineligible');
-  if (atom.data.status !== 'asserted')
-    throw new BeliefStateError('not_asserted');
+  if (atom.data.confidence < 0.85) throw new BeliefStateError('confidence_too_low');
+  if (!['T0', 'T1', 'T2'].includes(atom.data.tier)) throw new BeliefStateError('tier_ineligible');
+  if (atom.data.status !== 'asserted') throw new BeliefStateError('not_asserted');
 
   // Check no open challenges
   const challenges = await serviceClient
@@ -2271,8 +2275,7 @@ async function promoteToCourtGrade(atomId: string, signingUserId: string) {
     .eq('predicate', 'challenges')
     .eq('status', 'asserted');
 
-  if ((challenges.data?.length ?? 0) > 0)
-    throw new BeliefStateError('open_challenges');
+  if ((challenges.data?.length ?? 0) > 0) throw new BeliefStateError('open_challenges');
 
   // Promote
   await serviceClient
@@ -2283,7 +2286,7 @@ async function promoteToCourtGrade(atomId: string, signingUserId: string) {
   await auditLog.write({
     action: 'belief_atom.court_grade',
     target_ref: atomId,
-    actor_id: signingUserId
+    actor_id: signingUserId,
   });
 }
 ```
@@ -2325,7 +2328,7 @@ function buildCacheKey(params: {
     canonical_args,
     params.provider_install_id,
     params.scope,
-    params.scope_ref ?? 'global'
+    params.scope_ref ?? 'global',
   ].join('|');
   return `cache:${sha256(key_material)}`;
 }
@@ -2337,14 +2340,15 @@ Global chain data is keyed without a scope_ref — shared across all agencies an
 
 ```typescript
 const TTL_CONFIG = {
-  immutable:     { redis_ttl_sec: null,    pg_expires: null },
-  slow_drift:    { redis_ttl_sec: 6*3600,  pg_expires: '7 days' },
-  medium_drift:  { redis_ttl_sec: 2*3600,  pg_expires: '24 hours' },
-  fast_drift:    { redis_ttl_sec: 5*60,    pg_expires: '5 minutes' },
+  immutable: { redis_ttl_sec: null, pg_expires: null },
+  slow_drift: { redis_ttl_sec: 6 * 3600, pg_expires: '7 days' },
+  medium_drift: { redis_ttl_sec: 2 * 3600, pg_expires: '24 hours' },
+  fast_drift: { redis_ttl_sec: 5 * 60, pg_expires: '5 minutes' },
 };
 ```
 
 A background Fly.io worker (`cache-sweeper`) runs every 15 minutes:
+
 ```sql
 DELETE FROM cache_entries
 WHERE expires_at < NOW()
@@ -2370,13 +2374,19 @@ interface CacheRefreshJob {
   requested_by: string;
   scope_selection: 'single_entity' | 'selected_entities' | 'viewport' | 'all_case';
   entity_ids?: string[];
-  data_types: Array<'attribution_labels' | 'token_metadata' | 'address_balances'
-                    | 'tx_history' | 'obfuscation_detection'>;
+  data_types: Array<
+    | 'attribution_labels'
+    | 'token_metadata'
+    | 'address_balances'
+    | 'tx_history'
+    | 'obfuscation_detection'
+  >;
   estimated_cost_usd: number;
 }
 ```
 
 The refresh worker:
+
 1. Deletes (sets `expires_at = NOW()`) relevant `cache_entries` rows via service client.
 2. Re-runs capability router calls (now cache misses → provider calls).
 3. For responses where `delta_detected = true`, publishes a Supabase Realtime event to the `case:{case_id}:cache_refresh` channel so the frontend canvas highlights changed nodes.
@@ -2511,8 +2521,12 @@ A Reproducibility Pack is a content-addressed `.tar.gz` archive:
     "obfuscation_detectors": "2026.06.01"
   },
   "model_cards": [
-    { "id": "uuid", "model_id": "claude-opus-4-6", "version": "20260601",
-      "prompt_template_hash": "sha256:..." }
+    {
+      "id": "uuid",
+      "model_id": "claude-opus-4-6",
+      "version": "20260601",
+      "prompt_template_hash": "sha256:..."
+    }
   ]
 }
 ```
@@ -2613,7 +2627,7 @@ The storage interface makes the backend code identical across Supabase Storage, 
 // packages/document-storage/src/interface.ts
 
 export interface StorageBackend {
-  readonly backendId: string;  // "supabase_storage" | "minio" | "aws_s3" | "azure_blob" | "gcs" | "nfs"
+  readonly backendId: string; // "supabase_storage" | "minio" | "aws_s3" | "azure_blob" | "gcs" | "nfs"
 
   upload(params: {
     bucket: string;
@@ -2623,21 +2637,11 @@ export interface StorageBackend {
     metadata?: Record<string, string>;
   }): Promise<{ path: string; size: number }>;
 
-  download(params: {
-    bucket: string;
-    path: string;
-  }): Promise<Buffer>;
+  download(params: { bucket: string; path: string }): Promise<Buffer>;
 
-  getSignedUrl(params: {
-    bucket: string;
-    path: string;
-    expiresInSeconds: number;
-  }): Promise<string>;
+  getSignedUrl(params: { bucket: string; path: string; expiresInSeconds: number }): Promise<string>;
 
-  delete(params: {
-    bucket: string;
-    path: string;
-  }): Promise<void>;
+  delete(params: { bucket: string; path: string }): Promise<void>;
 
   list(params: {
     bucket: string;
@@ -2656,7 +2660,7 @@ export class SupabaseStorageBackend implements StorageBackend {
   readonly backendId = 'supabase_storage';
   private client = createClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!   // service role for storage operations
+    process.env.SUPABASE_SERVICE_ROLE_KEY!, // service role for storage operations
   );
 
   async upload({ bucket, path, data, contentType }) {
@@ -2668,9 +2672,7 @@ export class SupabaseStorageBackend implements StorageBackend {
   }
 
   async download({ bucket, path }) {
-    const { data, error } = await this.client.storage
-      .from(bucket)
-      .download(path);
+    const { data, error } = await this.client.storage.from(bucket).download(path);
     if (error) throw new StorageError(error.message);
     return Buffer.from(await data.arrayBuffer());
   }
@@ -2689,12 +2691,13 @@ export class SupabaseStorageBackend implements StorageBackend {
   }
 
   async list({ bucket, prefix }) {
-    const { data, error } = await this.client.storage
-      .from(bucket)
-      .list(prefix, { limit: 1000 });
+    const { data, error } = await this.client.storage.from(bucket).list(prefix, { limit: 1000 });
     if (error) throw new StorageError(error.message);
-    return data.map(f => ({ path: `${prefix}/${f.name}`, size: f.metadata?.size ?? 0,
-                             lastModified: new Date(f.updated_at ?? f.created_at) }));
+    return data.map((f) => ({
+      path: `${prefix}/${f.name}`,
+      size: f.metadata?.size ?? 0,
+      lastModified: new Date(f.updated_at ?? f.created_at),
+    }));
   }
 }
 ```
@@ -2706,13 +2709,20 @@ export class SupabaseStorageBackend implements StorageBackend {
 
 export function getStorageBackend(install: AgencyStorageInstall): StorageBackend {
   switch (install.backend_id) {
-    case 'supabase_storage': return new SupabaseStorageBackend();
-    case 'minio_on_prem':    return new MinioStorageBackend(install.config);
-    case 'aws_s3':           return new S3StorageBackend(install.config);
-    case 'azure_blob':       return new AzureBlobStorageBackend(install.config);
-    case 'gcs':              return new GCSStorageBackend(install.config);
-    case 'nfs_mount':        return new NFSStorageBackend(install.config);
-    default: throw new Error(`Unknown storage backend: ${install.backend_id}`);
+    case 'supabase_storage':
+      return new SupabaseStorageBackend();
+    case 'minio_on_prem':
+      return new MinioStorageBackend(install.config);
+    case 'aws_s3':
+      return new S3StorageBackend(install.config);
+    case 'azure_blob':
+      return new AzureBlobStorageBackend(install.config);
+    case 'gcs':
+      return new GCSStorageBackend(install.config);
+    case 'nfs_mount':
+      return new NFSStorageBackend(install.config);
+    default:
+      throw new Error(`Unknown storage backend: ${install.backend_id}`);
   }
 }
 ```
@@ -2760,8 +2770,8 @@ async function uploadDocument(params: {
     bucket: 'documents',
     path: storagePath,
     data: encrypted,
-    contentType: 'application/octet-stream',  // always octet-stream; original MIME in Postgres
-    metadata: { enc_version: 'v1', case_id: params.caseId }
+    contentType: 'application/octet-stream', // always octet-stream; original MIME in Postgres
+    metadata: { enc_version: 'v1', case_id: params.caseId },
   });
 
   return { storagePath, contentHash };
@@ -2769,6 +2779,7 @@ async function uploadDocument(params: {
 ```
 
 The `case_documents.storage_path_enc` column stores the storage path encrypted with the case DEK. The `case_documents.content_hash` stores the sha256 of the unencrypted content. To read a document:
+
 1. Retrieve DEK from KMS via `case_dek_refs.kms_key_ref`.
 2. Decrypt `storage_path_enc` → get storage path.
 3. Download from Supabase Storage.
@@ -2796,6 +2807,7 @@ This is defense-in-depth: even at the storage API layer, a user cannot access an
 Document versioning is tracked at the application layer via `case_document_versions` (same schema as Section 4.8 in the original design). Supabase Storage does not provide S3-style bucket versioning — the application manages versions.
 
 Legal hold prevents deletion:
+
 - `case_documents.legal_hold = TRUE` is checked before any delete operation.
 - The `cache-sweeper` worker skips documents with `legal_hold = TRUE`.
 - On Phase 2 migration to AWS S3, legal-hold documents are tagged and Object Lock is enabled on the S3 bucket.
@@ -2865,27 +2877,41 @@ interface ChangeDetectionHeuristic {
 }
 
 const HEURISTICS: ChangeDetectionHeuristic[] = [
-  { name: 'optimal_change',    version: '2026.04.01', weight: 0.30,
+  {
+    name: 'optimal_change',
+    version: '2026.04.01',
+    weight: 0.3,
     evaluate(tx, idx) {
       if (tx.outputs?.length !== 2) return 0;
-      return tx.outputs[idx].value_native < tx.outputs[1-idx].value_native ? 0.6 : 0.3;
-    }
+      return tx.outputs[idx].value_native < tx.outputs[1 - idx].value_native ? 0.6 : 0.3;
+    },
   },
-  { name: 'round_payment',     version: '2026.04.01', weight: 0.20,
+  {
+    name: 'round_payment',
+    version: '2026.04.01',
+    weight: 0.2,
     evaluate(tx, idx) {
       const v = tx.outputs?.[idx].value_native ?? 0n;
       return v % 100000n === 0n ? 0.1 : 0.7;
-    }
+    },
   },
-  { name: 'one_time_use',      version: '2026.04.01', weight: 0.25,
+  {
+    name: 'one_time_use',
+    version: '2026.04.01',
+    weight: 0.25,
     // async: queries cold storage for address history
-    evaluate(_tx, _idx) { return 0.5; }
+    evaluate(_tx, _idx) {
+      return 0.5;
+    },
   },
-  { name: 'script_type_match', version: '2026.04.01', weight: 0.25,
+  {
+    name: 'script_type_match',
+    version: '2026.04.01',
+    weight: 0.25,
     evaluate(tx, idx) {
       if (!tx.inputs?.length) return 0;
       return tx.inputs[0].script_type === tx.outputs?.[idx].script_type ? 0.75 : 0.3;
-    }
+    },
   },
 ];
 ```
@@ -2902,7 +2928,8 @@ function isCoinJoin(tx: CanonicalTransaction): boolean {
     value_counts.set(out.value_native, (value_counts.get(out.value_native) ?? 0) + 1);
   const max_count = Math.max(...value_counts.values());
   if (max_count >= 3) return true;
-  if (new Set(tx.outputs.map(o => o.value_native)).size === 1 && tx.outputs.length >= 2) return true;
+  if (new Set(tx.outputs.map((o) => o.value_native)).size === 1 && tx.outputs.length >= 2)
+    return true;
   return false;
 }
 ```
@@ -2920,10 +2947,11 @@ await beliefStateService.emit({
     override_type: 'exclude_address',
     target_address: '1AbcExcluded...',
     reason: 'Subpoena confirms this address is a different entity',
-    evidence_refs: ['doc_id_123']
+    evidence_refs: ['doc_id_123'],
   },
-  confidence: 1.0, tier: 'T0',
-  created_by: user_id
+  confidence: 1.0,
+  tier: 'T0',
+  created_by: user_id,
 });
 
 await serviceClient
@@ -2945,13 +2973,13 @@ pgvector lives in the same Supabase Postgres instance as the operational store (
 
 Default embedding provider: **Voyage AI** (BYOK). Self-hosted fallback: **BGE-M3** (1024-dim, runs on Fly.io CPU worker).
 
-| Use case | Model | Dimensions | Notes |
-|---|---|---|---|
-| Document chunks | voyage-large-2-instruct | 1024 | Best retrieval for legal/technical text |
-| Belief atom text | voyage-large-2-instruct | 1024 | Consistent model for all semantic search |
-| Attribution labels | voyage-code-2 | 1536 | Better for technical entity names |
-| Case summaries | voyage-large-2-instruct | 1024 | Cross-case similarity |
-| BGE-M3 (self-hosted fallback) | BGE-M3 | 1024 | No API cost |
+| Use case                      | Model                   | Dimensions | Notes                                    |
+| ----------------------------- | ----------------------- | ---------- | ---------------------------------------- |
+| Document chunks               | voyage-large-2-instruct | 1024       | Best retrieval for legal/technical text  |
+| Belief atom text              | voyage-large-2-instruct | 1024       | Consistent model for all semantic search |
+| Attribution labels            | voyage-code-2           | 1536       | Better for technical entity names        |
+| Case summaries                | voyage-large-2-instruct | 1024       | Cross-case similarity                    |
+| BGE-M3 (self-hosted fallback) | BGE-M3                  | 1024       | No API cost                              |
 
 ### 11.2 Vector table DDL
 
@@ -3074,13 +3102,13 @@ This is a Phase 4 concern and does not affect Phase 0–2 schema.
 
 Supabase Realtime provides a WebSocket-based pub/sub layer backed by Postgres logical replication (the `wal_level = logical` change capture). It handles three distinct real-time use cases for ChainSight:
 
-| Use case | Channel pattern | Data | Latency target |
-|---|---|---|---|
-| Live trace progress | `case:{case_id}:trace` | Agent progress events | < 500ms |
-| Deconfliction alerts | `user:{user_id}:alerts` | DeconflictionAlert rows | < 1s |
-| Cache refresh delta | `case:{case_id}:cache_refresh` | Changed entity IDs | < 500ms |
-| Watcher notifications | `user:{user_id}:watchers` | WatcherFiring events (Phase 3+) | < 1s |
-| Belief atom updates | `case:{case_id}:beliefs` | New atom summaries (not encrypted content) | < 500ms |
+| Use case              | Channel pattern                | Data                                       | Latency target |
+| --------------------- | ------------------------------ | ------------------------------------------ | -------------- |
+| Live trace progress   | `case:{case_id}:trace`         | Agent progress events                      | < 500ms        |
+| Deconfliction alerts  | `user:{user_id}:alerts`        | DeconflictionAlert rows                    | < 1s           |
+| Cache refresh delta   | `case:{case_id}:cache_refresh` | Changed entity IDs                         | < 500ms        |
+| Watcher notifications | `user:{user_id}:watchers`      | WatcherFiring events (Phase 3+)            | < 1s           |
+| Belief atom updates   | `case:{case_id}:beliefs`       | New atom summaries (not encrypted content) | < 500ms        |
 
 The CRDT canvas (Yjs, Phase 2+) uses its own WebSocket layer — not Supabase Realtime. Supabase Realtime is for **server-to-client notifications**, not collaborative document synchronization.
 
@@ -3111,7 +3139,7 @@ export function subscribeToTrace(caseId: string, onUpdate: (event: TraceEvent) =
         event: 'INSERT',
         schema: 'public',
         table: 'belief_atoms',
-        filter: `case_id=eq.${caseId}`
+        filter: `case_id=eq.${caseId}`,
       },
       (payload) => {
         // payload.new contains only non-encrypted columns (Supabase filters BYTEA)
@@ -3121,9 +3149,9 @@ export function subscribeToTrace(caseId: string, onUpdate: (event: TraceEvent) =
           subjectRef: payload.new.subject_ref,
           confidence: payload.new.confidence,
           tier: payload.new.tier,
-          status: payload.new.status
+          status: payload.new.status,
         });
-      }
+      },
     )
     .subscribe();
 
@@ -3144,10 +3172,10 @@ await supabase.channel(`case:${caseId}:cache_refresh`).send({
   type: 'broadcast',
   event: 'cache_refreshed',
   payload: {
-    changed_entity_ids: changed_ids,    // entity IDs where delta_detected = true
+    changed_entity_ids: changed_ids, // entity IDs where delta_detected = true
     refreshed_at: new Date().toISOString(),
-    data_types_refreshed: job.data_types
-  }
+    data_types_refreshed: job.data_types,
+  },
 });
 ```
 
@@ -3157,7 +3185,7 @@ await supabase.channel(`case:${caseId}:cache_refresh`).send({
 supabase
   .channel(`case:${caseId}:cache_refresh`)
   .on('broadcast', { event: 'cache_refreshed' }, ({ payload }) => {
-    canvasStore.pulseNodes(payload.changed_entity_ids);  // 5-second highlight
+    canvasStore.pulseNodes(payload.changed_entity_ids); // 5-second highlight
   })
   .subscribe();
 ```
@@ -3181,7 +3209,7 @@ presenceChannel
         user_id: currentUser.id,
         display_name: currentUser.displayName,
         current_view: 'canvas',
-        selected_node_id: null
+        selected_node_id: null,
       });
     }
   });
@@ -3276,13 +3304,13 @@ For additive changes (new tables, new nullable columns), Supabase `db push` in a
 
 ### 14.1 SaaS Blind RPO/RTO with Supabase
 
-| Store | RPO | RTO | Backup method |
-|---|---|---|---|
-| **Supabase Postgres** | 5 minutes (WAL) | 30 minutes | Supabase built-in PITR (Point-in-Time Recovery); 7-day WAL window on Pro plan |
-| **Supabase Storage** | 0 (replication) | 1 hour | Supabase Storage replicates within region; no cross-region in v1 (Phase 2 adds AWS S3 CRR) |
-| **Redis (Upstash)** | 1 hour (AOF export) | 5 minutes | Upstash daily backups; Redis is reconstructable from Postgres |
-| **Memgraph (Fly.io)** | 1 hour (snapshots) | 15 min (from snapshot) / 60 min (rebuild from Postgres) | Hourly snapshots to Supabase Storage |
-| **Audit log** | 0 (dual-write) | 1 hour | Written to both Postgres and Supabase Storage `audit-log/` simultaneously |
+| Store                 | RPO                 | RTO                                                     | Backup method                                                                              |
+| --------------------- | ------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Supabase Postgres** | 5 minutes (WAL)     | 30 minutes                                              | Supabase built-in PITR (Point-in-Time Recovery); 7-day WAL window on Pro plan              |
+| **Supabase Storage**  | 0 (replication)     | 1 hour                                                  | Supabase Storage replicates within region; no cross-region in v1 (Phase 2 adds AWS S3 CRR) |
+| **Redis (Upstash)**   | 1 hour (AOF export) | 5 minutes                                               | Upstash daily backups; Redis is reconstructable from Postgres                              |
+| **Memgraph (Fly.io)** | 1 hour (snapshots)  | 15 min (from snapshot) / 60 min (rebuild from Postgres) | Hourly snapshots to Supabase Storage                                                       |
+| **Audit log**         | 0 (dual-write)      | 1 hour                                                  | Written to both Postgres and Supabase Storage `audit-log/` simultaneously                  |
 
 ### 14.2 Supabase PITR (Point-in-Time Recovery)
 
@@ -3298,8 +3326,9 @@ For per-agency restore: because case data is encrypted with per-case DEKs, resto
 ### 14.3 Redis reconstructability
 
 Redis (cache + BullMQ queue) is reconstructable from Supabase Postgres:
+
 - **Cache:** On Redis loss, the `cache_entries` Postgres table is the authoritative record. The application rehydrates Redis on first access (cache miss → Postgres lookup → Redis write).
-- **BullMQ queues:** In-flight jobs that haven't been acknowledged are re-submitted on worker restart. BullMQ's `removeOnFail: false` ensures failed jobs stay in the dead-letter queue (in Postgres via `pg_boss` pattern if BullMQ loses them — *[Best-guess]* evaluate BullMQ's Redis-persistence guarantees vs. `pg_boss` as a Postgres-native queue before Phase 1 goes to production).
+- **BullMQ queues:** In-flight jobs that haven't been acknowledged are re-submitted on worker restart. BullMQ's `removeOnFail: false` ensures failed jobs stay in the dead-letter queue (in Postgres via `pg_boss` pattern if BullMQ loses them — _[Best-guess]_ evaluate BullMQ's Redis-persistence guarantees vs. `pg_boss` as a Postgres-native queue before Phase 1 goes to production).
 
 ### 14.4 Memgraph backup procedure
 
@@ -3329,14 +3358,14 @@ async function writeAuditLog(entry: AuditLogEntry) {
 
   // Write 2: Supabase Storage (tamper-evident archive)
   const date = new Date(entry.occurred_at);
-  const path = `${entry.agency_id}/${date.getUTCFullYear()}/${String(date.getUTCMonth()+1).padStart(2,'0')}/${String(date.getUTCDate()).padStart(2,'0')}/${entry.id}.json.zst`;
+  const path = `${entry.agency_id}/${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}/${entry.id}.json.zst`;
 
   const compressed = zstd.compress(JSON.stringify(entry));
   await storageBackend.upload({
     bucket: 'audit-log',
     path,
     data: compressed,
-    contentType: 'application/octet-stream'
+    contentType: 'application/octet-stream',
   });
 }
 ```
@@ -3346,6 +3375,7 @@ On Phase 2 (AWS S3): enable S3 Object Lock in Compliance mode on the `audit-log`
 ### 14.6 Phase 2 cross-region considerations
 
 On migration to AWS (Phase 2):
+
 - **Postgres:** AWS RDS with Multi-AZ deployment (synchronous replication, automatic failover, RPO ≈ 0).
 - **S3:** Cross-Region Replication (source: `us-east-1`, destination: `us-west-2`) for all case-data, repro-packs, and audit-log buckets.
 - **Memgraph:** EC2 with EBS volumes; snapshots to S3 with CRR.
@@ -3359,33 +3389,35 @@ Phase 0 stays single-region (Supabase: `us-east-1` primary). Cross-region is a P
 
 ### 15.1 Performance targets
 
-| Operation | Target P50 | Target P99 | Assumptions |
-|---|---|---|---|
-| Tx-by-hash lookup (from Redis cache) | < 5 ms | < 20 ms | Redis hot |
-| Tx-by-hash lookup (Postgres cache_entries) | < 20 ms | < 80 ms | Supabase Postgres, index hit |
-| Tx-by-hash lookup (cache miss, Etherscan) | < 500 ms | < 2 s | Etherscan + normalize + write |
-| K-hop neighborhood expansion, depth 3 (Memgraph) | < 200 ms | < 800 ms | Case graph < 50k nodes |
-| K-hop neighborhood expansion, depth 6 (Memgraph) | < 500 ms | < 3 s | Case graph < 100k nodes |
-| K-shortest-paths, k=3, depth 10 (Memgraph) | < 1 s | < 5 s | |
-| Full wallet history pull (50 addresses × 3 chains, cold) | < 5 min | < 15 min | All cache misses; rate limits |
-| Full wallet history pull (50 addresses × 3 chains, warm) | < 30 s | < 2 min | 90% cache hit rate |
-| Document upload (10 MB PDF) + encryption + Supabase Storage | < 4 s | < 12 s | libsodium + Supabase upload |
-| Document extraction (10 MB PDF, Textract) | < 45 s | < 3 min | AWS Textract async (Phase 1+) |
-| Belief atom insert (single, service role) | < 10 ms | < 50 ms | Postgres write |
-| Belief atom court-grade batch read (1000 atoms, RLS) | < 150 ms | < 600 ms | RLS adds ~20–50ms overhead vs. no-RLS |
-| Reproducibility pack build (1000 atoms, 50 docs) | < 5 min | < 20 min | Supabase Storage reads + DuckDB |
-| Reproducibility pack replay (same) | < 10 min | < 30 min | Isolated Docker container |
-| Vector similarity search (top-5 of 100k chunks, HNSW) | < 20 ms | < 100 ms | pgvector in Supabase Postgres |
-| Supabase Realtime delivery (belief atom update to canvas) | < 200 ms | < 800 ms | WebSocket through Supabase edge |
+| Operation                                                   | Target P50 | Target P99 | Assumptions                           |
+| ----------------------------------------------------------- | ---------- | ---------- | ------------------------------------- |
+| Tx-by-hash lookup (from Redis cache)                        | < 5 ms     | < 20 ms    | Redis hot                             |
+| Tx-by-hash lookup (Postgres cache_entries)                  | < 20 ms    | < 80 ms    | Supabase Postgres, index hit          |
+| Tx-by-hash lookup (cache miss, Etherscan)                   | < 500 ms   | < 2 s      | Etherscan + normalize + write         |
+| K-hop neighborhood expansion, depth 3 (Memgraph)            | < 200 ms   | < 800 ms   | Case graph < 50k nodes                |
+| K-hop neighborhood expansion, depth 6 (Memgraph)            | < 500 ms   | < 3 s      | Case graph < 100k nodes               |
+| K-shortest-paths, k=3, depth 10 (Memgraph)                  | < 1 s      | < 5 s      |                                       |
+| Full wallet history pull (50 addresses × 3 chains, cold)    | < 5 min    | < 15 min   | All cache misses; rate limits         |
+| Full wallet history pull (50 addresses × 3 chains, warm)    | < 30 s     | < 2 min    | 90% cache hit rate                    |
+| Document upload (10 MB PDF) + encryption + Supabase Storage | < 4 s      | < 12 s     | libsodium + Supabase upload           |
+| Document extraction (10 MB PDF, Textract)                   | < 45 s     | < 3 min    | AWS Textract async (Phase 1+)         |
+| Belief atom insert (single, service role)                   | < 10 ms    | < 50 ms    | Postgres write                        |
+| Belief atom court-grade batch read (1000 atoms, RLS)        | < 150 ms   | < 600 ms   | RLS adds ~20–50ms overhead vs. no-RLS |
+| Reproducibility pack build (1000 atoms, 50 docs)            | < 5 min    | < 20 min   | Supabase Storage reads + DuckDB       |
+| Reproducibility pack replay (same)                          | < 10 min   | < 30 min   | Isolated Docker container             |
+| Vector similarity search (top-5 of 100k chunks, HNSW)       | < 20 ms    | < 100 ms   | pgvector in Supabase Postgres         |
+| Supabase Realtime delivery (belief atom update to canvas)   | < 200 ms   | < 800 ms   | WebSocket through Supabase edge       |
 
 **RLS overhead note:** Supabase RLS adds 10–50ms overhead on complex policies that call SECURITY DEFINER functions. The `user_has_case_access()` function is the most expensive policy. To mitigate:
+
 - Cache the function result within a transaction using a local variable: `current_setting('app.case_access_cache')`.
 - For batch operations, the API layer pre-verifies access once and switches to the service role for the batch.
-- *[Best-guess]* If RLS overhead exceeds 50ms on belief atom reads, switch the frontend to service-role reads with application-layer access checks (losing the DB-level safety net but recovering performance).
+- _[Best-guess]_ If RLS overhead exceeds 50ms on belief atom reads, switch the frontend to service-role reads with application-layer access checks (losing the DB-level safety net but recovering performance).
 
 ### 15.2 Supabase plan considerations
 
 **Supabase Pro plan** ($25/month, December 2025 pricing) provides:
+
 - 8 GB database storage
 - 100 GB egress/month
 - PITR (7-day WAL)
@@ -3393,11 +3425,12 @@ Phase 0 stays single-region (Supabase: `us-east-1` primary). Cross-region is a P
 - Connection pooling (PgBouncer)
 
 Phase 0 fits comfortably within Pro. **Supabase Team plan** ($599/month) is needed when:
+
 - Database storage exceeds 8 GB (roughly 200+ active cases with full graph data)
 - Read replicas are needed for reporting
 - More aggressive connection pooling is needed
 
-*[Best-guess]* Expect to upgrade to Team plan around 50–100 active customers. Budget this.
+_[Best-guess]_ Expect to upgrade to Team plan around 50–100 active customers. Budget this.
 
 ### 15.3 Capacity planning math
 
@@ -3427,7 +3460,7 @@ Redis (Upstash):
 
 Fly.io API workers:
   3 × machines.shared-cpu-2x → ~$30/month
-  
+
 Total estimated Phase 0 infrastructure cost: ~$275/month
 ```
 
@@ -3469,6 +3502,7 @@ Dependencies:
 ### 16.2 Week 1–2: Supabase Foundations
 
 **Data tasks:**
+
 - [ ] Create Supabase project, connect GitHub repo, enable Supabase CLI
 - [ ] Write `supabase/migrations/20260616000001_tenancy.sql`: agencies, auth integration, users, supervisory_roles
 - [ ] Write `supabase/migrations/20260616000002_cases.sql`: cases, case_access, case_dek_refs, iocs
@@ -3487,6 +3521,7 @@ Dependencies:
 ### 16.3 Week 3–4: Capability Router + First Ingest
 
 **Data tasks:**
+
 - [ ] Write `supabase/migrations/20260616000007_providers.sql`: provider_definitions, agency_provider_installs, provider_resolutions
 - [ ] Write `supabase/migrations/20260616000008_cache.sql`: cache_entries (with all RLS scope policies)
 - [ ] Write `supabase/migrations/20260616000009_realtime.sql`: add belief_atoms to Supabase Realtime publication
@@ -3504,6 +3539,7 @@ Dependencies:
 ### 16.4 Week 5–6: Memgraph + Graph Builder
 
 **Data tasks:**
+
 - [ ] Deploy Memgraph on Fly.io with persistent volume; apply index creation Cypher
 - [ ] Implement `GraphBuilderWorker` (Fly.io worker): reads Postgres graph tables, writes to Memgraph
 - [ ] Implement AddressNode and TransactionNode upsert in Memgraph
@@ -3518,6 +3554,7 @@ Dependencies:
 ### 16.5 Week 7–8: Reproducibility Pack + Chain of Custody
 
 **Data tasks:**
+
 - [ ] Write `supabase/migrations/20260616000010_documents.sql`: case_documents, extracted_entities
 - [ ] Write `supabase/migrations/20260616000011_coc.sql`: chain_of_custody_records (with restrictive RLS for no-update)
 - [ ] Write `supabase/migrations/20260616000012_reports.sql`: reports, reproducibility_packs
@@ -3667,23 +3704,23 @@ COLD_STORAGE_BUCKET=chain-data
 
 ## Appendix B — Locked Decision Cross-Reference
 
-| Decision ID | Where applied in this document |
-|---|---|
-| **G10** (transaction-centric graph) | Section 3 (Memgraph edges), Section 4.4 (graph tables + CHECK constraint) |
-| **F23** (cache layer) | Section 7 entirely, Section 4.7 (cache_entries RLS) |
-| **F24** (UTXO clustering) | Section 10 entirely, Section 4.10 |
-| **F25** (personal attribution) | Section 4.11 (RLS with private/org/shared policies) |
-| **F29** (chain of custody) | Section 4.8, Section 9.6, Section 14.5 (dual-write) |
-| **B1** (Belief State) | Section 6 entirely, Section 4.5 (append-only RLS), Section 12.1 (Realtime) |
-| **B2** (tiered determinism) | Section 1 (tier labels on CanonicalTransaction), Section 6 (tier field) |
-| **B3** (Reproducibility Pack) | Section 8 entirely |
-| **B8** (encryption) | Section 4.13, Section 9.4 |
-| **v0.3 BYOK** | Section 1 (capability router), Section 4.6 (provider tables + RLS) |
-| **v0.5 F2** (document storage) | Section 9 entirely |
-| **G1** (court-grade requires human signoff) | Section 6.5 |
-| **G5** (path immutability) | Section 4.9 (trace_paths status constraint) |
-| **G22** (envelope encryption as v1 floor) | Section 4.13 |
-| **Supabase stack** | Sections 1, 2, 4, 5, 6, 7, 9, 11, 12, 13, 14, 15, 16 |
+| Decision ID                                 | Where applied in this document                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| **G10** (transaction-centric graph)         | Section 3 (Memgraph edges), Section 4.4 (graph tables + CHECK constraint)  |
+| **F23** (cache layer)                       | Section 7 entirely, Section 4.7 (cache_entries RLS)                        |
+| **F24** (UTXO clustering)                   | Section 10 entirely, Section 4.10                                          |
+| **F25** (personal attribution)              | Section 4.11 (RLS with private/org/shared policies)                        |
+| **F29** (chain of custody)                  | Section 4.8, Section 9.6, Section 14.5 (dual-write)                        |
+| **B1** (Belief State)                       | Section 6 entirely, Section 4.5 (append-only RLS), Section 12.1 (Realtime) |
+| **B2** (tiered determinism)                 | Section 1 (tier labels on CanonicalTransaction), Section 6 (tier field)    |
+| **B3** (Reproducibility Pack)               | Section 8 entirely                                                         |
+| **B8** (encryption)                         | Section 4.13, Section 9.4                                                  |
+| **v0.3 BYOK**                               | Section 1 (capability router), Section 4.6 (provider tables + RLS)         |
+| **v0.5 F2** (document storage)              | Section 9 entirely                                                         |
+| **G1** (court-grade requires human signoff) | Section 6.5                                                                |
+| **G5** (path immutability)                  | Section 4.9 (trace_paths status constraint)                                |
+| **G22** (envelope encryption as v1 floor)   | Section 4.13                                                               |
+| **Supabase stack**                          | Sections 1, 2, 4, 5, 6, 7, 9, 11, 12, 13, 14, 15, 16                       |
 
 ---
 
@@ -3691,29 +3728,29 @@ COLD_STORAGE_BUCKET=chain-data
 
 All tables with RLS enabled and the primary policy type:
 
-| Table | Isolation level | Primary policy |
-|---|---|---|
-| `users` | User-self + admin-agency | `id = auth.uid()` or same agency admin |
-| `cases` | Agency-scoped + restricted | `agency_id = current_agency_id()` |
-| `case_access` | Agency-scoped | Case in same agency |
-| `iocs` | Case-scoped | `user_has_case_access(case_id)` |
-| `address_nodes` | Case-scoped | `user_has_case_access(case_id)` |
-| `transaction_nodes` | Case-scoped | `user_has_case_access(case_id)` |
-| `graph_edges` | Case-scoped | `user_has_case_access(case_id)` |
-| `belief_atoms` | Case-scoped read; service_role write | `user_has_case_access(case_id)` |
-| `provider_definitions` | Public read | `auth.uid() IS NOT NULL` |
-| `agency_provider_installs` | Agency-scoped | `agency_id = current_agency_id()` |
-| `cache_entries` | Scope-specific (4 policies) | See Section 7.4 |
-| `case_documents` | Case-scoped | `user_has_case_access(case_id)` |
-| `chain_of_custody_records` | Case-scoped | `user_has_case_access(case_id)` |
-| `utxo_clusters` | Case-scoped | `user_has_case_access(case_id)` |
-| `personal_attributions` | User-owned + sharing tiers | `attributor_id = auth.uid()` (private) |
-| `audit_log_entries` | Admin/supervisor read; restrictive no-delete | `agency_id = current_agency_id()` + role check |
-| `document_embeddings` | Case-scoped | `user_has_case_access(case_id)` |
-| `case_dek_refs` | Service role only | No SELECT policy for authenticated users |
+| Table                      | Isolation level                              | Primary policy                                 |
+| -------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| `users`                    | User-self + admin-agency                     | `id = auth.uid()` or same agency admin         |
+| `cases`                    | Agency-scoped + restricted                   | `agency_id = current_agency_id()`              |
+| `case_access`              | Agency-scoped                                | Case in same agency                            |
+| `iocs`                     | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `address_nodes`            | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `transaction_nodes`        | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `graph_edges`              | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `belief_atoms`             | Case-scoped read; service_role write         | `user_has_case_access(case_id)`                |
+| `provider_definitions`     | Public read                                  | `auth.uid() IS NOT NULL`                       |
+| `agency_provider_installs` | Agency-scoped                                | `agency_id = current_agency_id()`              |
+| `cache_entries`            | Scope-specific (4 policies)                  | See Section 7.4                                |
+| `case_documents`           | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `chain_of_custody_records` | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `utxo_clusters`            | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `personal_attributions`    | User-owned + sharing tiers                   | `attributor_id = auth.uid()` (private)         |
+| `audit_log_entries`        | Admin/supervisor read; restrictive no-delete | `agency_id = current_agency_id()` + role check |
+| `document_embeddings`      | Case-scoped                                  | `user_has_case_access(case_id)`                |
+| `case_dek_refs`            | Service role only                            | No SELECT policy for authenticated users       |
 
 ---
 
-*This document is one of eight discipline outputs for ChainSight v1.0. It incorporates the confirmed Supabase + Fly.io + GitHub stack for SaaS Blind v1, with On-Prem unchanged and a documented Phase 2 migration path to AWS RDS + S3 + EKS.*
+_This document is one of eight discipline outputs for ChainSight v1.0. It incorporates the confirmed Supabase + Fly.io + GitHub stack for SaaS Blind v1, with On-Prem unchanged and a documented Phase 2 migration path to AWS RDS + S3 + EKS._
 
-*Document version: 1.1.0 | Updated: 2026-06-16 | Supabase stack update incorporated.*
+_Document version: 1.1.0 | Updated: 2026-06-16 | Supabase stack update incorporated._

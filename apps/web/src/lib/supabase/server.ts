@@ -15,11 +15,23 @@ export async function createSupabaseServerClient() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
+        setAll: (
+          cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>,
+        ) => {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
+            cookiesToSet.forEach(
+              ({
+                name,
+                value,
+                options,
+              }: {
+                name: string;
+                value: string;
+                options?: Record<string, unknown>;
+              }) => {
+                cookieStore.set(name, value, options);
+              },
+            );
           } catch {
             // The `setAll` method was called from a Server Component. Server Components
             // cannot set cookies; this is fine because middleware refreshes the session.

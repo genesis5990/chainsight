@@ -31,12 +31,12 @@ declare module 'fastify' {
 
 export const authPlugin = fp(async (fastify) => {
   // Resolve JWKS URL — prefer explicit env var, else derive from Supabase URL.
-  const jwksUrl =
-    env.SUPABASE_JWKS_URL ?? new URL('/auth/v1/jwks', env.SUPABASE_URL).toString();
+  const jwksUrl = env.SUPABASE_JWKS_URL ?? new URL('/auth/v1/jwks', env.SUPABASE_URL).toString();
 
   const jwks = createRemoteJWKSet(new URL(jwksUrl));
 
-  fastify.decorateRequest('auth', null);
+  // Decorate with the proper Fastify v5 getter/setter shape.
+  fastify.decorateRequest('auth', undefined as never);
 
   fastify.addHook('onRequest', async (request) => {
     // Skip auth for public health endpoints
@@ -63,12 +63,10 @@ export const authPlugin = fp(async (fastify) => {
       // Supabase puts custom claims in app_metadata; some providers put them at top level.
       const appMetadata = (payload.app_metadata ?? {}) as Record<string, unknown>;
       const agencyId =
-        (appMetadata.agency_id as string | undefined) ??
-        (payload.agency_id as string | undefined);
-      const role =
-        ((appMetadata.role as string | undefined) ??
-          (payload.role as string | undefined) ??
-          'investigator') as 'investigator' | 'supervisor' | 'admin' | 'service';
+        (appMetadata.agency_id as string | undefined) ?? (payload.agency_id as string | undefined);
+      const role = ((appMetadata.role as string | undefined) ??
+        (payload.role as string | undefined) ??
+        'investigator') as 'investigator' | 'supervisor' | 'admin' | 'service';
 
       if (!agencyId) {
         request.log.warn({ userId }, 'Authenticated user has no agency_id claim');

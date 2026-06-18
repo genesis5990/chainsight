@@ -98,7 +98,7 @@ The investigator's options on an alert are:
 
 **C) Cross-agency deconfliction (consent-gated)**
 
-For agencies that opt in, deconfliction can extend beyond the agency tenant to a federated deconfliction network. Each agency runs its own ChainSight instance (or tenant); a privacy-preserving exchange checks whether any of *their* active cases touch addresses, txs, or entities in *your* case **without revealing the other agency's case details**.
+For agencies that opt in, deconfliction can extend beyond the agency tenant to a federated deconfliction network. Each agency runs its own ChainSight instance (or tenant); a privacy-preserving exchange checks whether any of _their_ active cases touch addresses, txs, or entities in _your_ case **without revealing the other agency's case details**.
 
 Technical approach: hashed/Bloom-filtered indicators exchanged through a federated index, with differential-privacy noise on aggregate statistics. When a match is found, the platform notifies both agencies that "an investigation in your jurisdiction overlaps with another agency's active matter — proceed to formal contact?" Neither agency learns the other's case content until they choose to engage.
 
@@ -106,12 +106,12 @@ This is the modern descendant of the EPIC + 314(b) phone-call protocol, structur
 
 ### 1.3 Integration with the pillars
 
-| Pillar | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Every ExternalInvestigatorEntry and DeconflictionAlert emits a BeliefAtom so the case's external-coordination posture is part of the record |
-| **Reproducibility (Pillar 2)** | Deconfliction history is part of the Reproducibility Pack — court can see exactly when and how parallel investigations were managed |
-| **BYOK Marketplace (Pillar 3)** | Optional connectors to FinCEN 314(b), Egmont Group exchange, EPIC, Interpol I-24/7 (BYOK where available) |
-| **PSR / Reporting** | Deconfliction posture appears in the standard report template's methodology disclosure section — courts increasingly ask "what did you do to coordinate with parallel investigators?" |
+| Pillar                          | Touchpoint                                                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**     | Every ExternalInvestigatorEntry and DeconflictionAlert emits a BeliefAtom so the case's external-coordination posture is part of the record                                           |
+| **Reproducibility (Pillar 2)**  | Deconfliction history is part of the Reproducibility Pack — court can see exactly when and how parallel investigations were managed                                                   |
+| **BYOK Marketplace (Pillar 3)** | Optional connectors to FinCEN 314(b), Egmont Group exchange, EPIC, Interpol I-24/7 (BYOK where available)                                                                             |
+| **PSR / Reporting**             | Deconfliction posture appears in the standard report template's methodology disclosure section — courts increasingly ask "what did you do to coordinate with parallel investigators?" |
 
 ### 1.4 What the investigator sees (practical)
 
@@ -261,7 +261,7 @@ What this means in practice:
 
 Switching backends is an admin operation: configure the new backend in the marketplace (using the same "easy as `.env`" entry flow from the API key addendum), set its scope, and new documents route there. **Existing documents stay where they are** unless explicitly migrated; the system supports live migration with a background job that copies-then-verifies before flipping the storage reference.
 
-The encryption layer is always platform-managed even when the backend is changed. Documents are encrypted with the case DEK *before* being written to any backend, so changing backends never decreases security.
+The encryption layer is always platform-managed even when the backend is changed. Documents are encrypted with the case DEK _before_ being written to any backend, so changing backends never decreases security.
 
 ### 2.6 What this gives investigators
 
@@ -401,13 +401,13 @@ This is the artifact that goes into evidence custody before trial. Same numbers,
 
 ### 3.7 Integration with the pillars
 
-| Pillar | Touchpoint |
-|---|---|
-| **Belief State** | Every frame is a structured query against the SBS — the presentation is literally a sequence of SBS reads, all reproducible |
-| **Reproducibility** | The presentation bundle is the Reproducibility Pack with a presentation layer on top; opposing counsel can reconstruct everything shown |
-| **BYOK Marketplace** | None during playback — the bundle is self-contained, no live provider calls. The frozen attribution snapshot is what's shown |
-| **PSR** | View C is the PSR module's observer mode |
-| **Math Service (G7)** | The accounting panel is a real-time read from the Math Service's precomputed case-level results |
+| Pillar                | Touchpoint                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State**      | Every frame is a structured query against the SBS — the presentation is literally a sequence of SBS reads, all reproducible             |
+| **Reproducibility**   | The presentation bundle is the Reproducibility Pack with a presentation layer on top; opposing counsel can reconstruct everything shown |
+| **BYOK Marketplace**  | None during playback — the bundle is self-contained, no live provider calls. The frozen attribution snapshot is what's shown            |
+| **PSR**               | View C is the PSR module's observer mode                                                                                                |
+| **Math Service (G7)** | The accounting panel is a real-time read from the Math Service's precomputed case-level results                                         |
 
 ---
 
@@ -422,57 +422,68 @@ This is also a Critic-Agent ally: when the AI detects "this looks like a peel ch
 ### 4.2 The patterns ChainSight recognizes (Phase 2 launch set)
 
 **Peel chains** — long sequences of transactions where each tx sends a small amount to one address (the "peel") and the bulk of the value to a new change address. Classic Bitcoin laundering pattern. Detected by:
+
 - Sequential txs with one consistent counterparty pattern
 - Geometric value decay across hops
 - Change-output addresses appearing only once
 - Temporal regularity (often automated, so tx intervals cluster)
 
 **Chain hopping** — moving funds across multiple blockchains to break visibility. Detected by:
+
 - Cross-chain bridge usage within a short time window
 - Multi-bridge chains (BTC → wBTC on ETH → bridged to BSC → bridged to TRX)
 - Value preservation across hops (signaling pass-through, not legitimate use)
 - Use of bridges with weak attribution (heuristic-matched, no message ID)
 
 **Token swap obfuscation** — converting between tokens repeatedly to break value continuity. Detected by:
+
 - Multiple swaps within a short time window
 - Round-trip swaps (USDT → ETH → USDT)
 - Swaps with abnormal slippage acceptance (paying to move, not to trade)
 - Use of low-liquidity pools (paying premium slippage for privacy)
 
 **Mixer entry/exit** — funds entering or leaving known mixing services. Detected by:
+
 - Direct interaction with known mixer contracts (Tornado Cash, Sinbad, ChipMixer historical, Wasabi/Whirlpool, etc.)
 - Temporal correlation between deposits and withdrawals across known mixer pools
 - Standard mixer denomination patterns (Tornado's 0.1/1/10/100 ETH pools)
 
 **CoinJoin participation** — Bitcoin-specific. Detected by transaction structure heuristics:
+
 - Equal-value outputs in coordinated transactions
 - Wasabi/Whirlpool/JoinMarket signature patterns
 - Participant clustering breaks at CoinJoin boundaries
 
 **Layered split-and-merge** — funds split across many addresses and re-merged at a downstream point. Detected by:
+
 - Fan-out followed by fan-in within a graph window
 - Roughly preserved total value across the layer
 - Synthetic dust additions to break amount-matching heuristics
 
 **Dusting** — small amounts sent to many addresses, then watching them coalesce. Detected by:
+
 - Outbound transactions to large numbers of addresses with abnormally small values
 - Follow-on consolidation patterns
 
 **Round-tripping through CEXs** — funds sent to an exchange and withdrawn to a different address to break on-chain attribution. Detected by:
+
 - Subpoena-confirmed deposit/withdrawal at the same VASP within a short window
 - Net-zero net flow at the VASP for that account
 - Amount preservation (minus exchange fees) suggesting pass-through, not trading
 
 **Bridge front-running / spoofing** — using bridge contracts in unusual sequences to confuse correlation. Detected by:
+
 - Multiple deposits to a bridge from related addresses within a short window
 - Mismatched src/dst values that suggest the heuristic-matcher might pick the wrong destination
 - Use of intent-based bridges (Across, Squid) in patterns that exploit relayer behavior
 
 **Time-decay laundering** — letting funds sit dormant before moving, to break temporal correlation heuristics. Detected by:
+
 - Long dormancy followed by sudden activity matching pre-dormancy value
 - Dormancy windows aligned with known forensic-tool refresh cycles
 
 **Smart-contract obfuscation** — moving funds through contracts whose only purpose is value pass-through. Detected by:
+
 - Newly deployed contracts with no public source
 - Single-purpose contracts (one function, called once, by one address)
 - Self-destruct patterns after value pass-through
@@ -534,15 +545,15 @@ Third, **patterns are evidentially powerful**. A report that says "the suspect e
 
 ### 4.5 Integration with the pillars
 
-| Pillar | Touchpoint |
-|---|---|
-| **Belief State** | Every ObfuscationFinding emits a BeliefAtom |
-| **Reproducibility** | Detector rule versions pinned in the Reproducibility Pack — opposing counsel can re-run the detector on the frozen chain data |
-| **BYOK Marketplace** | ML-based detectors may run as BYOK capabilities (some agencies will want their own models) or as platform-bundled models |
-| **PSR / Reports** | Findings inserted into report templates as a dedicated "Obfuscation methods identified" section |
-| **Canvas UX** | Affected spans rendered with the 🪤 icon and the dashed-boundary overlay |
-| **Court Mode (Feature 3)** | Findings are first-class frame candidates — "let me show you the peel chain" jumps to a curated view of the affected hops |
-| **Critic Agent (B5)** | Reviews every finding before it surfaces to the investigator; T3 ML detections require corroboration |
+| Pillar                         | Touchpoint                                                                                                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State**               | Every ObfuscationFinding emits a BeliefAtom                                                                                              |
+| **Reproducibility**            | Detector rule versions pinned in the Reproducibility Pack — opposing counsel can re-run the detector on the frozen chain data            |
+| **BYOK Marketplace**           | ML-based detectors may run as BYOK capabilities (some agencies will want their own models) or as platform-bundled models                 |
+| **PSR / Reports**              | Findings inserted into report templates as a dedicated "Obfuscation methods identified" section                                          |
+| **Canvas UX**                  | Affected spans rendered with the 🪤 icon and the dashed-boundary overlay                                                                 |
+| **Court Mode (Feature 3)**     | Findings are first-class frame candidates — "let me show you the peel chain" jumps to a curated view of the affected hops                |
+| **Critic Agent (B5)**          | Reviews every finding before it surfaces to the investigator; T3 ML detections require corroboration                                     |
 | **Ground Truth Flywheel (B7)** | Confirmed/dismissed findings train the detectors; weekly regression runs against canonical examples block deploys on accuracy regression |
 
 ---
@@ -561,13 +572,13 @@ These four features aren't independent. They reinforce each other:
 
 ## Build phasing
 
-| Phase | Additions from this addendum |
-|---|---|
-| **Phase 0** | Deconfliction tab data model; manual ExternalInvestigatorEntry CRUD; CaseDocument data model; document upload with platform-managed storage; storage backend abstraction with AWS S3 default |
-| **Phase 1** | Document Extraction Agent (subpoena returns + bank statements first); on-prem storage backend (MinIO, NFS); manual deconfliction tab UI; obfuscation detection v1 (peel chains, mixer entry/exit, basic chain hopping — rule-based detectors only) |
+| Phase       | Additions from this addendum                                                                                                                                                                                                                                                            |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0** | Deconfliction tab data model; manual ExternalInvestigatorEntry CRUD; CaseDocument data model; document upload with platform-managed storage; storage backend abstraction with AWS S3 default                                                                                            |
+| **Phase 1** | Document Extraction Agent (subpoena returns + bank statements first); on-prem storage backend (MinIO, NFS); manual deconfliction tab UI; obfuscation detection v1 (peel chains, mixer entry/exit, basic chain hopping — rule-based detectors only)                                      |
 | **Phase 2** | Auto-detected deconfliction within agency tenant; document types expansion (court orders, MLAT, victim statements); Present in Court mode with all four views; accounting-follows-the-frame panel; obfuscation detection v2 (CoinJoin, token-swap obfuscation, layered split-and-merge) |
-| **Phase 3** | Cross-agency deconfliction (federated, consent-gated); audio transcription for suspect interviews; obfuscation detection v3 (smart-contract obfuscation, time-decay, bridge front-running — ML-based detectors with Critic gating); Court Export Bundle with portable viewer |
-| **Phase 4** | Full federated deconfliction network with privacy-preserving exchange; full obfuscation detection library with quarterly catalog updates |
+| **Phase 3** | Cross-agency deconfliction (federated, consent-gated); audio transcription for suspect interviews; obfuscation detection v3 (smart-contract obfuscation, time-decay, bridge front-running — ML-based detectors with Critic gating); Court Export Bundle with portable viewer            |
+| **Phase 4** | Full federated deconfliction network with privacy-preserving exchange; full obfuscation detection library with quarterly catalog updates                                                                                                                                                |
 
 ---
 
@@ -593,4 +604,4 @@ Nine documents in `/home/user/workspace/`, all shared:
 6. `chainsight_v0_4_consolidated.md` — Locked decisions (v0.4)
 7. `chainsight_v0_4_canvas_ux_addendum.md` — Canvas UX (v0.4)
 8. `chainsight_v0_4_api_key_entry_addendum.md` — API key UX (v0.4)
-9. `chainsight_v0_5_addendum.md` *(this file)* — Deconfliction, Document Ingest, Court Mode, Obfuscation Detection (v0.5)
+9. `chainsight_v0_5_addendum.md` _(this file)_ — Deconfliction, Document Ingest, Court Mode, Obfuscation Detection (v0.5)

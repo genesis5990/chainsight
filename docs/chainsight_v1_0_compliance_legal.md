@@ -61,6 +61,7 @@ The roadmap is locked in writing as of Phase 0 (F42). Milestones are phase-bound
 The On-Premises Sovereign deployment is scoped separately as "customer-managed infrastructure" — the customer holds the equivalent controls in that deployment.
 
 **Prerequisites:**
+
 - Written information security policy and access control policy (Phase 0 deliverable — see Section 18)
 - Audit logging implemented and demonstrably append-only (Phase 0, already designed in v1.0 engineering: Postgres + S3 Object Lock)
 - Encryption architecture documented and implemented (Phase 0: per-agency envelope encryption with per-tenant DEKs)
@@ -86,6 +87,7 @@ The On-Premises Sovereign deployment is scoped separately as "customer-managed i
 **Scope:** Same as Type 1, conducted against the post-migration AWS infrastructure (not Fly.io/Supabase hosted). By the time the Type 2 observation period begins (Phase 3 start), the AWS migration must be complete and the stack must be stable. The observation period cannot begin on a stack the company is still actively migrating. Scope expands from Type 1 to include the full Phase 2–3 feature set: Supervisor Mode, cross-tenant deconfliction, BYOK provider routing, the training environment, retraction workflow, and the confidential computing pilot. GitHub Actions remains in scope as a change-management surface.
 
 **Prerequisites:**
+
 - SOC 2 Type 1 completed and no material control failures
 - Minimum 6 months of continuous operation under the documented controls
 - Formal change management process generating audit-ready evidence (change tickets, deployment records)
@@ -109,6 +111,7 @@ The On-Premises Sovereign deployment is scoped separately as "customer-managed i
 **Scope:** The complete ISMS: risk management, asset management, access control, cryptography, physical/environmental, operations, communications, supplier relationships, incident management, business continuity, compliance.
 
 **Prerequisites:**
+
 - SOC 2 Type 1 completed — there is approximately 60–70% overlap in documented controls; the SOC 2 work is leverageable
 - Formal ISMS scope statement
 - Risk assessment and Statement of Applicability (SoA) covering all ISO 27001 Annex A controls
@@ -131,6 +134,7 @@ The On-Premises Sovereign deployment is scoped separately as "customer-managed i
 **Why it matters:** Any US state or local law enforcement agency that uses ChainSight to process CJI — and the platform will process CJI the moment it ingests a case involving a CJIS-covered system (NCIC hits, FinCEN 314(a) data, etc.) — requires CJIS conformance from the vendor. Federal agencies may additionally require a CJIS audit before signing.
 
 **Key CJIS requirements relevant to ChainSight:**
+
 - Personnel security: fingerprint-based background checks for personnel with access to CJI. For a solo developer with access to production systems, this means the founder must pass a federal background check before any CJI is processed. This is non-negotiable and should be initiated in Phase 2 at the latest.
 - Multi-factor authentication: already designed (TOTP minimum, WebAuthn; v1.0 engineering Part 3)
 - Encryption in transit and at rest: already designed (envelope encryption, TLS)
@@ -156,6 +160,7 @@ The On-Premises Sovereign deployment is scoped separately as "customer-managed i
 **Scope:** The SaaS Blind deployment running on AWS GovCloud (or equivalent). On-Premises Sovereign does not go through FedRAMP — customers control their own ATO for on-prem deployments.
 
 **Prerequisites:**
+
 - SOC 2 Type 2 and ISO 27001 completed — substantial control overlap
 - AWS GovCloud (US-East/US-West) deployment operational — not Fly.io
 - A federal agency sponsor willing to sign the ATO. This is the critical dependency: FedRAMP requires a sponsoring agency to either issue an ATO directly or accept a JAB authorization. Finding the sponsor is the business development task; this should be the active pursuit from Phase 3 onward.
@@ -230,17 +235,17 @@ The On-Premises Sovereign deployment is scoped separately as "customer-managed i
 
 ### 1.3 Certification Investment Summary
 
-| Certification | Phase | Budget Range | Engineering Impact |
-|---|---|---|---|
-| SOC 2 Type 1 | End Phase 2 | $30K–$70K | Low — controls already designed |
-| SOC 2 Type 2 | End Phase 3 | $70K–$190K | Low — documentation + 6 months observation |
-| ISO 27001 | End Phase 3 | $70K–$140K | Low — leverages SOC 2 |
-| CJIS Conformance | Phase 3 | $30K–$60K | Medium — background checks, CJI routing architecture |
-| FedRAMP Moderate | Phase 4 | $500K–$2M | High — AWS GovCloud migration, SSP, 3PAO |
-| FedRAMP High | Post-Phase 4 | $500K–$1M | High — additional controls |
-| CMMC L2 | Phase 4 (if DoD) | $100K–$300K | Medium — overlaps with FedRAMP |
-| UK Cyber Essentials+ | Phase 4 (UK) | £5K–£15K | Low |
-| Common Criteria / IRAP | Post-Phase 4 | $500K–$2M | Very High |
+| Certification          | Phase            | Budget Range | Engineering Impact                                   |
+| ---------------------- | ---------------- | ------------ | ---------------------------------------------------- |
+| SOC 2 Type 1           | End Phase 2      | $30K–$70K    | Low — controls already designed                      |
+| SOC 2 Type 2           | End Phase 3      | $70K–$190K   | Low — documentation + 6 months observation           |
+| ISO 27001              | End Phase 3      | $70K–$140K   | Low — leverages SOC 2                                |
+| CJIS Conformance       | Phase 3          | $30K–$60K    | Medium — background checks, CJI routing architecture |
+| FedRAMP Moderate       | Phase 4          | $500K–$2M    | High — AWS GovCloud migration, SSP, 3PAO             |
+| FedRAMP High           | Post-Phase 4     | $500K–$1M    | High — additional controls                           |
+| CMMC L2                | Phase 4 (if DoD) | $100K–$300K  | Medium — overlaps with FedRAMP                       |
+| UK Cyber Essentials+   | Phase 4 (UK)     | £5K–£15K     | Low                                                  |
+| Common Criteria / IRAP | Post-Phase 4     | $500K–$2M    | Very High                                            |
 
 **Total pre-FedRAMP investment (through Phase 3):** $200K–$460K  
 **FedRAMP adds:** $500K–$2M  
@@ -266,7 +271,7 @@ This is an outline of provisions, not legal language. Outside counsel drafts the
 
 Standard definitions plus ChainSight-specific terms: "Agency," "Case Data," "Reproducibility Pack," "BYOK Provider," "Deployment Mode," "Anti-Feature Commitments," "Civil-Liberties Review Board," "Court-Grade." The definitions section is load-bearing — civil-rights commitments and liability caps depend on precisely what "Case Data" includes.
 
-*Outside counsel task:* Define "Case Data" carefully to include all investigator inputs, findings, attributions, reports, and case metadata, but to exclude billing counters and seat counts.
+_Outside counsel task:_ Define "Case Data" carefully to include all investigator inputs, findings, attributions, reports, and case metadata, but to exclude billing counters and seat counts.
 
 ---
 
@@ -278,7 +283,7 @@ Standard definitions plus ChainSight-specific terms: "Agency," "Case Data," "Rep
 - No sublicensing without prior written consent
 - Agency may run the platform for the benefit of joint task forces and partner agencies under written cooperation agreements — outside counsel should define the scope carefully
 
-*Outside counsel task:* Distinguish the On-Prem perpetual license from the SaaS subscription clearly. The perpetual license is a platform commitment from F44 and must survive vendor cessation.
+_Outside counsel task:_ Distinguish the On-Prem perpetual license from the SaaS subscription clearly. The perpetual license is a platform commitment from F44 and must survive vendor cessation.
 
 ---
 
@@ -289,7 +294,7 @@ Standard definitions plus ChainSight-specific terms: "Agency," "Case Data," "Rep
 - Customer warrants they will not use the platform for any purpose listed in the Anti-Feature Commitments (Section 8 of the MSA; see this document's Section 5)
 - Customer warrants that any investigator using the platform has appropriate clearance and legal authority for the cases they work
 
-*Non-negotiable:* The customer responsibility for legal use provision. ChainSight does not and cannot provide legal authority for any investigative action. This is architectural: the platform is a tool, not an investigative authority.
+_Non-negotiable:_ The customer responsibility for legal use provision. ChainSight does not and cannot provide legal authority for any investigative action. This is architectural: the platform is a tool, not an investigative authority.
 
 ---
 
@@ -301,7 +306,7 @@ Standard definitions plus ChainSight-specific terms: "Agency," "Case Data," "Rep
 - For SaaS Blind: data processing is subject to a Data Processing Addendum (DPA) that satisfies GDPR Article 28, UK DPA, and applicable US requirements
 - For On-Premises Sovereign: vendor does not process Case Data at all; customer is the sole data controller and processor
 
-*Outside counsel task:* Draft the DPA as a standalone exhibit to the MSA, covering all required GDPR, UK DPA, and state-law processor obligations. The DPA applies only to SaaS Blind.
+_Outside counsel task:_ Draft the DPA as a standalone exhibit to the MSA, covering all required GDPR, UK DPA, and state-law processor obligations. The DPA applies only to SaaS Blind.
 
 ---
 
@@ -327,7 +332,7 @@ Standard definitions plus ChainSight-specific terms: "Agency," "Case Data," "Rep
 - **Supabase compelled disclosure risk:** If Supabase receives a compelled disclosure demand (subpoena, court order, national security demand) targeting ChainSight customer data, Supabase will produce only the ciphertext it holds. The application-layer encryption means the ciphertext is not useful to the demanding party without the customer's KMS root key. The vendor commits to publishing this architectural fact in customer-facing documentation (Exhibit E) so customers understand it before signing
 - **GitHub compelled disclosure risk:** GitHub's source repository contains ChainSight source code, not Case Data. A subpoena to GitHub for ChainSight's repository would expose the source code (which is also available to On-Prem customers who triggered escrow release) but not any customer Case Data. This is disclosed here for completeness.
 
-*Outside counsel task:* Review Supabase's DPA and Terms of Service to confirm they permit the subprocessor relationship and envelope-encryption architecture described here. Review Fly.io's DPA. Confirm that GitHub's ToS and data processing terms are consistent with the CI/CD subprocessor role. Obtain signed DPAs from all three before the first SaaS Blind customer is onboarded.
+_Outside counsel task:_ Review Supabase's DPA and Terms of Service to confirm they permit the subprocessor relationship and envelope-encryption architecture described here. Review Fly.io's DPA. Confirm that GitHub's ToS and data processing terms are consistent with the CI/CD subprocessor role. Obtain signed DPAs from all three before the first SaaS Blind customer is onboarded.
 
 ---
 
@@ -341,7 +346,7 @@ A binding contractual provision, not just a report footer. This is the legal exp
 - The platform's methodology disclosures (published per F41) are incorporated by reference into the MSA as binding descriptions of the platform's capabilities and limitations
 - The customer acknowledges they have read and understood the methodology disclosures
 
-*Non-negotiable:* This provision exists specifically to withstand Daubert challenges and to clearly allocate responsibility for investigative judgments to the human investigators. It is both an integrity commitment and a liability management mechanism.
+_Non-negotiable:_ This provision exists specifically to withstand Daubert challenges and to clearly allocate responsibility for investigative judgments to the human investigators. It is both an integrity commitment and a liability management mechanism.
 
 ---
 
@@ -351,9 +356,9 @@ A binding contractual provision, not just a report footer. This is the legal exp
 - Exclusion of consequential, indirect, punitive, and special damages (with customary carve-outs)
 - Mutual limitation (both vendor and customer bound by the cap, with appropriate carve-outs for IP indemnification and data breach obligations)
 
-*Negotiation posture:* Government customers (especially federal) will push to remove or raise the cap. The 12-months-of-fees cap is a reasonable starting position. The vendor should not agree to uncapped liability, period. The methodology disclaimer in Section 6 is the companion protection: if the customer's investigative judgment led to a wrongful action, that is the customer's liability, not the vendor's.
+_Negotiation posture:_ Government customers (especially federal) will push to remove or raise the cap. The 12-months-of-fees cap is a reasonable starting position. The vendor should not agree to uncapped liability, period. The methodology disclaimer in Section 6 is the companion protection: if the customer's investigative judgment led to a wrongful action, that is the customer's liability, not the vendor's.
 
-*Outside counsel task:* Ensure the consequential damages exclusion is enforceable in the customer's jurisdiction. Some states (and the UK) have limitations on exclusion clauses in B2B contracts. Government contracts may require specific liability language under FAR or its state equivalents.
+_Outside counsel task:_ Ensure the consequential damages exclusion is enforceable in the customer's jurisdiction. Some states (and the UK) have limitations on exclusion clauses in B2B contracts. Government contracts may require specific liability language under FAR or its state equivalents.
 
 ---
 
@@ -363,7 +368,7 @@ A binding contractual provision, not just a report footer. This is the legal exp
 - Customer indemnifies vendor for any third-party claims arising from customer's use of the platform in violation of the AUP or applicable law
 - Standard carve-outs: indemnification does not apply if the infringement results from customer's modifications, use in combination with non-vendor software, or use in violation of the MSA
 
-*Practical consideration:* The BYOK architecture is deliberately designed so that third-party data providers (Chainalysis, TRM, etc.) have no IP claim against ChainSight arising from the data they provide to the customer. The customer's BYOK credentials mean the customer has a direct license from those providers. Outside counsel should confirm this architecture eliminates IP passthrough risk.
+_Practical consideration:_ The BYOK architecture is deliberately designed so that third-party data providers (Chainalysis, TRM, etc.) have no IP claim against ChainSight arising from the data they provide to the customer. The customer's BYOK credentials mean the customer has a direct license from those providers. Outside counsel should confirm this architecture eliminates IP passthrough risk.
 
 ---
 
@@ -373,7 +378,7 @@ A binding contractual provision, not just a report footer. This is the legal exp
 - Suspension is not a data destruction event — the customer retains access to their Case Data for export during any suspension period
 - Vendor must provide notice before suspension except in genuine emergency security events, and must provide notice within 24 hours of emergency suspension
 
-*Non-negotiable:* The "suspension is not data destruction" principle. Customer trust depends on this. Even if a customer is suspended for cause, destroying their case data would be a catastrophic breach of trust.
+_Non-negotiable:_ The "suspension is not data destruction" principle. Customer trust depends on this. Even if a customer is suspended for cause, destroying their case data would be a catastrophic breach of trust.
 
 ---
 
@@ -387,7 +392,7 @@ A binding contractual provision, not just a report footer. This is the legal exp
   - Vendor deletes customer data from vendor infrastructure within 30 days after the export window closes (with certification)
   - For SaaS Blind customers converting to On-Prem: export and migration support is a standard service
 
-*Outside counsel task:* Ensure the data export and deletion provisions satisfy GDPR Article 17 (right to erasure) and applicable state privacy laws. For government customers, coordinate with the DPA to ensure government records retention requirements are not inconsistent with termination data deletion.
+_Outside counsel task:_ Ensure the data export and deletion provisions satisfy GDPR Article 17 (right to erasure) and applicable state privacy laws. For government customers, coordinate with the DPA to ensure government records retention requirements are not inconsistent with termination data deletion.
 
 ---
 
@@ -411,7 +416,7 @@ For government customers, a separate exhibit addressing:
 - No-debarment representations
 - ITAR/EAR representations (see Section 19, OQ-6)
 
-*Outside counsel task:* The government contracting addendum requires a federal contracting attorney, not a general commercial attorney. Do not attempt to draft this without specialist counsel.
+_Outside counsel task:_ The government contracting addendum requires a federal contracting attorney, not a general commercial attorney. Do not attempt to draft this without specialist counsel.
 
 ---
 
@@ -465,7 +470,7 @@ Each report that uses a specific tracing methodology includes the applicable par
 
 **FIFO (First-In, First-Out)**
 
-> **FIFO Methodology Disclosure:** This analysis applies the First-In, First-Out (FIFO) methodology to commingled cryptocurrency transactions. Under FIFO, the earliest-received funds at an address are treated as the first to be disbursed. This methodology is recognized by the IRS (Revenue Ruling 2023-14 and Notice 2014-21), is commonly applied in US criminal forfeiture proceedings (see *United States v. Approximately 69,370 Bitcoin*, N.D. Cal. 2023), and aligns with the FIFO approach applied by UK courts where a traceable funds regime applies. FIFO will tend to attribute earlier-vintage, potentially higher-value funds to the defendant's proceeds. The investigation team selected FIFO because [case-specific rationale to be completed by investigator]. Alternative methodologies are presented in the Appendix for disclosure purposes.
+> **FIFO Methodology Disclosure:** This analysis applies the First-In, First-Out (FIFO) methodology to commingled cryptocurrency transactions. Under FIFO, the earliest-received funds at an address are treated as the first to be disbursed. This methodology is recognized by the IRS (Revenue Ruling 2023-14 and Notice 2014-21), is commonly applied in US criminal forfeiture proceedings (see _United States v. Approximately 69,370 Bitcoin_, N.D. Cal. 2023), and aligns with the FIFO approach applied by UK courts where a traceable funds regime applies. FIFO will tend to attribute earlier-vintage, potentially higher-value funds to the defendant's proceeds. The investigation team selected FIFO because [case-specific rationale to be completed by investigator]. Alternative methodologies are presented in the Appendix for disclosure purposes.
 
 ---
 
@@ -483,7 +488,7 @@ Each report that uses a specific tracing methodology includes the applicable par
 
 **Pari Passu**
 
-> **Pari Passu Methodology Disclosure:** This analysis applies the Pari Passu (pro rata) methodology. Under pari passu, all funds in a commingled account are treated as proportionally tainted: if 40% of the funds in an account came from an illicit source, then 40% of every outflow from that account is attributed to that source. Pari passu is the default methodology applied by UK courts in civil proceedings (*Barlow Clowes International Ltd v Vaughan* [1992] 4 All ER 22) and is increasingly applied in US civil forfeiture proceedings. Pari passu produces an intermediate result between FIFO and LIBR in most cases. The investigation team selected pari passu because [case-specific rationale].
+> **Pari Passu Methodology Disclosure:** This analysis applies the Pari Passu (pro rata) methodology. Under pari passu, all funds in a commingled account are treated as proportionally tainted: if 40% of the funds in an account came from an illicit source, then 40% of every outflow from that account is attributed to that source. Pari passu is the default methodology applied by UK courts in civil proceedings (_Barlow Clowes International Ltd v Vaughan_ [1992] 4 All ER 22) and is increasingly applied in US civil forfeiture proceedings. Pari passu produces an intermediate result between FIFO and LIBR in most cases. The investigation team selected pari passu because [case-specific rationale].
 
 ---
 
@@ -505,17 +510,17 @@ When a report is designated for use in a Daubert motion context (either to suppo
 
 > **Daubert/FRE 702 Technical Disclosure**
 >
-> In response to Federal Rules of Evidence 702 and the standards articulated in *Daubert v. Merrell Dow Pharmaceuticals* (509 U.S. 579, 1993) and its progeny, the undersigned expert and the ChainSight platform provide the following technical disclosures:
+> In response to Federal Rules of Evidence 702 and the standards articulated in _Daubert v. Merrell Dow Pharmaceuticals_ (509 U.S. 579, 1993) and its progeny, the undersigned expert and the ChainSight platform provide the following technical disclosures:
 >
-> (1) *Theory or technique:* The analysis in this report employs blockchain transaction tracing methodologies that are documented in the public literature, applied consistently in this field, and implemented in the ChainSight platform's published methodology disclosure.
+> (1) _Theory or technique:_ The analysis in this report employs blockchain transaction tracing methodologies that are documented in the public literature, applied consistently in this field, and implemented in the ChainSight platform's published methodology disclosure.
 >
-> (2) *Tested:* The platform's clustering heuristics, attribution algorithms, and accounting methodologies are subject to quarterly regression testing against documented ground-truth datasets. Testing results and false-positive rates are published quarterly. The Reproducibility Pack accompanying this report enables independent retesting.
+> (2) _Tested:_ The platform's clustering heuristics, attribution algorithms, and accounting methodologies are subject to quarterly regression testing against documented ground-truth datasets. Testing results and false-positive rates are published quarterly. The Reproducibility Pack accompanying this report enables independent retesting.
 >
-> (3) *Peer review and publication:* The heuristics used (UTXO common-input ownership, change-output detection, FIFO/LIFO/LIBR/pari passu/rolling charge accounting) are methods documented in the peer-reviewed literature (see Citations). The platform's implementation follows publicly disclosed methodology.
+> (3) _Peer review and publication:_ The heuristics used (UTXO common-input ownership, change-output detection, FIFO/LIFO/LIBR/pari passu/rolling charge accounting) are methods documented in the peer-reviewed literature (see Citations). The platform's implementation follows publicly disclosed methodology.
 >
-> (4) *Known or potential error rate:* False-positive rates for each heuristic used in this analysis are stated in the Methodology Details section and are publicly published. The cumulative confidence interval for the overall trace is stated in the Executive Summary.
+> (4) _Known or potential error rate:_ False-positive rates for each heuristic used in this analysis are stated in the Methodology Details section and are publicly published. The cumulative confidence interval for the overall trace is stated in the Executive Summary.
 >
-> (5) *General acceptance:* Blockchain transaction tracing using the methodologies identified herein is accepted and routinely applied by investigators and forensic experts in US federal criminal proceedings. The platform's approach is consistent with methodologies applied by Chainalysis, TRM Labs, and Elliptic, all of which have been accepted in federal courts.
+> (5) _General acceptance:_ Blockchain transaction tracing using the methodologies identified herein is accepted and routinely applied by investigators and forensic experts in US federal criminal proceedings. The platform's approach is consistent with methodologies applied by Chainalysis, TRM Labs, and Elliptic, all of which have been accepted in federal courts.
 
 ---
 
@@ -528,6 +533,7 @@ The civil-liberties architecture is not a marketing commitment. It is the operat
 ### 4.2 Annual Methodology Audit Framework
 
 **What gets audited:**
+
 - UTXO common-input heuristics (CIH): rules, thresholds, exception handling
 - Change-output detection: algorithms, confidence assignments
 - Obfuscation detectors: peel-chain, mixer attribution, dusting attack detection
@@ -536,6 +542,7 @@ The civil-liberties architecture is not a marketing commitment. It is the operat
 - Watcher rule evaluation engine: does the watcher system enable dragnet behavior? Are all watchers case-bound?
 
 **Audit methodology:**
+
 1. External auditor receives a copy of the full methodology documentation, the open-source portions of the implementation, and anonymized test datasets
 2. Auditor attempts to reproduce published false-positive rates using the provided methodology
 3. Auditor tests for disparate impact across the following dimensions: jurisdiction (US vs. non-US addresses), chain (Bitcoin vs. Ethereum vs. Solana), address type (exchange, DeFi, privacy-coin adjacent), and temporal cohort (pre-2023 vs. post-2023 transactions)
@@ -543,12 +550,14 @@ The civil-liberties architecture is not a marketing commitment. It is the operat
 5. Auditor produces a written report; ChainSight produces a public response
 
 **Auditor selection criteria:**
+
 - Independent of ChainSight commercially
 - Demonstrable experience in either algorithmic fairness auditing, digital forensics, or civil-liberties research
 - Acceptable candidates: academic research groups (MIT Digital Currency Initiative, Stanford Center for Internet and Society, Berkman Klein Center), specialized audit firms (Algorithm Audit, BABL AI, Parity Consulting), or civil-liberties organizations with technical capacity (EFF, ACLU's Technology and Liberty Project)
 - The CLRB (see 4.4) approves the auditor selection annually
 
 **Publication standard:**
+
 - Full audit report published within 90 days of completion, with redactions only for security-sensitive implementation details (e.g., specific detection thresholds that would help bad actors evade detection)
 - The redaction log is published separately so the public can assess the extent of redaction
 - ChainSight's response to findings is published simultaneously
@@ -559,15 +568,15 @@ The civil-liberties architecture is not a marketing commitment. It is the operat
 
 The platform publishes quarterly reports on measured false-positive rates for each heuristic, compared to published targets.
 
-| Detector / Heuristic | Public FPR Target | Reporting Frequency | Remediation Trigger |
-|---|---|---|---|
-| CIH clustering (UTXO) | < 1% | Quarterly | Exceeding 1.5% triggers remediation within 60 days |
-| Change-output detection | < 5% | Quarterly | Exceeding 7.5% triggers remediation within 60 days |
-| Mixer attribution | < 0.5% | Quarterly | Exceeding 0.75% triggers remediation within 45 days |
-| Sanctions-list matching | < 0.1% | Quarterly | Any breach triggers immediate review |
-| Peel-chain detection | < 3% | Quarterly | Exceeding 4.5% triggers remediation within 60 days |
-| ML-based attribution (T3) | < 2% | Quarterly | Exceeding 3% triggers remediation within 60 days |
-| AI-generated path suggestions | < 5% | Quarterly | Exceeding 7.5% triggers remediation within 60 days |
+| Detector / Heuristic          | Public FPR Target | Reporting Frequency | Remediation Trigger                                 |
+| ----------------------------- | ----------------- | ------------------- | --------------------------------------------------- |
+| CIH clustering (UTXO)         | < 1%              | Quarterly           | Exceeding 1.5% triggers remediation within 60 days  |
+| Change-output detection       | < 5%              | Quarterly           | Exceeding 7.5% triggers remediation within 60 days  |
+| Mixer attribution             | < 0.5%            | Quarterly           | Exceeding 0.75% triggers remediation within 45 days |
+| Sanctions-list matching       | < 0.1%            | Quarterly           | Any breach triggers immediate review                |
+| Peel-chain detection          | < 3%              | Quarterly           | Exceeding 4.5% triggers remediation within 60 days  |
+| ML-based attribution (T3)     | < 2%              | Quarterly           | Exceeding 3% triggers remediation within 60 days    |
+| AI-generated path suggestions | < 5%              | Quarterly           | Exceeding 7.5% triggers remediation within 60 days  |
 
 **Measurement methodology:** Against the ground-truth datasets maintained by the B7 flywheel (v0.2, Phase 2+), supplemented by confirmed case outcomes as they become available. The measurement methodology itself is published.
 
@@ -580,6 +589,7 @@ The platform publishes quarterly reports on measured false-positive rates for ea
 **Purpose:** The CLRB provides independent civil-liberties oversight of platform features with potential civil-rights impact. It has real authority, not advisory status alone.
 
 **Composition (5–7 members):**
+
 - One representative from a civil-liberties organization (ACLU, EFF, Brennan Center for Justice, or equivalent). Must be an organization with active litigation or advocacy experience in law enforcement technology.
 - One academic with published research in algorithmic fairness, criminal justice technology, or civil rights law. Appointment requires CV review by the other members.
 - One current or former federal judge, magistrate, or criminal defense attorney with federal experience. Provides the judicial process perspective.
@@ -590,6 +600,7 @@ The platform publishes quarterly reports on measured false-positive rates for ea
 **Compensation:** CLRB members receive a stipend for their time. The stipend is disclosed publicly. Members do not hold equity or advisory shares in ChainSight.
 
 **Authority:**
+
 - The CLRB reviews and may veto new features before release in the following categories: (a) new attribution heuristics or ML models; (b) new watcher rule capabilities; (c) any feature that approaches the anti-feature commitment lines; (d) changes to the false-positive rate targets
 - Veto requires a majority vote of CLRB members
 - ChainSight may appeal a veto to an independent arbitrator once; the arbitrator's decision is final
@@ -599,6 +610,7 @@ The platform publishes quarterly reports on measured false-positive rates for ea
 **Meeting cadence:** Quarterly scheduled meetings. Emergency meetings convened within 10 business days upon CLRB request.
 
 **Independence mechanisms:**
+
 - CLRB members may not be employed by or receive material compensation from ChainSight or any of its major commercial customers
 - ChainSight funds the CLRB but cannot unilaterally disband it; dissolution requires a shareholder vote or unanimous CLRB consent
 - CLRB minutes and voting records are public within 30 days of each meeting (with redaction only for non-public security matters)
@@ -608,27 +620,29 @@ The platform publishes quarterly reports on measured false-positive rates for ea
 ### 4.5 Adversarial Testing Program
 
 **Red team scope:**
+
 - Annually, a dedicated external security firm with civil-liberties expertise attempts to use the platform to produce predictive policing outputs, demographic correlation results, or mass surveillance scenarios
 - The red team also probes for traditional security vulnerabilities relevant to the platform's sensitive data
 - Results are provided to ChainSight and to the CLRB, with a public summary published in the annual audit
 
 **Bug bounty for methodology issues:**
+
 - Separate from the security bug bounty program
 - Researchers who identify methodology behaviors that produce demographically disparate results, approximate banned features, or produce systematic false positives are eligible for public acknowledgment and a methodology bounty
 - Coordinated disclosure: researcher notifies ChainSight; ChainSight has 90 days to remediate; then full disclosure
 
 ### 4.6 Phase Commitments for F41
 
-| Deliverable | Phase |
-|---|---|
-| Anti-feature commitments published | Phase 0 |
-| Methodology disclaimer in all reports | Phase 0 |
-| CLRB charter documented | Phase 0 |
-| CLRB convened | Phase 2 |
-| First external methodology audit | End Phase 3 |
-| First annual Transparency Report | End Phase 3 |
-| Quarterly FPR publication begins | Phase 2 (when ground-truth measurement is operational) |
-| Adversarial testing program | Annual from Phase 3 |
+| Deliverable                           | Phase                                                  |
+| ------------------------------------- | ------------------------------------------------------ |
+| Anti-feature commitments published    | Phase 0                                                |
+| Methodology disclaimer in all reports | Phase 0                                                |
+| CLRB charter documented               | Phase 0                                                |
+| CLRB convened                         | Phase 2                                                |
+| First external methodology audit      | End Phase 3                                            |
+| First annual Transparency Report      | End Phase 3                                            |
+| Quarterly FPR publication begins      | Phase 2 (when ground-truth measurement is operational) |
+| Adversarial testing program           | Annual from Phase 3                                    |
 
 ---
 
@@ -644,9 +658,9 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > ChainSight will not implement, ship, or enable any feature that generates suspicion scores, risk assessments, or investigative leads for an address, entity, or person based on behavioral patterns alone, without a documented investigative predicate for a specific past crime. Every Watcher rule in the platform requires a case_id field populated with a specific active case. There is no "monitor this address for suspicious behavior in general" without a case context.
 
-*MSA language:* "Vendor represents and warrants that the Platform does not and will not include any feature that generates suspicion assessments for blockchain addresses, entities, or associated persons in the absence of a documented specific investigative predicate. Customer's use of the Platform for purposes other than the investigation of specific past financial crimes or specific regulatory violations is a material breach of this Agreement."
+_MSA language:_ "Vendor represents and warrants that the Platform does not and will not include any feature that generates suspicion assessments for blockchain addresses, entities, or associated persons in the absence of a documented specific investigative predicate. Customer's use of the Platform for purposes other than the investigation of specific past financial crimes or specific regulatory violations is a material breach of this Agreement."
 
-*CI enforcement:* Any route or API endpoint that accepts a watch or monitor instruction without a case_id fails the anti-feature test. The test suite validates the enforcement at the data-model level (the WatcherRule schema requires case_id: uuid, non-nullable, foreign-keyed to an active Case).
+_CI enforcement:_ Any route or API endpoint that accepts a watch or monitor instruction without a case_id fails the anti-feature test. The test suite validates the enforcement at the data-model level (the WatcherRule schema requires case_id: uuid, non-nullable, foreign-keyed to an active Case).
 
 ---
 
@@ -654,9 +668,9 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > ChainSight will not implement, ship, or enable any feature that surfaces, scores, or correlates on-chain address activity with demographic, geographic (below the national jurisdiction level), political, religious, or other protected-class signals. The platform traces transactions, not people. Attribution links on-chain addresses to named entities only through documented, evidence-based means — not through demographic inference.
 
-*MSA language:* "The Platform does not and will not incorporate demographic, geographic at the sub-national level, political, religious, racial, ethnic, or other protected-class signals into any analytical output, attribution, scoring, or suggestion feature. Any Customer use that relies on or encourages such correlation is a material breach."
+_MSA language:_ "The Platform does not and will not incorporate demographic, geographic at the sub-national level, political, religious, racial, ethnic, or other protected-class signals into any analytical output, attribution, scoring, or suggestion feature. Any Customer use that relies on or encourages such correlation is a material breach."
 
-*CI enforcement:* Data schema validation: no field in the attribution, suggestion, or watcher models may accept or store demographic proxies. Model card review for any T3 model includes a bias audit confirming absence of demographic correlation in training features.
+_CI enforcement:_ Data schema validation: no field in the attribution, suggestion, or watcher models may accept or store demographic proxies. Model card review for any T3 model includes a bias audit confirming absence of demographic correlation in training features.
 
 ---
 
@@ -664,7 +678,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > ChainSight will not implement any feature that enables monitoring of all addresses in a jurisdiction, chain, or protocol without individualized case context. There is no "watch all Ethereum activity in California" mode.
 
-*MSA language:* "Vendor represents that the Platform does not include bulk-monitoring capabilities targeting geographic jurisdictions, chains, or protocols in the absence of a specific investigative predicate. Any Customer attempt to configure the Platform for bulk jurisdiction-level monitoring constitutes a material breach."
+_MSA language:_ "Vendor represents that the Platform does not include bulk-monitoring capabilities targeting geographic jurisdictions, chains, or protocols in the absence of a specific investigative predicate. Any Customer attempt to configure the Platform for bulk jurisdiction-level monitoring constitutes a material breach."
 
 ---
 
@@ -672,7 +686,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > Every Watcher in the platform requires a case context with a documented investigative predicate. Watchers that fire on addresses not already part of an active case generate deconfliction opportunities, not new investigations.
 
-*MSA language:* Incorporated in Commitment 1 and Commitment 3 provisions.
+_MSA language:_ Incorporated in Commitment 1 and Commitment 3 provisions.
 
 ---
 
@@ -680,7 +694,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > The platform's detectors fire on patterns confirmed against documented ground-truth cases. The AI does not speculate about novel attack typologies and present them as findings. Suggestions flagged as "investigative hypotheses" are always clearly labeled as T3 (probabilistic) and never as primary findings.
 
-*MSA language:* "The Platform's analytical outputs are based on recognized and validated methodologies. Vendor does not represent that AI-generated investigative suggestions constitute reliable or verified findings independent of investigator review and sign-off."
+_MSA language:_ "The Platform's analytical outputs are based on recognized and validated methodologies. Vendor does not represent that AI-generated investigative suggestions constitute reliable or verified findings independent of investigator review and sign-off."
 
 ---
 
@@ -688,7 +702,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > The platform is an investigative tool, not a financial services product. No feature that provides trading signals, portfolio optimization, tax-lot management for personal holdings, or personal wealth tracking will be added.
 
-*Rationale:* Conflict of interest with investigative integrity. An investigator whose platform also manages their personal portfolio has a structural temptation to bias their investigative work.
+_Rationale:_ Conflict of interest with investigative integrity. An investigator whose platform also manages their personal portfolio has a structural temptation to bias their investigative work.
 
 ---
 
@@ -696,9 +710,9 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > The vendor will never hold, receive, or manage customer encryption keys in any form. The BYOK and sovereign deployment models are absolute. There is no "let ChainSight hold your keys for convenience" option, not even temporarily, not even for on-boarding.
 
-*MSA language:* "Vendor represents that it does not and will not hold, receive, store, or manage Customer's KMS root keys or DEKs in cleartext form. Customer's KMS root key never leaves Customer's control."
+_MSA language:_ "Vendor represents that it does not and will not hold, receive, store, or manage Customer's KMS root keys or DEKs in cleartext form. Customer's KMS root key never leaves Customer's control."
 
-*CI enforcement:* The key management code path is subject to automated review; any commit that introduces a vendor-side key storage path fails the build.
+_CI enforcement:_ The key management code path is subject to automated review; any commit that introduces a vendor-side key storage path fails the build.
 
 ---
 
@@ -706,7 +720,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > Every byte of telemetry the platform collects is documented in the published Telemetry Disclosure. Opt-in toggles are real: if a customer turns off telemetry, the platform emits zero telemetry to the vendor. There are no "minimum telemetry required for service" carve-outs beyond billing counters (seat count, tier flag).
 
-*MSA language:* "Vendor will maintain a current Telemetry Disclosure document available to Customer, listing every data element transmitted from Customer's deployment to Vendor's systems. No telemetry not disclosed in the current Telemetry Disclosure will be collected without Customer's prior written consent."
+_MSA language:_ "Vendor will maintain a current Telemetry Disclosure document available to Customer, listing every data element transmitted from Customer's deployment to Vendor's systems. No telemetry not disclosed in the current Telemetry Disclosure will be collected without Customer's prior written consent."
 
 ---
 
@@ -714,7 +728,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > The vendor will not receive, aggregate, or re-sell Case Data in any form. The BYOK model means the vendor is not a party to the data provider relationships. In any future scenario where ChainSight offers a data brokerage service (vendor-negotiated bulk data deals passed to customers), this is done with full disclosure and explicit opt-in, with strict separation from Case Data.
 
-*MSA language:* "Vendor does not and will not sell, license, sublicense, transfer, or otherwise provide Customer's Case Data to any third party, including for the purpose of enriching third-party datasets or analytics products."
+_MSA language:_ "Vendor does not and will not sell, license, sublicense, transfer, or otherwise provide Customer's Case Data to any third party, including for the purpose of enriching third-party datasets or analytics products."
 
 ---
 
@@ -722,7 +736,7 @@ These commitments are locked per F41 and the v0.8 consolidated document Part 5. 
 
 > Every privacy guarantee in the platform architecture is technically enforceable by the customer through controls they own and operate. The vendor makes no privacy claim that requires the customer to take the vendor's word for it without technical verification.
 
-*MSA language:* "Vendor's privacy and security representations are backed by technically verifiable controls as described in Exhibit E [Security Architecture Summary]. Customer's right to verify these controls through independent audit is preserved, subject to reasonable scheduling and NDA requirements."
+_MSA language:_ "Vendor's privacy and security representations are backed by technically verifiable controls as described in Exhibit E [Security Architecture Summary]. Customer's right to verify these controls through independent audit is preserved, subject to reasonable scheduling and NDA requirements."
 
 ---
 
@@ -751,48 +765,50 @@ The founder's first call to a broker should happen in Phase 0, weeks 3–4. Insu
 
 **Errors and Omissions (E&O) / Professional Liability**
 
-*What it covers:* Claims that ChainSight's platform produced incorrect analysis that led to a harmful professional decision — e.g., a wrongful freeze, a flawed expert report that was excluded, or incorrect attribution that led to prosecution of the wrong person.
+_What it covers:_ Claims that ChainSight's platform produced incorrect analysis that led to a harmful professional decision — e.g., a wrongful freeze, a flawed expert report that was excluded, or incorrect attribution that led to prosecution of the wrong person.
 
-*Minimum coverage:*
+_Minimum coverage:_
+
 - Phase 0 (pre-revenue, pilot only): $2M per occurrence / $5M aggregate — some insurers won't write below $1M for software, but $2M/$5M is achievable for a pre-revenue company
 - Phase 2 (first paying customers): $5M per occurrence / $10M aggregate
 - Phase 3 (first government contracts): $10M per occurrence / $20M aggregate
 - Phase 4 (FedRAMP, federal LE): Re-evaluate; some government contracts specify minimum coverage
 
-*Trigger for increase:* Milestone — not calendar — based. Coverage increases when the customer count crosses 5, 25, and 100 paying customers, and when first government contract is signed.
+_Trigger for increase:_ Milestone — not calendar — based. Coverage increases when the customer count crosses 5, 25, and 100 paying customers, and when first government contract is signed.
 
-*Note on E&O for AI platforms:* Standard E&O policies increasingly include AI exclusions or limitations. Work with a broker who specializes in tech E&O and explicitly negotiate that AI-assisted analytical outputs are covered. The methodology disclaimer in the MSA (Section 6) and in every report is the companion legal structure — it reduces the vendor's legal exposure, but the insurance backstops what slips through.
+_Note on E&O for AI platforms:_ Standard E&O policies increasingly include AI exclusions or limitations. Work with a broker who specializes in tech E&O and explicitly negotiate that AI-assisted analytical outputs are covered. The methodology disclaimer in the MSA (Section 6) and in every report is the companion legal structure — it reduces the vendor's legal exposure, but the insurance backstops what slips through.
 
 ---
 
 **Cyber Liability**
 
-*What it covers:* Data breach response costs, regulatory fines (GDPR, state privacy laws), customer notification, forensic investigation, third-party liability arising from a breach.
+_What it covers:_ Data breach response costs, regulatory fines (GDPR, state privacy laws), customer notification, forensic investigation, third-party liability arising from a breach.
 
-*Minimum coverage:*
+_Minimum coverage:_
+
 - Phase 0: $5M per occurrence / $10M aggregate
 - Phase 2+: $10M per occurrence / $20M aggregate
 - Phase 4 (government): $20M per occurrence / $40M aggregate — some federal contracts may require higher
 
-*Critical consideration:* Cyber liability for a law enforcement-adjacent platform insures assets of extraordinary sensitivity (case data, suspect identities, victim PII, pending investigations). Insurers may have questions about the sovereign deployment model — specifically whether the vendor's architectural blindness reduces or increases their exposure. The vendor's architectural blindness (SaaS Blind) does reduce breach surface because the vendor cannot read Case Data, but the vendor is still a target for supply-chain attacks. Document this architecture clearly for the underwriter.
+_Critical consideration:_ Cyber liability for a law enforcement-adjacent platform insures assets of extraordinary sensitivity (case data, suspect identities, victim PII, pending investigations). Insurers may have questions about the sovereign deployment model — specifically whether the vendor's architectural blindness reduces or increases their exposure. The vendor's architectural blindness (SaaS Blind) does reduce breach surface because the vendor cannot read Case Data, but the vendor is still a target for supply-chain attacks. Document this architecture clearly for the underwriter.
 
 ---
 
 **Technology Professional Liability**
 
-*What it covers:* Claims arising from errors in the platform's software, including methodology disputes and defect claims. Often bundled with E&O but some underwriters separate them.
+_What it covers:_ Claims arising from errors in the platform's software, including methodology disputes and defect claims. Often bundled with E&O but some underwriters separate them.
 
-*Minimum coverage:* $5M per occurrence / $10M aggregate, increasing with Phase 3.
+_Minimum coverage:_ $5M per occurrence / $10M aggregate, increasing with Phase 3.
 
 ---
 
 **Directors and Officers (D&O)**
 
-*What it covers:* Personal liability of the company's officers and directors for management decisions, regulatory actions, investor claims.
+_What it covers:_ Personal liability of the company's officers and directors for management decisions, regulatory actions, investor claims.
 
-*When to bind:* Before taking any outside investment (seed, angel, or institutional). For a solo founder at Phase 0 with no outside investors, D&O can wait until the first funding round is imminent.
+_When to bind:_ Before taking any outside investment (seed, angel, or institutional). For a solo founder at Phase 0 with no outside investors, D&O can wait until the first funding round is imminent.
 
-*Minimum coverage:* $2M–$5M at seed stage. Scale with the company.
+_Minimum coverage:_ $2M–$5M at seed stage. Scale with the company.
 
 ---
 
@@ -804,15 +820,15 @@ Standard commercial liability. Required by most co-working spaces and office lea
 
 ### 6.3 Insurance Timeline Summary
 
-| Coverage | When to Bind | Initial Minimum |
-|---|---|---|
-| General Commercial Liability | Phase 0 Week 1 | $1M/$2M |
-| Cyber Liability | Phase 0 Week 3 (before any beta users) | $5M/$10M |
-| E&O / Professional Liability | Phase 0 Week 3 (before any beta users) | $2M/$5M |
-| Tech Professional Liability | Phase 0 Week 3 | $2M/$5M |
-| D&O | Before first outside investment | $2M/$5M |
+| Coverage                     | When to Bind                           | Initial Minimum |
+| ---------------------------- | -------------------------------------- | --------------- |
+| General Commercial Liability | Phase 0 Week 1                         | $1M/$2M         |
+| Cyber Liability              | Phase 0 Week 3 (before any beta users) | $5M/$10M        |
+| E&O / Professional Liability | Phase 0 Week 3 (before any beta users) | $2M/$5M         |
+| Tech Professional Liability  | Phase 0 Week 3                         | $2M/$5M         |
+| D&O                          | Before first outside investment        | $2M/$5M         |
 
-*Recommended broker:* Use a broker who specializes in tech company insurance, ideally with law-enforcement tech or legal-tech clients. Coalition, Corvus, and Cowbell are cyber-first. For E&O in the forensics or legal-tech space, a traditional tech broker (Woodruff Sawyer, Embroker, Founder Shield) with AI coverage experience is preferred.
+_Recommended broker:_ Use a broker who specializes in tech company insurance, ideally with law-enforcement tech or legal-tech clients. Coalition, Corvus, and Cowbell are cyber-first. For E&O in the forensics or legal-tech space, a traditional tech broker (Woodruff Sawyer, Embroker, Founder Shield) with AI coverage experience is preferred.
 
 ---
 
@@ -826,11 +842,12 @@ The platform needs four distinct types of legal counsel. These are not one engag
 
 **Engagement 1: General Corporate / Privacy / IP Counsel**
 
-*Role:* Company formation, IP ownership, employment agreements (for future hires), privacy law compliance (GDPR, state laws), open-source license management, the standard commercial MSA.
+_Role:_ Company formation, IP ownership, employment agreements (for future hires), privacy law compliance (GDPR, state laws), open-source license management, the standard commercial MSA.
 
-*When:* Phase 0 Week 1. Company formation and IP assignment happen before any code is written.
+_When:_ Phase 0 Week 1. Company formation and IP assignment happen before any code is written.
 
-*Specific deliverables:*
+_Specific deliverables:_
+
 - Company formation documents (Certificate of Incorporation, bylaws, initial stock issuance, IP assignment agreement — the founder assigns all relevant IP to the company)
 - Standard MSA draft from this document's skeleton
 - Privacy policy for the website and the platform
@@ -838,19 +855,20 @@ The platform needs four distinct types of legal counsel. These are not one engag
 - Open-source license review for all dependencies (ensure BYOK connector code uses appropriately licensed components)
 - GDPR Article 27 representative engagement planning (Phase 4)
 
-*Engagement letter requirements:* Flat-fee or capped engagement for formation; hourly for ongoing. Require explicit IP assignment and work-for-hire provisions. Require conflict-of-interest check (no existing clients in the competing forensics space).
+_Engagement letter requirements:_ Flat-fee or capped engagement for formation; hourly for ongoing. Require explicit IP assignment and work-for-hire provisions. Require conflict-of-interest check (no existing clients in the competing forensics space).
 
-*Target firms:* Cooley, Gunderson Dettmer, Fenwick & West, Wilson Sonsini — these are standard startup firms with strong IP practices. For a solo founder on a budget, a boutique tech/startup firm is appropriate at Phase 0.
+_Target firms:_ Cooley, Gunderson Dettmer, Fenwick & West, Wilson Sonsini — these are standard startup firms with strong IP practices. For a solo founder on a budget, a boutique tech/startup firm is appropriate at Phase 0.
 
 ---
 
 **Engagement 2: Federal Contracting Counsel**
 
-*Role:* Government contracting vehicles (GSA Schedule, SEWP, CIO-SP4, OASIS+), FAR/DFARS compliance, federal acquisition regulations, government MSA addendum, FedRAMP counsel.
+_Role:_ Government contracting vehicles (GSA Schedule, SEWP, CIO-SP4, OASIS+), FAR/DFARS compliance, federal acquisition regulations, government MSA addendum, FedRAMP counsel.
 
-*When:* Phase 3 — when the first federal agency relationship begins to formalize. Do not engage federal contracting counsel before there is a real federal opportunity, because the engagement is expensive and the work is not time-critical before Phase 3.
+_When:_ Phase 3 — when the first federal agency relationship begins to formalize. Do not engage federal contracting counsel before there is a real federal opportunity, because the engagement is expensive and the work is not time-critical before Phase 3.
 
-*Specific deliverables:*
+_Specific deliverables:_
+
 - Government contracting addendum to the MSA
 - GSA Schedule application strategy and support
 - Federal acquisition compliance review
@@ -858,46 +876,48 @@ The platform needs four distinct types of legal counsel. These are not one engag
 - CJIS conformance documentation review
 - ITAR/EAR opinion letter (see Section 19, OQ-6)
 
-*Engagement letter requirements:* Hourly with a retainer. Require the firm to identify specific government contracting attorneys (not generalists). Look for prior experience with tech platforms seeking initial GSA Schedule approval.
+_Engagement letter requirements:_ Hourly with a retainer. Require the firm to identify specific government contracting attorneys (not generalists). Look for prior experience with tech platforms seeking initial GSA Schedule approval.
 
-*Target firms:* Sheppard Mullin, DLA Piper, Jenner & Block, Arnold & Porter — all have strong federal contracting practices. Smaller boutique firms specializing in government contracts (Winstead, Crowell & Moring) may be more cost-effective.
+_Target firms:_ Sheppard Mullin, DLA Piper, Jenner & Block, Arnold & Porter — all have strong federal contracting practices. Smaller boutique firms specializing in government contracts (Winstead, Crowell & Moring) may be more cost-effective.
 
 ---
 
 **Engagement 3: Civil-Rights / Civil-Liberties Counsel**
 
-*Role:* The F41 civil-liberties architecture needs legal backing. This counsel reviews the anti-feature commitments, CLRB structure, and methodology framework for civil-rights law compliance and drafts the civil-rights provisions of the MSA.
+_Role:_ The F41 civil-liberties architecture needs legal backing. This counsel reviews the anti-feature commitments, CLRB structure, and methodology framework for civil-rights law compliance and drafts the civil-rights provisions of the MSA.
 
-*When:* Phase 1–2 — before the CLRB is convened. The counsel helps design the CLRB charter and attends the inaugural CLRB meeting.
+_When:_ Phase 1–2 — before the CLRB is convened. The counsel helps design the CLRB charter and attends the inaugural CLRB meeting.
 
-*Specific deliverables:*
+_Specific deliverables:_
+
 - Review of anti-feature commitments against Fourth Amendment case law, Fourteenth Amendment equal protection principles, and relevant civil-rights statutes
 - CLRB charter legal review and conflict-of-interest opinion
 - Customer responsibility for legal use provision drafting
 - Legal opinion on platform liability exposure under 42 U.S.C. § 1983 (civil rights statute) — if a customer misuses the platform to cause a civil-rights violation, what is ChainSight's exposure as the tool provider?
 - Review of the methodology disclaimer for legal sufficiency
 
-*Note on liability under § 1983:* This is a real exposure. If a law enforcement officer uses ChainSight to support a wrongful arrest or unconstitutional seizure, the victim may bring a § 1983 claim against the agency and potentially against the tool provider. The vendor's protection is: (a) the tool does not make arrests or seizures; (b) the customer responsibility for legal use clause places the legal authority decision squarely on the customer; (c) the methodology disclaimer separates technical conclusions from legal conclusions. Civil-rights counsel should opine on whether these protections are sufficient.
+_Note on liability under § 1983:_ This is a real exposure. If a law enforcement officer uses ChainSight to support a wrongful arrest or unconstitutional seizure, the victim may bring a § 1983 claim against the agency and potentially against the tool provider. The vendor's protection is: (a) the tool does not make arrests or seizures; (b) the customer responsibility for legal use clause places the legal authority decision squarely on the customer; (c) the methodology disclaimer separates technical conclusions from legal conclusions. Civil-rights counsel should opine on whether these protections are sufficient.
 
-*Target firms:* Law firms with civil-rights defense experience, not plaintiffs' firms. Latham & Watkins, Gibson Dunn, and Sidley Austin have both civil-rights and technology law practices. The ACLU's Technology and Liberty Project is a potential non-profit resource for the CLRB design, not for legal representation.
+_Target firms:_ Law firms with civil-rights defense experience, not plaintiffs' firms. Latham & Watkins, Gibson Dunn, and Sidley Austin have both civil-rights and technology law practices. The ACLU's Technology and Liberty Project is a potential non-profit resource for the CLRB design, not for legal representation.
 
 ---
 
 **Engagement 4: Litigation Counsel on Retainer**
 
-*Role:* Eventual subpoenas, government investigations, customer disputes, and expert witness support. This counsel is not engaged for specific work at Phase 0 — they are identified and a general retainer is established so that when a matter arises (and it will), the relationship is already in place.
+_Role:_ Eventual subpoenas, government investigations, customer disputes, and expert witness support. This counsel is not engaged for specific work at Phase 0 — they are identified and a general retainer is established so that when a matter arises (and it will), the relationship is already in place.
 
-*When:* Phase 2 — when the first paying customers are operational. Do not wait for a matter to arise.
+_When:_ Phase 2 — when the first paying customers are operational. Do not wait for a matter to arise.
 
-*Specific deliverables at retainer establishment:*
+_Specific deliverables at retainer establishment:_
+
 - Review of the discovery response posture (Section 15 of this document)
 - Advise on vendor-side subpoena response protocol
 - Review the platform's "architectural blindness defense" for legal sufficiency
 - Advise on customer notification before disclosure procedures
 
-*Engagement letter requirements:* Monthly retainer (even a small one, e.g., $2,000–$5,000/month) to establish the conflict-of-interest clearance and the relationship. Hourly rates for actual matter work, pre-agreed.
+_Engagement letter requirements:_ Monthly retainer (even a small one, e.g., $2,000–$5,000/month) to establish the conflict-of-interest clearance and the relationship. Hourly rates for actual matter work, pre-agreed.
 
-*Target firms:* Firms with litigation practices in both technology and federal law. A firm with prior experience in digital evidence matters is a plus but not essential — this counsel needs to understand the subpoena response posture, not the blockchain technology.
+_Target firms:_ Firms with litigation practices in both technology and federal law. A firm with prior experience in digital evidence matters is a plus but not essential — this counsel needs to understand the subpoena response posture, not the blockchain technology.
 
 ---
 
@@ -913,13 +933,14 @@ Federal agencies and most state/local agencies cannot write a purchase order dir
 
 **GSA Multiple Award Schedule (MAS) — Schedule IT 70 or SIN 54151**
 
-*What it is:* The General Services Administration's pre-competed contract vehicle. Being on GSA Schedule means federal agencies can buy directly from ChainSight using the GSA ordering procedures. This is the most broadly applicable federal vehicle and the prerequisite for most of the others.
+_What it is:_ The General Services Administration's pre-competed contract vehicle. Being on GSA Schedule means federal agencies can buy directly from ChainSight using the GSA ordering procedures. This is the most broadly applicable federal vehicle and the prerequisite for most of the others.
 
-*Who can use it:* All federal agencies, and many state/local governments (via the Cooperative Purchasing program).
+_Who can use it:_ All federal agencies, and many state/local governments (via the Cooperative Purchasing program).
 
-*What ChainSight becomes as a contracting partner:* A GSA Schedule holder with approved products and pricing. The agency issues a task order against the Schedule. ChainSight invoices the agency.
+_What ChainSight becomes as a contracting partner:_ A GSA Schedule holder with approved products and pricing. The agency issues a task order against the Schedule. ChainSight invoices the agency.
 
-*Application process:*
+_Application process:_
+
 1. Register in SAM.gov (System for Award Management) — this is required before any federal contracting
 2. Obtain a DUNS/UEI number (already required for SAM.gov)
 3. Complete eOffer application through GSA's system
@@ -927,39 +948,39 @@ Federal agencies and most state/local agencies cannot write a purchase order dir
 5. Negotiate pricing — GSA requires "most favored customer" pricing
 6. Approval typically takes 4–9 months from application
 
-*Timeline:* Begin Phase 3. Application submitted in Phase 3; approval expected in Phase 3–4 boundary.
+_Timeline:_ Begin Phase 3. Application submitted in Phase 3; approval expected in Phase 3–4 boundary.
 
-*Federal contracting attorney requirement:* Yes. GSA Schedule applications have pitfalls — pricing disclosure, Trade Agreements Act compliance (TAA), past performance documentation — that benefit materially from specialist guidance.
+_Federal contracting attorney requirement:_ Yes. GSA Schedule applications have pitfalls — pricing disclosure, Trade Agreements Act compliance (TAA), past performance documentation — that benefit materially from specialist guidance.
 
-*Cost to obtain:* $20,000–$50,000 in attorney fees; $0 in GSA fees. Ongoing compliance (Mass Modification processing, price updates) is minor ongoing work.
+_Cost to obtain:_ $20,000–$50,000 in attorney fees; $0 in GSA fees. Ongoing compliance (Mass Modification processing, price updates) is minor ongoing work.
 
 ---
 
 **SEWP (Solutions for Enterprise-Wide Procurement) V or VI**
 
-*What it is:* A NASA-administered GWAC (Government-Wide Acquisition Contract) for IT products and services. SEWP is widely used for technology purchases and provides streamlined ordering.
+_What it is:_ A NASA-administered GWAC (Government-Wide Acquisition Contract) for IT products and services. SEWP is widely used for technology purchases and provides streamlined ordering.
 
-*Who can use it:* All federal agencies.
+_Who can use it:_ All federal agencies.
 
-*When to pursue:* Phase 4. SEWP requires existing past performance with federal customers — not viable until Phase 3 government customers have validated the platform.
+_When to pursue:_ Phase 4. SEWP requires existing past performance with federal customers — not viable until Phase 3 government customers have validated the platform.
 
-*Process:* Apply to join a SEWP group through an existing SEWP prime contractor (many IT firms serve as primes). This is easier than a direct SEWP award.
+_Process:_ Apply to join a SEWP group through an existing SEWP prime contractor (many IT firms serve as primes). This is easier than a direct SEWP award.
 
 ---
 
 **CIO-SP4 (Chief Information Officer Solutions and Partners 4)**
 
-*What it is:* An NIH-administered GWAC for IT health and life sciences. Less directly relevant to blockchain forensics but potentially relevant if health-care financial crime work is pursued.
+_What it is:_ An NIH-administered GWAC for IT health and life sciences. Less directly relevant to blockchain forensics but potentially relevant if health-care financial crime work is pursued.
 
-*When to pursue:* Phase 4.
+_When to pursue:_ Phase 4.
 
 ---
 
 **OASIS+ (One Acquisition Solution for Integrated Services Plus)**
 
-*What it is:* A GSA-administered GWAC for professional services, including management consulting and IT services. More relevant if ChainSight evolves to include managed investigation services.
+_What it is:_ A GSA-administered GWAC for professional services, including management consulting and IT services. More relevant if ChainSight evolves to include managed investigation services.
 
-*When to pursue:* Phase 4 and beyond. Only relevant if the business model expands to services.
+_When to pursue:_ Phase 4 and beyond. Only relevant if the business model expands to services.
 
 ---
 
@@ -973,7 +994,7 @@ State and local law enforcement agencies — the primary Phase 2–3 market — 
 
 **OMNIA Partners:** A similar cooperative purchasing platform, particularly strong in law enforcement and public safety verticals.
 
-*Process for state/local vehicles:* These typically require responding to an RFP issued by a lead agency (e.g., one state issues the RFP, and then all states can use the resulting contract). Phase 3 timing; federal contracting counsel advises on priority.
+_Process for state/local vehicles:_ These typically require responding to an RFP issued by a lead agency (e.g., one state issues the RFP, and then all states can use the resulting contract). Phase 3 timing; federal contracting counsel advises on priority.
 
 ---
 
@@ -1032,18 +1053,20 @@ For On-Premises Sovereign customers, the license terms (Section 2.2, MSA Section
 - Update subscription gates access to new versions but does not revoke the right to run the current version
 - The perpetual right survives: (a) vendor bankruptcy; (b) vendor acquisition; (c) product discontinuation; (d) customer's non-renewal of support
 
-*Legal instrument:* This is a license grant, not a SaaS subscription. Outside counsel drafts it as a true perpetual license with a clear definition of what "perpetual right to use" means in the context of containerized software (the license runs with the customer's deployment, not with the vendor's infrastructure).
+_Legal instrument:_ This is a license grant, not a SaaS subscription. Outside counsel drafts it as a true perpetual license with a clear definition of what "perpetual right to use" means in the context of containerized software (the license runs with the customer's deployment, not with the vendor's infrastructure).
 
 ### 9.5 Source-Code Escrow Program
 
 **For:** Agency and Classified tier customers.
 
 **Escrow agent options:**
+
 - Iron Mountain Intellectual Property Management — the market leader for source code escrow in enterprise software
 - NCC Group Escrow Services — specialist with government and financial services experience
 - Eide Bailly (for smaller-scale arrangements)
 
 **What goes into escrow:**
+
 - Complete source code as of the most recent release
 - Build instructions and all tooling necessary to build and deploy from source
 - Configuration documentation for all dependencies
@@ -1051,17 +1074,20 @@ For On-Premises Sovereign customers, the license terms (Section 2.2, MSA Section
 - Updated within 30 days of each major release
 
 **Triggering events for release to customer:**
+
 1. Vendor bankruptcy or dissolution
 2. Vendor's failure to maintain the product for more than 12 consecutive months (measured by absence of commercially reasonable maintenance releases, security patches, or support)
 3. Vendor acquisition by an entity that the customer's jurisdictional law identifies as a foreign adversary (subject to dispute resolution under the MSA)
 4. Vendor's material, uncured breach of the MSA
 
 **Scope of release license:**
+
 - Customer may use the released source to operate and maintain their existing deployment
 - Customer may engage contractors to maintain the software
 - Customer may not resell, sublicense, or create derivative products for commercial sale
 
 **Customer-funded community fork option:**
+
 - If multiple customers receive simultaneous escrow release (e.g., vendor bankruptcy), they may collectively fund a community fork
 - The community fork is permitted under the release license for the collective's own operational use
 - Commercial redistribution of the fork requires negotiation with any surviving IP holders
@@ -1081,21 +1107,25 @@ Every release binary is reproducibly buildable from public source. Any customer,
 ### 10.2 Implementation Architecture
 
 **Reproducible builds:**
+
 - The build process is deterministic: given the same source, the same build toolchain versions, and the same environment, the output binary is bit-for-bit identical
 - This is achieved by: pinning all build tool versions, eliminating timestamps from build outputs, normalizing file ordering, and using hermetic builds (no filesystem state bleeds between builds)
 - The build system (GitHub Actions + Docker) is configured for reproducibility and the configuration is public
 
 **Signing:**
+
 - Every release binary is signed with the vendor's release signing key
 - The signing key's public key is committed to a transparency log
 - The signing certificate chain is published and auditable
 
 **Sigstore integration:**
+
 - All release artifacts are signed using Sigstore (cosign), following the keyless signing workflow
 - Sigstore's Rekor transparency log receives the signature record, creating a public, append-only record of every signature event
 - The Sigstore OIDC workflow ties the signature to the GitHub Actions workflow that produced it, enabling "the binary was produced by this specific workflow run from this specific commit"
 
 **Transparency log:**
+
 - Every release event generates a Rekor entry containing: the binary's SHA-256 digest, the source commit hash, the build workflow URL, and the signing certificate
 - The Rekor entry is publicly accessible and independently verifiable
 - The customer can verify: (a) their binary's digest matches the Rekor entry; (b) the Rekor entry's source commit is the published source; (c) the build workflow is the official vendor workflow
@@ -1131,28 +1161,32 @@ This documentation is shipped with every release and is linked from the CLRB-app
 
 Federal Rule of Evidence 702 (and its state equivalents) requires that expert testimony based on scientific or technical analysis be: (1) based on sufficient facts or data; (2) the product of reliable principles and methods; (3) the product of reliable application of the methods to the facts of the case.
 
-*Daubert v. Merrell Dow Pharmaceuticals* (509 U.S. 579, 1993) provides the four-factor framework: (1) testability; (2) peer review and publication; (3) known or potential error rate; (4) general acceptance.
+_Daubert v. Merrell Dow Pharmaceuticals_ (509 U.S. 579, 1993) provides the four-factor framework: (1) testability; (2) peer review and publication; (3) known or potential error rate; (4) general acceptance.
 
 The platform is designed from the ground up to satisfy all four Daubert factors and all three FRE 702 requirements. This section specifies how.
 
 ### 11.2 How the Platform Produces Daubert-Survivable Output
 
 **Testability:**
+
 - The Reproducibility Pack enables independent retesting. Any party who receives a Pack can re-run the analysis on their own hardware. The replay.sh script produces bit-for-bit identical output.
 - T0 conclusions (cryptographic) are directly testable against the public blockchain — any party with blockchain access can independently verify the transaction data.
 - T1 and T2 conclusions are testable given the pinned rule versions and attribution snapshots included in the Pack.
 
 **Peer review and publication:**
+
 - The heuristics used (UTXO common-input ownership, change-output detection, FIFO/LIFO accounting) are documented in the public literature. The platform's methodology disclosures cite the relevant literature.
 - The platform publishes its false-positive rate measurements quarterly — this is itself a form of published performance data subject to external scrutiny.
 - The annual methodology audit (Section 4.2) is peer-equivalent review for the platform's methodology claims.
 
 **Known or potential error rate:**
+
 - Section 4.3 tables are the platform's published answer to this Daubert factor. Every heuristic has a public FPR target and a published quarterly measurement.
 - The cumulative confidence interval in every report provides a specific quantitative statement of the analysis's aggregate error bound.
 - The Tier system (T0–T3) communicates the determinism class of every conclusion.
 
 **General acceptance:**
+
 - Blockchain transaction tracing using the methodologies identified herein (UTXO CIH, FIFO, LIFO, pari passu, etc.) is routinely applied by Chainalysis, TRM Labs, and Elliptic, all of which have been accepted in federal and state courts. ChainSight's methodologies are consistent with the accepted field practice.
 - The platform is designed for consistency with accepted methodologies, not novelty.
 
@@ -1178,14 +1212,14 @@ For each report generated for court use, the platform automatically includes the
 
 The platform's cross-examination prep library (part of F26) is organized by methodology and by common defense arguments. Key entries that must be pre-loaded:
 
-| Defense Argument | Prepared Response Framework |
-|---|---|
-| "The AI made this analysis; you didn't" | Explain the Human-in-the-loop (G1) requirement: every court-grade finding required investigator sign-off with `signoff_id`. The AI assists; the investigator certifies. |
-| "Different runs produce different results" | Explain T0/T1/T2 determinism and the Reproducibility Pack. Offer to demonstrate replay on defense's own hardware. |
-| "The error rate is unacceptably high" | Cite published FPR targets and quarterly measurements. For this specific analysis, identify which heuristics were used and their FPRs. Distinguish the cumulative confidence interval from a simple error rate. |
-| "Blockchain data can be manipulated" | T0 data is cryptographically verified. Explain immutability of blockchain data and the difference between T0 and T3 conclusions. |
-| "The methodology was selected to benefit the prosecution" | Explain that methodology selection criteria are disclosed in the report, the platform presents results under all methodologies (per the appendix comparison), and the investigator's rationale for selection is documented. |
-| "You don't know who controlled the private key" | Acknowledge the technical limit: the platform traces fund flows, not physical possession of private keys. Attribution to a specific person requires additional evidence (exchange KYC, device forensics, etc.) documented in the attribution sources. |
+| Defense Argument                                          | Prepared Response Framework                                                                                                                                                                                                                           |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "The AI made this analysis; you didn't"                   | Explain the Human-in-the-loop (G1) requirement: every court-grade finding required investigator sign-off with `signoff_id`. The AI assists; the investigator certifies.                                                                               |
+| "Different runs produce different results"                | Explain T0/T1/T2 determinism and the Reproducibility Pack. Offer to demonstrate replay on defense's own hardware.                                                                                                                                     |
+| "The error rate is unacceptably high"                     | Cite published FPR targets and quarterly measurements. For this specific analysis, identify which heuristics were used and their FPRs. Distinguish the cumulative confidence interval from a simple error rate.                                       |
+| "Blockchain data can be manipulated"                      | T0 data is cryptographically verified. Explain immutability of blockchain data and the difference between T0 and T3 conclusions.                                                                                                                      |
+| "The methodology was selected to benefit the prosecution" | Explain that methodology selection criteria are disclosed in the report, the platform presents results under all methodologies (per the appendix comparison), and the investigator's rationale for selection is documented.                           |
+| "You don't know who controlled the private key"           | Acknowledge the technical limit: the platform traces fund flows, not physical possession of private keys. Attribution to a specific person requires additional evidence (exchange KYC, device forensics, etc.) documented in the attribution sources. |
 
 ### 11.6 Prior Testimony Tracking and Daubert Outcome Registry
 
@@ -1222,6 +1256,7 @@ There is a critical distinction in EU data protection law: the General Data Prot
 - EU private sector compliance teams (AML/CFT) using ChainSight process under GDPR
 
 **Phase 4 EU preparation tasks:**
+
 1. Appoint an EU Article 27 GDPR representative (a natural or legal person established in the EU who can receive supervisory authority inquiries on ChainSight's behalf)
 2. Conduct a Transfer Impact Assessment (TIA) for transfers of personal data from EU customers to any US infrastructure components in SaaS Blind
 3. Implement Standard Contractual Clauses (SCCs) in the DPA for EU customers
@@ -1258,10 +1293,12 @@ An expanding set of state privacy laws with similar structure to CCPA. The same 
 ### 12.5 The Police Directive vs. GDPR Distinction (Operational Detail)
 
 When a law enforcement customer in the EU processes personal data through ChainSight, the applicable framework is:
+
 - **LED** if the customer is a competent authority (law enforcement agency, prosecution service) processing for law enforcement purposes
 - **GDPR** if the customer is a private sector entity (AML/CFT compliance team, exchange) processing for compliance purposes
 
 ChainSight as a processor must support both:
+
 - For LED customers: a DPA addendum referencing LED Article 22 (processor obligations) and confirming appropriate technical/organizational measures
 - For GDPR customers: a standard Article 28 DPA
 
@@ -1274,13 +1311,15 @@ The DPA must clearly document what personal data is processed by category (block
 ### 13.1 FinCEN 314(a) and 314(b)
 
 **314(a) — Law enforcement to financial institution inquiries:**
-FinCEN Section 314(a) allows law enforcement to submit lists of suspects to FinCEN, which distributes them to registered financial institutions. Institutions search their records and report back. ChainSight's role: 
+FinCEN Section 314(a) allows law enforcement to submit lists of suspects to FinCEN, which distributes them to registered financial institutions. Institutions search their records and report back. ChainSight's role:
+
 - The platform can assist investigators in preparing the predicate information for a 314(a) request (on-chain analysis establishing reasonable grounds)
 - The platform tracks 314(a) submissions as evidence actions in the case's deconfliction tab
 - The platform ingests 314(a) responses as documentary evidence (via document ingest, F16)
 
 **314(b) — Voluntary financial institution cooperation:**
 Section 314(b) allows financial institutions to voluntarily share information about potential money laundering with each other. ChainSight's role:
+
 - For compliance-team customers (VASPs, banks): the platform can support 314(b) information sharing workflows by helping structure the supporting analysis
 - The platform does not itself participate in 314(b) as a financial institution; it is a tool used by participating institutions
 
@@ -1331,6 +1370,7 @@ Personal Attribution (F25, v0.6) is the mechanism by which individual investigat
 The legal posture on ownership is clear: personal attributions belong to the investigator (or their employing agency, depending on the employment relationship). ChainSight has no ownership claim.
 
 **Four visibility tiers (per G19):**
+
 1. Private (investigator only)
 2. Specific users (named colleagues)
 3. Team (investigator's team within the agency)
@@ -1362,11 +1402,13 @@ At some point, a party in litigation or a government investigation will subpoena
 The most important aspect of the discovery response posture is that the sovereign deployment architecture substantially limits what ChainSight can produce, and this is by design.
 
 For **On-Premises Sovereign** deployments:
+
 - ChainSight holds no Case Data. Period. All case data is in the customer's infrastructure.
 - A subpoena to ChainSight for On-Prem customer case data should receive a response: "ChainSight does not possess, and has never possessed, the requested information. The data exists in [Customer Agency]'s infrastructure."
 - ChainSight can produce: the software license agreement, billing records (seat count, tier), and the published software artifacts.
 
 For **SaaS Blind** deployments:
+
 - Case Data is encrypted with per-agency keys held in the customer's KMS
 - ChainSight holds encrypted ciphertext; producing ciphertext without the decryption key produces nothing useful to the requesting party
 - A subpoena to ChainSight for SaaS Blind Case Data should receive: (a) the encrypted ciphertext (which is all ChainSight possesses), and (b) an explanation of the encryption architecture establishing that ChainSight is not the custodian of the plaintext
@@ -1402,6 +1444,7 @@ Regardless of deployment mode, ChainSight can produce in response to a lawful su
 - Published CLRB reports
 
 ChainSight cannot produce (and does not possess):
+
 - Case data in plaintext (SaaS Blind) or at all (On-Prem)
 - Investigator identities linked to specific cases
 - The specific addresses, transactions, or findings in any case
@@ -1439,12 +1482,14 @@ This is a standard tech industry practice (Twitter, Apple, Google all publish th
 The annual external bias audit is procured via a competitive Request for Proposals (RFP). The RFP specifies:
 
 **Required auditor qualifications:**
+
 - Independence: no commercial relationship with ChainSight or its major customers; no current engagement with a competitive blockchain forensics platform
 - Technical capability: demonstrable experience with (a) machine learning fairness assessment, (b) digital forensics systems, or (c) both
 - Civil-rights perspective: the auditor must include at least one team member with expertise in civil-rights law or civil-liberties research
 - Proposed methodology: the RFP requires a specific proposed audit methodology (not just generic "we will audit your algorithms")
 
 **Audit scope (annual):**
+
 - Complete methodology documentation review
 - Source code access (under NDA) for the specific algorithms being audited
 - Test dataset access: auditor receives the same anonymized ground-truth datasets used for the platform's own regression testing
@@ -1453,6 +1498,7 @@ The annual external bias audit is procured via a competitive Request for Proposa
 - Documentation review of CLRB decisions made during the audit period
 
 **Audit output:**
+
 - Full written report, structured as: findings, methodology, statistical results, recommendations
 - Risk rating for each finding: Critical (requires immediate remediation), High (remediation before next audit), Medium (remediation plan required), Low (acknowledge and monitor)
 - ChainSight public response to findings, delivered simultaneously with the report
@@ -1493,6 +1539,7 @@ The annual Transparency Report is published no later than March 31 of the year f
 ### 17.2 What Is Included
 
 **Section 1 — Platform Usage (aggregate)**
+
 - Total number of active agency tenants (range, not exact, e.g., "25–50")
 - Total number of active investigator seats (range)
 - Number of cases opened during the reporting period (range)
@@ -1501,9 +1548,10 @@ The annual Transparency Report is published no later than March 31 of the year f
 - Number of seizure recommendation packages generated (range)
 - Number of expert declaration reports generated (range)
 
-*Note:* Ranges rather than exact numbers because exact numbers, combined with public knowledge of customer identities, could reveal sensitive operational information about specific investigations.
+_Note:_ Ranges rather than exact numbers because exact numbers, combined with public knowledge of customer identities, could reveal sensitive operational information about specific investigations.
 
 **Section 2 — Court Outcomes**
+
 - Number of cases in which ChainSight-produced evidence was offered at a Daubert or admissibility hearing, to the extent known
 - Outcome breakdown: admitted, excluded, not challenged, pending, unknown
 - Jurisdiction breakdown (federal/state; not case-specific)
@@ -1511,12 +1559,14 @@ The annual Transparency Report is published no later than March 31 of the year f
 - Notes on reasoning cited in exclusion decisions (if publicly available)
 
 **Section 3 — Retractions and Corrections**
+
 - Number of retraction events during the reporting period
 - Breakdown by type: investigator-initiated correction, court-prompted correction, post-conviction review correction
 - Number of cases in which a retraction triggered a supplemental court filing
 - Number of retractions that affected prior court outcomes (the most important metric)
 
 **Section 4 — Methodology Audit**
+
 - Name of external auditor and their organizational affiliation
 - Audit period
 - Summary of findings (Critical, High, Medium, Low counts)
@@ -1525,11 +1575,13 @@ The annual Transparency Report is published no later than March 31 of the year f
 - CLRB response
 
 **Section 5 — False-Positive Rate Performance**
+
 - Quarterly FPR measurements vs. published targets for each heuristic
 - Trend analysis: improving, stable, or degrading
 - Remediation events triggered and resolved
 
 **Section 6 — CLRB Activity**
+
 - Number of CLRB meetings held
 - Number of features reviewed
 - Number of veto decisions
@@ -1537,6 +1589,7 @@ The annual Transparency Report is published no later than March 31 of the year f
 - CLRB's own annual statement (drafted by the CLRB, not by ChainSight)
 
 **Section 7 — Government Demands**
+
 - Number of legal process demands received (subpoenas, court orders, government requests)
 - Number complied with in whole
 - Number complied with in part
@@ -1546,6 +1599,7 @@ The annual Transparency Report is published no later than March 31 of the year f
 - Notes on any demands where customer notification was prohibited (without disclosing the existence of a specific demand if legally required to maintain secrecy — standard warrant canary language)
 
 **Section 8 — Security Incidents**
+
 - Number of security incidents
 - Nature and severity (without operational details that would assist future attacks)
 - Customer impact
@@ -1564,6 +1618,7 @@ The annual Transparency Report is published no later than March 31 of the year f
 ### 17.4 Machine-Readable Format
 
 The JSON version of the Transparency Report follows an open schema published at chainsight.io/transparency-schema. This enables:
+
 - Journalists and researchers to parse and analyze multiple years of data
 - Academic studies of blockchain forensics platform performance
 - Comparison across multiple platforms (if others adopt the schema)
@@ -1582,7 +1637,7 @@ Phase 0 is the critical window where the legal and compliance architecture is es
 **[REQUIRED] Company Formation:**
 Engage general corporate counsel. Incorporate the company in the selected jurisdiction. Complete: Certificate of Incorporation, bylaws, initial stock issuance, IP assignment agreement (founder assigns all pre-existing relevant IP to the company), and founder vesting agreement. This must be done before a single line of production code is written, because code written before IP assignment is not cleanly owned by the company.
 
-*What to decide with counsel:* Jurisdiction (Delaware C-Corp is standard; explore alternatives only if there is a specific reason). Board composition. Initial cap table.
+_What to decide with counsel:_ Jurisdiction (Delaware C-Corp is standard; explore alternatives only if there is a specific reason). Board composition. Initial cap table.
 
 **[REQUIRED] SAM.gov Registration:**
 Register the company in SAM.gov. This is the prerequisite for any federal contracting or grant activity. It takes 1–3 business days once initiated. Do it immediately.
@@ -1609,6 +1664,7 @@ Review the terms of service for every BYOK provider the platform will integrate 
 
 **[REQUIRED] Subprocessor DPAs — Supabase, Fly.io, GitHub:**
 Before the first SaaS Blind customer is onboarded, obtain signed Data Processing Agreements (or confirm existing DPAs are in place) from Supabase, Fly.io, and GitHub. Specifically:
+
 - Supabase: their standard DPA is available at supabase.com/privacy; confirm it covers the envelope-encrypted-ciphertext-only scenario and that it includes sub-processor flow-down for any of Supabase's own infrastructure providers (they run on AWS)
 - Fly.io: confirm their DPA covers application-layer processing and that they agree not to retain or analyze application logs in ways that could constitute Case Data processing
 - GitHub: their DPA covers the CI/CD and source repository role; confirm they are not categorized as a Case Data processor (they are not, unless Case Data somehow appears in CI workflows — design CI workflows to prevent this)
@@ -1660,6 +1716,7 @@ These are not Phase 0 tasks but are flagged here because they must be planned an
 The SaaS Blind infrastructure migration from Fly.io + Supabase (hosted) to AWS is a hard prerequisite for the SOC 2 Type 1 assessment. This is not a "nice to have" infrastructure upgrade — it is a compliance commitment with contractual implications for customers who signed up expecting the vendor to achieve SOC 2 Type 1 by end of Phase 2. The migration must be complete and stable for at least one month before the SOC 2 auditor begins fieldwork. Engineering resourcing for this migration should be planned in Phase 1.
 
 Specifically:
+
 - Choose AWS deployment model (ECS Fargate or EKS) in Phase 1
 - Decide between Supabase Enterprise (AWS-hosted) and self-managed Postgres on AWS RDS
 - If retaining Supabase Enterprise: negotiate enterprise agreement with Supabase; confirm their SOC 2 and data residency commitments at the enterprise tier
@@ -1698,12 +1755,12 @@ This section establishes the operational framework for managing ChainSight's sub
 
 ### 19.2 Current Subprocessor Registry (SaaS Blind v1)
 
-| Subprocessor | Role | Data Processed | Region | DPA Status | SOC 2 |
-|---|---|---|---|---|---|
-| **Supabase** | Postgres (primary DB), Auth, Storage, Realtime | Case Data ciphertext, auth tokens, storage objects (encrypted), session data | US East; EU region for Phase 4 | Required before first customer | Yes (SOC 2 Type 2) |
-| **Fly.io** | Application hosting and compute | Application logs (no Case Data); container execution | US regions; selectable | Required before first customer | Pursuing SOC 2 |
-| **GitHub** | Source code, CI/CD, release signing | Source code, build artifacts, CI workflow logs (no Case Data) | US (GitHub.com) | GitHub standard DPA | Yes (SOC 2 Type 2) |
-| **AWS** *(Phase 2+)* | Hosting, compute (ECS/EKS), RDS/Aurora, S3, KMS | Case Data ciphertext, application execution | us-east-1, us-west-2; GovCloud for Phase 4 | AWS Customer Agreement + DPA | Yes (SOC 2 Type 2; FedRAMP High) |
+| Subprocessor         | Role                                            | Data Processed                                                               | Region                                     | DPA Status                     | SOC 2                            |
+| -------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------ | -------------------------------- |
+| **Supabase**         | Postgres (primary DB), Auth, Storage, Realtime  | Case Data ciphertext, auth tokens, storage objects (encrypted), session data | US East; EU region for Phase 4             | Required before first customer | Yes (SOC 2 Type 2)               |
+| **Fly.io**           | Application hosting and compute                 | Application logs (no Case Data); container execution                         | US regions; selectable                     | Required before first customer | Pursuing SOC 2                   |
+| **GitHub**           | Source code, CI/CD, release signing             | Source code, build artifacts, CI workflow logs (no Case Data)                | US (GitHub.com)                            | GitHub standard DPA            | Yes (SOC 2 Type 2)               |
+| **AWS** _(Phase 2+)_ | Hosting, compute (ECS/EKS), RDS/Aurora, S3, KMS | Case Data ciphertext, application execution                                  | us-east-1, us-west-2; GovCloud for Phase 4 | AWS Customer Agreement + DPA   | Yes (SOC 2 Type 2; FedRAMP High) |
 
 **Supabase's own subprocessors:** Supabase runs on AWS. The complete subprocessor chain is ChainSight → Supabase → AWS. Ciphertext protection applies at every level. Confirm this chain is accurately described in the DPA with Supabase and that Supabase's sub-processor relationship with AWS is disclosed.
 
@@ -1732,7 +1789,7 @@ The Fly.io → AWS migration is the most significant subprocessor change in the 
 
 **Customer communication template:**
 
-> *Subject: ChainSight Infrastructure Update — 30-Day Advance Notice*
+> _Subject: ChainSight Infrastructure Update — 30-Day Advance Notice_
 >
 > As part of our commitment to achieving SOC 2 Type 1 certification, ChainSight is migrating SaaS Blind hosting from Fly.io to Amazon Web Services (AWS), effective [date].
 >
@@ -1747,6 +1804,7 @@ The Fly.io → AWS migration is the most significant subprocessor change in the 
 GitHub is the working source repository — the live codebase, development history, and CI/CD pipeline. It is not the escrow.
 
 The F44 source code escrow program (Section 9) operates independently:
+
 - Iron Mountain or NCC Group holds versioned static snapshots of the source code
 - Snapshots are deposited within 30 days of each major release
 - The escrow is independent of GitHub's availability: GitHub outage, acquisition, or account suspension does not affect the escrow
@@ -1766,99 +1824,100 @@ The following questions require answers from the founder before critical complia
 
 **OQ-1: Company Formation Status**
 
-*Question:* Has the company been formally incorporated? If so: in what jurisdiction, and on what date? Has the founder's pre-existing intellectual property (all prior design documents, v0.1–v0.8, schema, etc.) been formally assigned to the company via an IP assignment agreement?
+_Question:_ Has the company been formally incorporated? If so: in what jurisdiction, and on what date? Has the founder's pre-existing intellectual property (all prior design documents, v0.1–v0.8, schema, etc.) been formally assigned to the company via an IP assignment agreement?
 
-*Why it matters:* If the company is not yet incorporated, the IP assignment is the most time-critical task — any code written before assignment is ambiguous in ownership. Delaware C-Corp is strongly preferred for US-based venture; other structures require explanation.
+_Why it matters:_ If the company is not yet incorporated, the IP assignment is the most time-critical task — any code written before assignment is ambiguous in ownership. Delaware C-Corp is strongly preferred for US-based venture; other structures require explanation.
 
-*Required action:* Founder answers this question before any code is written.
+_Required action:_ Founder answers this question before any code is written.
 
 ---
 
 **OQ-2: Jurisdiction of Incorporation and Operations**
 
-*Question:* Where is the company incorporated, and where will it be physically based (principal place of business)? Are there any foreign jurisdiction considerations (e.g., founder residing outside the US)?
+_Question:_ Where is the company incorporated, and where will it be physically based (principal place of business)? Are there any foreign jurisdiction considerations (e.g., founder residing outside the US)?
 
-*Why it matters:* Affects: choice of law in the MSA, state privacy law compliance obligations, ITAR/EAR applicability (see OQ-6), the "US person" determination for export control, and the applicable employment law if contractors are engaged internationally.
+_Why it matters:_ Affects: choice of law in the MSA, state privacy law compliance obligations, ITAR/EAR applicability (see OQ-6), the "US person" determination for export control, and the applicable employment law if contractors are engaged internationally.
 
 ---
 
 **OQ-3: Founding Capital and Funding Structure**
 
-*Question:* What is the source and structure of the founding capital? Is the company bootstrapped, angel-funded, or planning a seed round? Are there any existing investors, SAFEs, or convertible notes?
+_Question:_ What is the source and structure of the founding capital? Is the company bootstrapped, angel-funded, or planning a seed round? Are there any existing investors, SAFEs, or convertible notes?
 
-*Why it matters:* D&O insurance timing, board composition, anti-dilution provisions in the escrow and perpetual license terms, and the "material breach allowing escrow release" trigger may need to account for investor rights.
+_Why it matters:_ D&O insurance timing, board composition, anti-dilution provisions in the escrow and perpetual license terms, and the "material breach allowing escrow release" trigger may need to account for investor rights.
 
 ---
 
 **OQ-4: Pre-Existing Customer or Partner Relationships**
 
-*Question:* Are there any existing relationships with law enforcement agencies, compliance teams, private investigators, or other potential customers? Any letters of intent, MOUs, or informal commitments? Any BYOK providers with whom the founder has existing personal relationships that could constitute an informal agreement?
+_Question:_ Are there any existing relationships with law enforcement agencies, compliance teams, private investigators, or other potential customers? Any letters of intent, MOUs, or informal commitments? Any BYOK providers with whom the founder has existing personal relationships that could constitute an informal agreement?
 
-*Why it matters:* Pre-existing relationships may need to be formalized, restructured, or disclosed. A pre-existing relationship with a BYOK provider could create an appearance of non-neutrality that complicates the "vendor-neutral" positioning.
+_Why it matters:_ Pre-existing relationships may need to be formalized, restructured, or disclosed. A pre-existing relationship with a BYOK provider could create an appearance of non-neutrality that complicates the "vendor-neutral" positioning.
 
 ---
 
 **OQ-5: ITAR/EAR Exposure**
 
-*Question:* Does the platform, in its current design, incorporate or export any technology subject to the International Traffic in Arms Regulations (ITAR) or Export Administration Regulations (EAR)? Specifically: (a) any cryptographic technology beyond EAR99 or License Exception ENC; (b) any technology on the Commerce Control List; (c) any relationship with DoD-funded research?
+_Question:_ Does the platform, in its current design, incorporate or export any technology subject to the International Traffic in Arms Regulations (ITAR) or Export Administration Regulations (EAR)? Specifically: (a) any cryptographic technology beyond EAR99 or License Exception ENC; (b) any technology on the Commerce Control List; (c) any relationship with DoD-funded research?
 
-*Why it matters:* Blockchain forensics software is likely EAR-controlled under ECCN 5D002 (information security software) given its encryption components. Export of the platform to non-US persons (including cross-border customer deployments) and to specific countries may require licenses. The sovereign deployment model (customer runs the platform internationally) is an export of the software. This is a federal contracting attorney question, but the preliminary answer affects Phase 0 operations.
+_Why it matters:_ Blockchain forensics software is likely EAR-controlled under ECCN 5D002 (information security software) given its encryption components. Export of the platform to non-US persons (including cross-border customer deployments) and to specific countries may require licenses. The sovereign deployment model (customer runs the platform internationally) is an export of the software. This is a federal contracting attorney question, but the preliminary answer affects Phase 0 operations.
 
-*Required action:* Federal contracting counsel (or a specialist export control attorney) should provide a written opinion on EAR classification before international customers are onboarded.
+_Required action:_ Federal contracting counsel (or a specialist export control attorney) should provide a written opinion on EAR classification before international customers are onboarded.
 
 ---
 
 **OQ-6: ITAR/EAR and Intelligence Community Customers**
 
-*Question:* Does the founder intend to pursue intelligence community (IC) customers (NSA, CIA, DIA, etc.)? If so, are there ITAR implications beyond EAR that apply to the platform's use in a classified context?
+_Question:_ Does the founder intend to pursue intelligence community (IC) customers (NSA, CIA, DIA, etc.)? If so, are there ITAR implications beyond EAR that apply to the platform's use in a classified context?
 
-*Why it matters:* IC customers often require ITAR-controlled product versions with export licenses. Building toward IC customers without proper export control counsel is a significant legal risk.
+_Why it matters:_ IC customers often require ITAR-controlled product versions with export licenses. Building toward IC customers without proper export control counsel is a significant legal risk.
 
 ---
 
 **OQ-7: Existing Conflicts of Interest**
 
-*Question:* Does the founder have any existing relationships with blockchain analytics companies (Chainalysis, TRM Labs, Elliptic, Arkham, Crystal, etc.) — employment, advisory, equity, contractual? Any NDAs with prior employers that might cover the concepts in this design pack?
+_Question:_ Does the founder have any existing relationships with blockchain analytics companies (Chainalysis, TRM Labs, Elliptic, Arkham, Crystal, etc.) — employment, advisory, equity, contractual? Any NDAs with prior employers that might cover the concepts in this design pack?
 
-*Why it matters:* Prior employer IP claims and NDA violations are the most common legal risk for technology startups. A "freedom to operate" analysis is required before code is written.
+_Why it matters:_ Prior employer IP claims and NDA violations are the most common legal risk for technology startups. A "freedom to operate" analysis is required before code is written.
 
 ---
 
 **OQ-8: Insurance Broker Preference**
 
-*Question:* Does the founder have an existing broker relationship? Any existing corporate insurance that should be transitioned to the new entity?
+_Question:_ Does the founder have an existing broker relationship? Any existing corporate insurance that should be transitioned to the new entity?
 
 ---
 
 **OQ-8A: Supabase Enterprise vs. Self-Managed Postgres Decision**
 
-*Question:* Has a decision been made on the Phase 2 AWS migration path — specifically, whether to use Supabase Enterprise (AWS-hosted) or migrate to self-managed Postgres on AWS RDS/Aurora?
+_Question:_ Has a decision been made on the Phase 2 AWS migration path — specifically, whether to use Supabase Enterprise (AWS-hosted) or migrate to self-managed Postgres on AWS RDS/Aurora?
 
-*Why it matters:* The two paths have different legal and compliance implications:
+_Why it matters:_ The two paths have different legal and compliance implications:
+
 - **Supabase Enterprise (AWS-hosted):** Supabase remains a subprocessor with their own DPA. Their Enterprise tier includes a signed BAA, dedicated infrastructure, and SOC 2 Type 2 coverage. This is lower engineering effort but adds a dependency on Supabase's enterprise pricing and terms. Confirm Supabase Enterprise DPA is compatible with CJIS requirements before committing.
 - **Self-managed Postgres on AWS RDS:** No Supabase dependency; AWS is the only infrastructure subprocessor for the database layer. Cleaner compliance chain but requires more engineering work (connection pooling, Auth migration away from Supabase Auth, Storage migration away from Supabase Storage). This is the better long-term posture for a FedRAMP path.
 
-*Recommended decision point:* Phase 1 (engineering must plan the migration before Phase 2 begins).
+_Recommended decision point:_ Phase 1 (engineering must plan the migration before Phase 2 begins).
 
 ---
 
 **OQ-8B: Fly.io Account and GitHub Organization Status**
 
-*Question:* Are the Fly.io deployment and GitHub organization registered under the company entity, or under the founder's personal accounts?
+_Question:_ Are the Fly.io deployment and GitHub organization registered under the company entity, or under the founder's personal accounts?
 
-*Why it matters:* Personal-account infrastructure creates two problems: (a) it is ambiguous whether the company owns the IP generated by that infrastructure; (b) subprocessor DPAs must be held by the company, not an individual. Before the first customer onboards, all infrastructure accounts must be transferred to or re-created under the company entity.
+_Why it matters:_ Personal-account infrastructure creates two problems: (a) it is ambiguous whether the company owns the IP generated by that infrastructure; (b) subprocessor DPAs must be held by the company, not an individual. Before the first customer onboards, all infrastructure accounts must be transferred to or re-created under the company entity.
 
 ---
 
 **OQ-9: Pilot Customer Profile**
 
-*Question:* Who is the most likely Phase 0 pilot customer — a licensed private investigator, a compliance team at a cryptocurrency exchange, a state law enforcement agency, or something else? The CJIS requirements, MSA structure, and insurance minimums differ meaningfully depending on whether the first customer processes Criminal Justice Information.
+_Question:_ Who is the most likely Phase 0 pilot customer — a licensed private investigator, a compliance team at a cryptocurrency exchange, a state law enforcement agency, or something else? The CJIS requirements, MSA structure, and insurance minimums differ meaningfully depending on whether the first customer processes Criminal Justice Information.
 
-*Why it matters:* A compliance team at a VASP does not trigger CJIS requirements; a state law enforcement agency does. This affects the timing of the founder's background check, the MSA addendum requirements, and the CJIS conformance preparation.
+_Why it matters:_ A compliance team at a VASP does not trigger CJIS requirements; a state law enforcement agency does. This affects the timing of the founder's background check, the MSA addendum requirements, and the CJIS conformance preparation.
 
 ---
 
-*End of Document*
+_End of Document_
 
 ---
 
@@ -1866,6 +1925,7 @@ The following questions require answers from the founder before critical complia
 This document should be reviewed and updated at the start of each phase. Material changes to the platform architecture (new features, changed deployment modes, new BYOK providers, subprocessor changes) may create compliance gaps that require updates to this architecture. The owner of this document is the compliance and legal architecture lead working alongside outside counsel.
 
 **Change log:**
+
 - v1.0: Initial complete architecture document
 - v1.1: Added SaaS Blind v1 stack specifics (Supabase + GitHub + Fly.io); added MSA Section 5A (Subprocessors); added Exhibit I (Subprocessor List); expanded data residency section with Fly.io/AWS regional specifics; updated SOC 2 scope and timeline to reflect concrete AWS migration prerequisite; added Section 15.2A (subpoenas directed at subprocessors); added Section 18.6 (Phase 2 mandatory milestones); added Section 19 (Subprocessor Registry and Management); added OQ-8A and OQ-8B to Open Questions
 

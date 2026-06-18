@@ -48,21 +48,21 @@ A solo developer's local environment must be a complete, faithful replica of the
 
 ### 1.2 Service topology
 
-| Service | Runtime | Notes |
-|---|---|---|
+| Service                    | Runtime                 | Notes                                                                                   |
+| -------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
 | **Postgres 16 + pgvector** | Supabase local emulator | Includes auth schema, storage schema, realtime schema — exact replica of cloud Supabase |
-| **GoTrue (Auth)** | Supabase local emulator | JWT issuance, OAuth, MFA — same as cloud |
-| **Storage** | Supabase local emulator | S3-compatible object store backed by local filesystem |
-| **Realtime** | Supabase local emulator | WebSocket server for live case updates |
-| **Edge Functions** | Supabase local emulator | Deno runtime; same as Supabase Edge Functions |
-| **Redis** | Docker Compose | BullMQ backing store, session cache |
-| **Memgraph** | Docker Compose | Graph store; persists to a named Docker volume |
-| **api** | Docker Compose (dev) | Fastify; mounts source with ts-node-dev hot-reload |
-| **web** | Docker Compose (dev) | Next.js; mounts source with Next.js HMR |
-| **worker** | Docker Compose (dev) | BullMQ workers; ts-node-dev hot-reload |
-| **math** | Docker Compose (dev) | Python FastAPI + gRPC; uvicorn --reload |
-| **OTEL Collector** | Docker Compose | Collects traces/metrics from all services |
-| **Grafana + Tempo + Loki** | Docker Compose | Local observability; identical to on-prem stack |
+| **GoTrue (Auth)**          | Supabase local emulator | JWT issuance, OAuth, MFA — same as cloud                                                |
+| **Storage**                | Supabase local emulator | S3-compatible object store backed by local filesystem                                   |
+| **Realtime**               | Supabase local emulator | WebSocket server for live case updates                                                  |
+| **Edge Functions**         | Supabase local emulator | Deno runtime; same as Supabase Edge Functions                                           |
+| **Redis**                  | Docker Compose          | BullMQ backing store, session cache                                                     |
+| **Memgraph**               | Docker Compose          | Graph store; persists to a named Docker volume                                          |
+| **api**                    | Docker Compose (dev)    | Fastify; mounts source with ts-node-dev hot-reload                                      |
+| **web**                    | Docker Compose (dev)    | Next.js; mounts source with Next.js HMR                                                 |
+| **worker**                 | Docker Compose (dev)    | BullMQ workers; ts-node-dev hot-reload                                                  |
+| **math**                   | Docker Compose (dev)    | Python FastAPI + gRPC; uvicorn --reload                                                 |
+| **OTEL Collector**         | Docker Compose          | Collects traces/metrics from all services                                               |
+| **Grafana + Tempo + Loki** | Docker Compose          | Local observability; identical to on-prem stack                                         |
 
 ### 1.3 Repository layout (Supabase-specific structure)
 
@@ -81,10 +81,10 @@ chainsight/
       belief-state-hook/
       provider-webhook/
     .gitignore               # supabase/.branches/ excluded
-  
+
   docker-compose.yml         # Redis, Memgraph, api, web, worker, math, observability
   docker-compose.override.yml  # Dev overrides: volume mounts, hot-reload ports
-  
+
   apps/
     api/                     # Fastify API
     web/                     # Next.js frontend
@@ -288,19 +288,19 @@ Supabase runs via its own process manager (`supabase start`). Docker Compose han
 
 ```yaml
 # docker-compose.yml
-version: "3.9"
+version: '3.9'
 name: chainsight
 
 services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -308,8 +308,8 @@ services:
   memgraph:
     image: memgraph/memgraph-platform:latest
     ports:
-      - "7687:7687"   # Bolt protocol
-      - "3005:3000"   # Memgraph Lab UI
+      - '7687:7687' # Bolt protocol
+      - '3005:3000' # Memgraph Lab UI
     volumes:
       - memgraph_data:/var/lib/memgraph
       - memgraph_log:/var/log/memgraph
@@ -317,7 +317,7 @@ services:
       MEMGRAPH_USER: memgraph
       MEMGRAPH_PASSWORD: ${MEMGRAPH_PASSWORD:-dev_password}
     healthcheck:
-      test: ["CMD", "echo", "RETURN 1;", "|", "mgconsole"]
+      test: ['CMD', 'echo', 'RETURN 1;', '|', 'mgconsole']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -328,23 +328,23 @@ services:
       dockerfile: infra/docker/api.Dockerfile
       target: development
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       NODE_ENV: development
       # Supabase connection — injected from supabase status output
       SUPABASE_URL: ${SUPABASE_URL:-http://localhost:54321}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
-      DATABASE_URL: ${DATABASE_URL}          # Direct Postgres URL for Drizzle ORM
+      DATABASE_URL: ${DATABASE_URL} # Direct Postgres URL for Drizzle ORM
       REDIS_URL: redis://redis:6379
       MEMGRAPH_URL: bolt://memgraph:7687
       MATH_SERVICE_URL: http://math:50051
       DEPLOYMENT_MODE: local
-      TELEMETRY_ENABLED: "false"
-      KMS_PROVIDER: dev_stub                 # In-memory DEK stub for local dev
+      TELEMETRY_ENABLED: 'false'
+      KMS_PROVIDER: dev_stub # In-memory DEK stub for local dev
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     volumes:
-      - ./apps/api/src:/app/src              # Hot-reload
+      - ./apps/api/src:/app/src # Hot-reload
       - ./packages:/packages
     depends_on:
       redis:
@@ -352,7 +352,7 @@ services:
       memgraph:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3001/health"]
+      test: ['CMD', 'curl', '-sf', 'http://localhost:3001/health']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -363,13 +363,13 @@ services:
       dockerfile: infra/docker/web.Dockerfile
       target: development
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL:-http://localhost:54321}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
       API_URL: http://api:3001
     volumes:
-      - ./apps/web/src:/app/src              # HMR
+      - ./apps/web/src:/app/src # HMR
       - ./apps/web/public:/app/public
     depends_on:
       - api
@@ -388,7 +388,7 @@ services:
       MEMGRAPH_URL: bolt://memgraph:7687
       MATH_SERVICE_URL: http://math:50051
       DEPLOYMENT_MODE: local
-      TELEMETRY_ENABLED: "false"
+      TELEMETRY_ENABLED: 'false'
       KMS_PROVIDER: dev_stub
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     volumes:
@@ -404,15 +404,15 @@ services:
       dockerfile: infra/docker/math.Dockerfile
       target: development
     ports:
-      - "50051:50051"   # gRPC
-      - "8000:8000"     # FastAPI HTTP (for health checks)
+      - '50051:50051' # gRPC
+      - '8000:8000' # FastAPI HTTP (for health checks)
     volumes:
-      - ./apps/math/src:/app/src             # uvicorn --reload
+      - ./apps/math/src:/app/src # uvicorn --reload
     environment:
       ENV: development
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      test: ['CMD', 'curl', '-sf', 'http://localhost:8000/health']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -420,16 +420,16 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     ports:
-      - "4317:4317"   # gRPC
-      - "4318:4318"   # HTTP
+      - '4317:4317' # gRPC
+      - '4318:4318' # HTTP
     volumes:
       - ./infra/docker/observability/otel-collector-config.yaml:/etc/otel/config.yaml
-    command: ["--config=/etc/otel/config.yaml"]
+    command: ['--config=/etc/otel/config.yaml']
 
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3002:3000"
+      - '3002:3000'
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
@@ -440,20 +440,20 @@ services:
   tempo:
     image: grafana/tempo:latest
     ports:
-      - "3200:3200"
+      - '3200:3200'
     volumes:
       - tempo_data:/var/tempo
       - ./infra/docker/observability/tempo-config.yaml:/etc/tempo/config.yaml
-    command: ["-config.file=/etc/tempo/config.yaml"]
+    command: ['-config.file=/etc/tempo/config.yaml']
 
   loki:
     image: grafana/loki:latest
     ports:
-      - "3100:3100"
+      - '3100:3100'
     volumes:
       - loki_data:/var/loki
       - ./infra/docker/observability/loki-config.yaml:/etc/loki/config.yaml
-    command: ["-config.file=/etc/loki/config.yaml"]
+    command: ['-config.file=/etc/loki/config.yaml']
 
 volumes:
   redis_data:
@@ -533,12 +533,12 @@ The generated `packages/db/src/types.ts` is committed. A CI check confirms that 
 
 Every code change passes through a tiered pipeline gated to its branch context:
 
-| Trigger | Jobs | Supabase | Fly.io |
-|---|---|---|---|
-| **Every push (any branch)** | lint, type-check, anti-feature check, unit tests | — | — |
-| **Pull request open/update** | all above + integration tests | Preview branch created | PR review app deployed |
-| **Merge to `main`** | build images, push to GHCR, sign with Sigstore, deploy | Push migrations to production project | Deploy to production apps |
-| **Tag `v*.*.*`** | all above + air-gapped bundle + Helm chart + GitHub Release | — | — |
+| Trigger                      | Jobs                                                        | Supabase                              | Fly.io                    |
+| ---------------------------- | ----------------------------------------------------------- | ------------------------------------- | ------------------------- |
+| **Every push (any branch)**  | lint, type-check, anti-feature check, unit tests            | —                                     | —                         |
+| **Pull request open/update** | all above + integration tests                               | Preview branch created                | PR review app deployed    |
+| **Merge to `main`**          | build images, push to GHCR, sign with Sigstore, deploy      | Push migrations to production project | Deploy to production apps |
+| **Tag `v*.*.*`**             | all above + air-gapped bundle + Helm chart + GitHub Release | —                                     | —                         |
 
 ### 2.2 Workflow files
 
@@ -560,7 +560,7 @@ name: CI
 on:
   push:
     branches-ignore:
-      - main   # main handled by deploy.yml
+      - main # main handled by deploy.yml
 
 jobs:
   lint-and-typecheck:
@@ -570,7 +570,7 @@ jobs:
       - uses: pnpm/action-setup@v3
         with: { version: 9 }
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
+        with: { node-version: '20', cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo lint type-check
 
@@ -581,7 +581,7 @@ jobs:
       - uses: pnpm/action-setup@v3
         with: { version: 9 }
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
+        with: { node-version: '20', cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - name: Run anti-feature check (F41)
         run: node tools/anti-feature-check/index.js
@@ -594,9 +594,9 @@ jobs:
       - uses: pnpm/action-setup@v3
         with: { version: 9 }
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
+        with: { node-version: '20', cache: 'pnpm' }
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
+        with: { python-version: '3.12' }
       - run: pnpm install --frozen-lockfile
       - run: pip install -r apps/math/requirements.txt
       - run: pnpm turbo test:unit
@@ -639,7 +639,7 @@ jobs:
           supabase branches create pr-${{ github.event.number }} \
             --project-ref ${{ env.SUPABASE_PROJECT_ID }} \
             --experimental
-          
+
           # Poll until the branch is ready (branches take ~30s to provision)
           for i in $(seq 1 20); do
             STATUS=$(supabase branches get pr-${{ github.event.number }} \
@@ -649,12 +649,12 @@ jobs:
             echo "Branch status: $STATUS (attempt $i/20)..."
             sleep 10
           done
-          
+
           # Get branch connection details
           BRANCH_INFO=$(supabase branches get pr-${{ github.event.number }} \
             --project-ref ${{ env.SUPABASE_PROJECT_ID }} \
             --output json)
-          
+
           echo "db_url=$(echo $BRANCH_INFO | jq -r '.db_url')" >> $GITHUB_OUTPUT
           echo "anon_key=$(echo $BRANCH_INFO | jq -r '.anon_key')" >> $GITHUB_OUTPUT
           echo "service_role_key=$(echo $BRANCH_INFO | jq -r '.service_role_key')" >> $GITHUB_OUTPUT
@@ -677,9 +677,9 @@ jobs:
       - uses: pnpm/action-setup@v3
         with: { version: 9 }
       - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
+        with: { node-version: '20', cache: 'pnpm' }
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
+        with: { python-version: '3.12' }
 
       - run: pnpm install --frozen-lockfile
       - run: pip install -r apps/math/requirements.txt
@@ -696,7 +696,7 @@ jobs:
           REDIS_URL: redis://localhost:6379
           MEMGRAPH_URL: bolt://localhost:7687
           KMS_PROVIDER: dev_stub
-          TELEMETRY_ENABLED: "false"
+          TELEMETRY_ENABLED: 'false'
           DEPLOYMENT_MODE: test
         run: pnpm turbo test:integration
 
@@ -791,7 +791,7 @@ env:
 permissions:
   contents: read
   packages: write
-  id-token: write    # Required for Sigstore keyless signing
+  id-token: write # Required for Sigstore keyless signing
 
 jobs:
   build-and-push:
@@ -825,8 +825,8 @@ jobs:
           target: production
           platforms: linux/amd64
           push: true
-          sbom: true             # Generate SBOM (included in OCI image)
-          provenance: true       # SLSA provenance attestation
+          sbom: true # Generate SBOM (included in OCI image)
+          provenance: true # SLSA provenance attestation
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:sha-${{ github.sha }}
@@ -905,7 +905,7 @@ name: Release
 
 on:
   push:
-    tags: ["v*.*.*"]
+    tags: ['v*.*.*']
 
 permissions:
   contents: write
@@ -994,21 +994,39 @@ The anti-feature check runs on every commit and PR as a hard gate. It cannot be 
 
 const BANNED_PATTERNS = [
   // Pattern: device fingerprinting or persistent user tracking
-  { pattern: /fingerprint\.js|fingerprintjs/i, description: "F41: Device fingerprinting library detected" },
-  { pattern: /canvas\.toDataURL.*track|browser.*fingerprint.*id/i, description: "F41: Canvas fingerprinting pattern detected" },
+  {
+    pattern: /fingerprint\.js|fingerprintjs/i,
+    description: 'F41: Device fingerprinting library detected',
+  },
+  {
+    pattern: /canvas\.toDataURL.*track|browser.*fingerprint.*id/i,
+    description: 'F41: Canvas fingerprinting pattern detected',
+  },
 
   // Pattern: behavioral analysis or profiling beyond investigation scope
-  { pattern: /suspect_profile|entity_profile|behavior_score/i, description: "F41: Suspect/entity behavioral profiling pattern detected" },
+  {
+    pattern: /suspect_profile|entity_profile|behavior_score/i,
+    description: 'F41: Suspect/entity behavioral profiling pattern detected',
+  },
 
   // Pattern: third-party analytics SDKs (Mixpanel, Amplitude, Segment, etc.)
-  { pattern: /mixpanel\.|amplitude\.|segment\.com|heap\.io|fullstory/i, description: "F41: Third-party analytics SDK detected" },
+  {
+    pattern: /mixpanel\.|amplitude\.|segment\.com|heap\.io|fullstory/i,
+    description: 'F41: Third-party analytics SDK detected',
+  },
 
   // Pattern: storing investigation content in external/vendor systems without encryption
   // (crude heuristic — review false positives; the principle is no plaintext case data to vendor)
-  { pattern: /SUPABASE_ANON_KEY.*case_id|console\.log.*case_id|log.*ioc.*address/i, description: "F41: Potential case data leakage to external system" },
+  {
+    pattern: /SUPABASE_ANON_KEY.*case_id|console\.log.*case_id|log.*ioc.*address/i,
+    description: 'F41: Potential case data leakage to external system',
+  },
 
   // Pattern: predictive policing inference
-  { pattern: /risk_score.*predict|future.*crime.*probability|recidivism/i, description: "F41: Predictive policing inference pattern detected" },
+  {
+    pattern: /risk_score.*predict|future.*crime.*probability|recidivism/i,
+    description: 'F41: Predictive policing inference pattern detected',
+  },
 ];
 
 // ... (scanning logic walks the monorepo excluding node_modules and .git)
@@ -1036,7 +1054,7 @@ Dependabot is configured for both npm and Docker base images:
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     groups:
@@ -1046,12 +1064,12 @@ updates:
         dependency-type: development
 
   - package-ecosystem: docker
-    directory: "/infra/docker"
+    directory: '/infra/docker'
     schedule:
       interval: weekly
 
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
 ```
@@ -1365,18 +1383,18 @@ All Fly-to-Fly communication uses Fly's private IPv6 network (6PN). No inter-ser
 
 ### 3.7 Cost model at Phase 0
 
-| Service | Cost at zero customers | Cost at pilot scale (5–10 agencies) |
-|---|---|---|
-| **Supabase Pro** | $25/month | $25/month (base; storage and egress scale slowly) |
-| **Fly.io — api** | ~$0 (scale-to-zero) | ~$30–60/month (shared-cpu-1x × 1–2 machines) |
-| **Fly.io — web** | ~$0 (scale-to-zero) | ~$20–40/month |
-| **Fly.io — worker** | ~$0 (scale-to-zero) | ~$15–30/month |
-| **Fly.io — math** | ~$0 (scale-to-zero) | ~$20–40/month |
-| **Fly.io — memgraph** | ~$5/month (1GB volume) | ~$15–25/month (larger volume) |
-| **Upstash Redis** | ~$0 (free tier) | ~$5–15/month |
-| **GitHub Actions** | ~$0 (free tier minutes) | ~$0–10/month |
-| **GHCR** | ~$0 (free tier) | ~$0–5/month |
-| **Total** | **~$30–35/month** | **~$110–185/month** |
+| Service               | Cost at zero customers  | Cost at pilot scale (5–10 agencies)               |
+| --------------------- | ----------------------- | ------------------------------------------------- |
+| **Supabase Pro**      | $25/month               | $25/month (base; storage and egress scale slowly) |
+| **Fly.io — api**      | ~$0 (scale-to-zero)     | ~$30–60/month (shared-cpu-1x × 1–2 machines)      |
+| **Fly.io — web**      | ~$0 (scale-to-zero)     | ~$20–40/month                                     |
+| **Fly.io — worker**   | ~$0 (scale-to-zero)     | ~$15–30/month                                     |
+| **Fly.io — math**     | ~$0 (scale-to-zero)     | ~$20–40/month                                     |
+| **Fly.io — memgraph** | ~$5/month (1GB volume)  | ~$15–25/month (larger volume)                     |
+| **Upstash Redis**     | ~$0 (free tier)         | ~$5–15/month                                      |
+| **GitHub Actions**    | ~$0 (free tier minutes) | ~$0–10/month                                      |
+| **GHCR**              | ~$0 (free tier)         | ~$0–5/month                                       |
+| **Total**             | **~$30–35/month**       | **~$110–185/month**                               |
 
 This is the cost of running the entire platform as a SaaS. AWS costs do not appear until Phase 2.
 
@@ -1439,35 +1457,35 @@ Phase 0 SaaS Blind runs entirely on Supabase + Fly.io. This is the correct Phase
 
 **Why migrate at all?**
 
-| Requirement | Supabase + Fly.io limitation | AWS solution |
-|---|---|---|
-| SOC 2 Type 1 | Supabase is a SaaS — auditors require that vendor controls be documented via their SOC 2 report, which exists but is not agency-controlled | RDS, ECS, S3 — all in the agency's own AWS org or ChainSight's audited AWS org |
-| Data residency controls | Supabase manages the Postgres instance; region is selectable but infrastructure is Supabase's | Customer-specified AWS region; VPC isolation |
-| CJIS cloud requirements | Fly.io is not FedRAMP authorized; Supabase is not FedRAMP authorized | AWS GovCloud path is available; AWS has CJIS-compliant configurations |
-| Confidential computing (Phase 3) | Nitro Enclaves require EC2 bare metal; not available on Fly.io or Supabase | AWS Nitro Enclaves available on c6a, m6a instances |
-| Per-tenant infrastructure isolation | Single Supabase project for all agencies (RLS provides logical isolation) | Per-tenant RDS schema or database; VPC-level isolation option |
+| Requirement                         | Supabase + Fly.io limitation                                                                                                               | AWS solution                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| SOC 2 Type 1                        | Supabase is a SaaS — auditors require that vendor controls be documented via their SOC 2 report, which exists but is not agency-controlled | RDS, ECS, S3 — all in the agency's own AWS org or ChainSight's audited AWS org |
+| Data residency controls             | Supabase manages the Postgres instance; region is selectable but infrastructure is Supabase's                                              | Customer-specified AWS region; VPC isolation                                   |
+| CJIS cloud requirements             | Fly.io is not FedRAMP authorized; Supabase is not FedRAMP authorized                                                                       | AWS GovCloud path is available; AWS has CJIS-compliant configurations          |
+| Confidential computing (Phase 3)    | Nitro Enclaves require EC2 bare metal; not available on Fly.io or Supabase                                                                 | AWS Nitro Enclaves available on c6a, m6a instances                             |
+| Per-tenant infrastructure isolation | Single Supabase project for all agencies (RLS provides logical isolation)                                                                  | Per-tenant RDS schema or database; VPC-level isolation option                  |
 
 ### 4.2 What migrates and what stays the same
 
 **What migrates (data layer → AWS):**
 
-| Supabase service | AWS equivalent | Notes |
-|---|---|---|
-| Postgres 16 + pgvector | Amazon RDS for PostgreSQL | pg_dump/restore; carry DEKs unchanged |
-| Supabase Storage | Amazon S3 | Signed URL migration; same encrypted blob format |
-| Supabase Auth (GoTrue) | Ory Kratos (self-hosted) or AWS Cognito | WebAuthn support required; Ory Kratos preferred |
-| Supabase Realtime | Soketi (self-hosted) or AWS API Gateway WebSocket | Realtime subscriptions re-implemented |
-| Supabase Edge Functions | AWS Lambda or ECS scheduled tasks | Deno → Node.js port (minor) |
+| Supabase service        | AWS equivalent                                    | Notes                                            |
+| ----------------------- | ------------------------------------------------- | ------------------------------------------------ |
+| Postgres 16 + pgvector  | Amazon RDS for PostgreSQL                         | pg_dump/restore; carry DEKs unchanged            |
+| Supabase Storage        | Amazon S3                                         | Signed URL migration; same encrypted blob format |
+| Supabase Auth (GoTrue)  | Ory Kratos (self-hosted) or AWS Cognito           | WebAuthn support required; Ory Kratos preferred  |
+| Supabase Realtime       | Soketi (self-hosted) or AWS API Gateway WebSocket | Realtime subscriptions re-implemented            |
+| Supabase Edge Functions | AWS Lambda or ECS scheduled tasks                 | Deno → Node.js port (minor)                      |
 
 **What migrates (application layer → AWS):**
 
-| Fly.io service | AWS equivalent | Notes |
-|---|---|---|
-| chainsight-api (Fastify) | ECS Fargate | Same Docker image; deployment config changes only |
-| chainsight-worker (BullMQ) | ECS Fargate | Same Docker image |
-| chainsight-math (Python gRPC) | ECS Fargate | Same Docker image |
-| chainsight-memgraph (Fly Volume) | EC2 + EBS Volume | Memgraph requires persistent volume; ECS Fargate does not support custom volumes at this scale |
-| Upstash Redis | Amazon ElastiCache for Redis | Same Redis protocol; connection URL changes |
+| Fly.io service                   | AWS equivalent               | Notes                                                                                          |
+| -------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| chainsight-api (Fastify)         | ECS Fargate                  | Same Docker image; deployment config changes only                                              |
+| chainsight-worker (BullMQ)       | ECS Fargate                  | Same Docker image                                                                              |
+| chainsight-math (Python gRPC)    | ECS Fargate                  | Same Docker image                                                                              |
+| chainsight-memgraph (Fly Volume) | EC2 + EBS Volume             | Memgraph requires persistent volume; ECS Fargate does not support custom volumes at this scale |
+| Upstash Redis                    | Amazon ElastiCache for Redis | Same Redis protocol; connection URL changes                                                    |
 
 **What does NOT change:**
 
@@ -1531,6 +1549,7 @@ terraform apply staging.tfplan
 #### Weeks 3–4: Postgres migration (Supabase → RDS)
 
 The Postgres migration must preserve:
+
 - All table data and schema
 - All DEKs (wrapped with agency KMS keys — keys do NOT need to change; they are stored as ciphertext in the database)
 - All RLS policies (identical SQL; RDS Postgres 16 supports the same policy syntax)
@@ -1595,14 +1614,14 @@ kratos:
               hooks:
                 - hook: require-verified-address
         registration:
-          enabled: false   # Invite-only; registration is admin-initiated
+          enabled: false # Invite-only; registration is admin-initiated
 
     courier:
       smtp:
-        connection_uri: "smtps://resend.smtp:465?skip_ssl_verify=false"
+        connection_uri: 'smtps://resend.smtp:465?skip_ssl_verify=false'
 
     session:
-      lifespan: "1h"
+      lifespan: '1h'
 
     totp:
       enabled: true
@@ -1611,9 +1630,9 @@ kratos:
       passwordless: true
       config:
         rp:
-          id: "app.chainsight.io"
-          origin: "https://app.chainsight.io"
-          display_name: "ChainSight"
+          id: 'app.chainsight.io'
+          origin: 'https://app.chainsight.io'
+          display_name: 'ChainSight'
 ```
 
 **User migration:** Supabase GoTrue stores passwords as bcrypt hashes. Ory Kratos also supports bcrypt. The migration:
@@ -1637,11 +1656,11 @@ BUCKETS = ["case-documents", "repro-packs", "audit-log-mirror"]
 for bucket_name in BUCKETS:
     # List all objects in Supabase Storage bucket
     objects = supabase.storage.from_(bucket_name).list("", {"limit": 10000})
-    
+
     for obj in objects:
         # Download from Supabase (generates a signed URL internally)
         file_data = supabase.storage.from_(bucket_name).download(obj["name"])
-        
+
         # Upload to S3 with same key (preserving agency_id prefix structure)
         s3.put_object(
             Bucket=f"chainsight-{bucket_name}",
@@ -1652,7 +1671,7 @@ for bucket_name in BUCKETS:
             ServerSideEncryption="aws:kms",
             SSEKMSKeyId=AWS_KMS_KEY_ARN,
         )
-        
+
         print(f"Migrated: {bucket_name}/{obj['name']}")
 ```
 
@@ -1844,16 +1863,16 @@ resource "aws_rds_cluster_parameter_group" "chainsight" {
 
 ### 4.7 Cost model at Phase 2
 
-| Service | Phase 0 cost | Phase 2 cost (AWS, pilot scale) | Phase 2 cost (AWS, 20+ customers) |
-|---|---|---|---|
-| Database | Supabase Pro $25/month | Aurora PostgreSQL t4g.medium ~$65/month | Aurora PostgreSQL r6g.large ~$200/month |
-| Auth | Included in Supabase | Ory Kratos ECS Fargate ~$20/month | ~$40/month |
-| Storage | Included in Supabase | S3 + CloudFront ~$5–20/month | ~$30–100/month |
-| Realtime | Included in Supabase | Soketi ECS Fargate ~$20/month | ~$40/month |
-| Application (ECS) | Fly.io ~$80–150/month | ECS Fargate ~$150–250/month | ~$400–800/month |
-| Redis | Upstash ~$5/month | ElastiCache t4g.micro ~$25/month | ElastiCache t3.medium ~$70/month |
-| Observability | Grafana Cloud free | Self-hosted on ECS ~$30/month | ~$60/month |
-| **Total** | **~$110–185/month** | **~$315–430/month** | **~$790–1,270/month** |
+| Service           | Phase 0 cost           | Phase 2 cost (AWS, pilot scale)         | Phase 2 cost (AWS, 20+ customers)       |
+| ----------------- | ---------------------- | --------------------------------------- | --------------------------------------- |
+| Database          | Supabase Pro $25/month | Aurora PostgreSQL t4g.medium ~$65/month | Aurora PostgreSQL r6g.large ~$200/month |
+| Auth              | Included in Supabase   | Ory Kratos ECS Fargate ~$20/month       | ~$40/month                              |
+| Storage           | Included in Supabase   | S3 + CloudFront ~$5–20/month            | ~$30–100/month                          |
+| Realtime          | Included in Supabase   | Soketi ECS Fargate ~$20/month           | ~$40/month                              |
+| Application (ECS) | Fly.io ~$80–150/month  | ECS Fargate ~$150–250/month             | ~$400–800/month                         |
+| Redis             | Upstash ~$5/month      | ElastiCache t4g.micro ~$25/month        | ElastiCache t3.medium ~$70/month        |
+| Observability     | Grafana Cloud free     | Self-hosted on ECS ~$30/month           | ~$60/month                              |
+| **Total**         | **~$110–185/month**    | **~$315–430/month**                     | **~$790–1,270/month**                   |
 
 Phase 2 costs are ~2–3× Phase 0 costs. The increase is justified by SOC 2 compliance and government contract eligibility.
 
@@ -1868,6 +1887,7 @@ These items must be resolved before the Phase 2 migration sprint begins:
 3. **AWS account structure for multi-region:** A single us-east-1 deployment suffices for Phase 2. Multi-region (for GDPR data residency or FedRAMP GovCloud) is Phase 3. The Terraform module structure is designed to support multi-region from the start.
 
 4. **GitHub Actions self-hosted runners:** SOC 2 Type 1 will flag GitHub-hosted runners. Self-hosted runners on EC2 should be provisioned at the start of Phase 2. See open question D2 in Section 19.
+
 ---
 
 ## 5. On-Premises Installer — Phase 1+
@@ -1883,18 +1903,19 @@ Both paths install identical software from the same signed container images. The
 
 ### 5.2 What the customer must provide
 
-| Resource | Minimum for small deployment | Recommended for full deployment |
-|---|---|---|
-| **Compute** | 1 node: 16 vCPU, 64GB RAM (Compose path) | 3-node K8s cluster: 2×8 vCPU, 32GB each + 1 GPU node |
-| **Storage** | 500GB SSD for Postgres + MinIO + Memgraph | 2TB NVMe RAID for primary; separate backup storage |
-| **Network** | 1Gbps internal; 100Mbps egress for BYOK provider calls | 10Gbps internal; 1Gbps egress |
-| **Identity** | LDAP/AD or OIDC provider for SSO | LDAP/AD with MFA enforced |
-| **KMS** | HashiCorp Vault (provided config included) or cloud KMS via agency | HSM-backed Vault or Thales Luna / Entrust nShield |
-| **TLS certificates** | Agency-issued or Let's Encrypt with internal ACME | Agency-issued certificates signed by agency PKI |
-| **DNS** | Internal DNS entry for the deployment FQDN | Internal DNS with split-horizon if needed |
-| **Backup storage** | NFS share or S3-compatible endpoint for backups | Separate site backup storage for DR |
+| Resource             | Minimum for small deployment                                       | Recommended for full deployment                      |
+| -------------------- | ------------------------------------------------------------------ | ---------------------------------------------------- |
+| **Compute**          | 1 node: 16 vCPU, 64GB RAM (Compose path)                           | 3-node K8s cluster: 2×8 vCPU, 32GB each + 1 GPU node |
+| **Storage**          | 500GB SSD for Postgres + MinIO + Memgraph                          | 2TB NVMe RAID for primary; separate backup storage   |
+| **Network**          | 1Gbps internal; 100Mbps egress for BYOK provider calls             | 10Gbps internal; 1Gbps egress                        |
+| **Identity**         | LDAP/AD or OIDC provider for SSO                                   | LDAP/AD with MFA enforced                            |
+| **KMS**              | HashiCorp Vault (provided config included) or cloud KMS via agency | HSM-backed Vault or Thales Luna / Entrust nShield    |
+| **TLS certificates** | Agency-issued or Let's Encrypt with internal ACME                  | Agency-issued certificates signed by agency PKI      |
+| **DNS**              | Internal DNS entry for the deployment FQDN                         | Internal DNS with split-horizon if needed            |
+| **Backup storage**   | NFS share or S3-compatible endpoint for backups                    | Separate site backup storage for DR                  |
 
 **GPU (for local LLM inference, v0.9 AI strategy):**
+
 - Tier A specialists (Phi-4, Qwen 3.5 8B): 1× NVIDIA A10G or A100 40GB
 - Tier B workers (DeepSeek V4 Pro 37B MoE): 2× A100 80GB or H100
 - Tier C frontier (Llama 4 70B or DeepSeek V4 Pro Max): 4-8× H100
@@ -1938,33 +1959,33 @@ infra/helm/chainsight/
 # infra/helm/chainsight/values.yaml
 
 global:
-  imageRegistry: "ghcr.io/chainsight"
-  imageTag: "1.0.0"   # Pinned per release; customer updates manually or via deferred-update workflow
+  imageRegistry: 'ghcr.io/chainsight'
+  imageTag: '1.0.0' # Pinned per release; customer updates manually or via deferred-update workflow
   imagePullPolicy: IfNotPresent
-  storageClass: ""    # Customer provides; defaults to cluster default
+  storageClass: '' # Customer provides; defaults to cluster default
 
   # Sovereignty: no vendor telemetry by default
   telemetry:
     enabled: false
     optInDetailedMetrics: false
-    vendorEndpoint: ""  # Only populated if customer opts in
+    vendorEndpoint: '' # Only populated if customer opts in
 
   # Encryption
   kms:
-    provider: vault       # vault | awskms | gcpkms | azurekeyvault | dev_stub
-    vaultAddr: ""         # Required if provider=vault
-    vaultToken: ""        # Use secretRef in production
-    vaultPath: "secret/chainsight"
+    provider: vault # vault | awskms | gcpkms | azurekeyvault | dev_stub
+    vaultAddr: '' # Required if provider=vault
+    vaultToken: '' # Use secretRef in production
+    vaultPath: 'secret/chainsight'
 
 api:
   replicaCount: 2
   resources:
     requests:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: '500m'
+      memory: '1Gi'
     limits:
-      cpu: "2000m"
-      memory: "4Gi"
+      cpu: '2000m'
+      memory: '4Gi'
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -1973,20 +1994,20 @@ api:
 
   # Blind support access (per v0.7 deployment model)
   supportAccess:
-    enabled: true          # Scoped, audited, revocable vendor support
-    auditLogRef: ""        # Where to write support action logs
+    enabled: true # Scoped, audited, revocable vendor support
+    auditLogRef: '' # Where to write support action logs
 
 postgres:
   # If managed = false, customer provides the connection string
-  managed: true  # Set to false if customer provides their own Postgres
-  host: ""
+  managed: true # Set to false if customer provides their own Postgres
+  host: ''
   port: 5432
   database: chainsight
   existingSecret: chainsight-db-secret
 
 redis:
   managed: true
-  host: ""
+  host: ''
   port: 6379
   existingSecret: chainsight-redis-secret
 
@@ -1995,12 +2016,12 @@ memgraph:
   persistence:
     enabled: true
     size: 100Gi
-    storageClass: ""
+    storageClass: ''
 
 minio:
   # On-prem object storage; replace with customer's existing S3-compatible store
   managed: true
-  endpoint: ""
+  endpoint: ''
   existingSecret: chainsight-minio-secret
 
 ollama:
@@ -2017,7 +2038,7 @@ observability:
   # Self-hostable — all telemetry stays inside the agency
   opentelemetry:
     enabled: true
-    endpoint: "http://otel-collector:4317"
+    endpoint: 'http://otel-collector:4317'
   grafana:
     enabled: true
     adminExistingSecret: chainsight-grafana-secret
@@ -2263,6 +2284,7 @@ echo "==> Upgrade to ${NEW_VERSION} complete."
 ### 6.1 Air-gapped threat model
 
 An air-gapped ChainSight deployment operates in an environment with:
+
 - No outbound network connectivity to ChainSight's vendor infrastructure
 - No outbound connectivity to commercial LLM APIs
 - No outbound connectivity to commercial data providers (BYOK calls go to agency-internal mirrors or are disabled)
@@ -2371,7 +2393,7 @@ The air-gapped installer enforces no-phone-home at multiple layers:
   "seat_count": 50,
   "valid_from": "2026-01-01",
   "valid_until": "2027-01-01",
-  "signature": "..."  // Vendor's Ed25519 signature over the above fields
+  "signature": "..." // Vendor's Ed25519 signature over the above fields
 }
 ```
 
@@ -2383,11 +2405,11 @@ The API validates this certificate at startup using the vendor's hardcoded publi
 // apps/api/src/lib/network-policy.ts
 // In air-gapped mode, all outbound HTTP is blocked unless routed through
 // an explicitly configured AgencyProviderInstall endpoint.
-if (process.env.AIRGAP_MODE === "true") {
+if (process.env.AIRGAP_MODE === 'true') {
   // Patch global fetch to block non-whitelisted domains
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (input, init) => {
-    const url = typeof input === "string" ? input : input.url;
+    const url = typeof input === 'string' ? input : input.url;
     if (!isAllowedByCapabilityRouter(url)) {
       throw new Error(`AIRGAP_VIOLATION: blocked outbound call to ${url}`);
     }
@@ -2401,6 +2423,7 @@ if (process.env.AIRGAP_MODE === "true") {
 **Decision (G21 open, resolved here with both paths supported):**
 
 **Physical media path (USB/DVD):**
+
 - Installer bundle copied to USB or DVD
 - Customer IT team carries media to air-gapped environment
 - Standard for smaller deployments and branch offices
@@ -2408,6 +2431,7 @@ if (process.env.AIRGAP_MODE === "true") {
 - Bundle ≤ 4GB (without GPU model weights) fits on a single DVD-9
 
 **One-way data diode path:**
+
 - Vendor places update bundle in a transfer zone
 - Customer's one-way diode (Owl Cyber Defense, Waterfall Security, or equivalent) transfers data from low-side (internet) to high-side (air-gapped)
 - No reverse channel possible — physically enforced
@@ -2421,6 +2445,7 @@ The installer script detects which mode is in use via `--delivery-mode physical|
 For air-gapped deployments running AI-assisted investigation, GPU integration is required. The platform supports three inference runtimes (per v0.9 strategy):
 
 **Ollama (default for simplicity):**
+
 ```yaml
 # In on-prem values.yaml
 ollama:
@@ -2431,7 +2456,7 @@ ollama:
     driver: nvidia
   models:
     - name: phi4
-      quantization: q4_k_m     # Balanced quality/performance
+      quantization: q4_k_m # Balanced quality/performance
     - name: qwen2.5:8b
       quantization: q4_k_m
   resources:
@@ -2440,6 +2465,7 @@ ollama:
 ```
 
 **vLLM (for production throughput):**
+
 ```yaml
 # In on-prem values.yaml
 vllm:
@@ -2447,7 +2473,7 @@ vllm:
   models:
     - name: deepseek-v4-pro-37b
       weights_path: /models/deepseek-v4-pro
-      tensor_parallel_size: 2   # Spread across 2 GPUs
+      tensor_parallel_size: 2 # Spread across 2 GPUs
       max_model_len: 32768
   resources:
     limits:
@@ -2455,11 +2481,12 @@ vllm:
 ```
 
 **NVIDIA NIM (for IL5/IL6 with NIM-certified models):**
+
 ```yaml
 # In on-prem values.yaml
 nim:
   enabled: true
-  endpoint: "http://nim-server:8000"  # Customer-managed NIM server
+  endpoint: 'http://nim-server:8000' # Customer-managed NIM server
   # ChainSight routes Tier C requests to NIM; Tiers A and B to vLLM
 ```
 
@@ -2467,12 +2494,12 @@ The capability router (Pillar 3) treats the local inference endpoint identically
 
 **Hardware sizing guide (included in installation documentation):**
 
-| Workload | GPU minimum | Notes |
-|---|---|---|
-| Tier A specialists only (Phi-4, Qwen 8B) | 1× A10G 24GB | Sufficient for small team (<5 concurrent investigations) |
-| Tier A + B (add DeepSeek V4 Pro 37B MoE) | 2× A100 40GB | Suitable for department deployment |
-| Full three-tier stack (add Llama 4 70B for Tier C) | 4× A100 80GB or 2× H100 | Agency deployment |
-| IL6 high-performance | 8× H100 | 4× for Tier C, 2× for Tier B, 2× for Tier A |
+| Workload                                           | GPU minimum             | Notes                                                    |
+| -------------------------------------------------- | ----------------------- | -------------------------------------------------------- |
+| Tier A specialists only (Phi-4, Qwen 8B)           | 1× A10G 24GB            | Sufficient for small team (<5 concurrent investigations) |
+| Tier A + B (add DeepSeek V4 Pro 37B MoE)           | 2× A100 40GB            | Suitable for department deployment                       |
+| Full three-tier stack (add Llama 4 70B for Tier C) | 4× A100 80GB or 2× H100 | Agency deployment                                        |
+| IL6 high-performance                               | 8× H100                 | 4× for Tier C, 2× for Tier B, 2× for Tier A              |
 
 ---
 
@@ -2491,17 +2518,17 @@ The business rationale for Phase 3 timing: confidential computing is complex to 
 
 Not every service needs enclave protection. The enclave boundary is drawn around the services that must process agency plaintext:
 
-| Service | Enclave required | Why |
-|---|---|---|
-| Belief State Service hot path | Yes | Reads and writes case plaintext (BeliefAtom content) |
-| Math Service | Yes | Processes decrypted financial values |
-| LLM orchestrator proxy | Yes | Forwards decrypted prompts to Tier C models |
-| Verifier Agent | Yes | Processes decrypted report drafts |
-| Narrative Agent | Yes | Generates from decrypted BeliefAtoms |
-| API gateway | No | Only routes encrypted data; no plaintext |
-| Worker (BullMQ) | No | Only moves encrypted payloads between services |
-| Graph store (Memgraph) | No | Encrypted at rest; query patterns are acceptable leakage per design |
-| Cache layer | No | Encrypted with per-agency DEKs; vendor reads ciphertext only |
+| Service                       | Enclave required | Why                                                                 |
+| ----------------------------- | ---------------- | ------------------------------------------------------------------- |
+| Belief State Service hot path | Yes              | Reads and writes case plaintext (BeliefAtom content)                |
+| Math Service                  | Yes              | Processes decrypted financial values                                |
+| LLM orchestrator proxy        | Yes              | Forwards decrypted prompts to Tier C models                         |
+| Verifier Agent                | Yes              | Processes decrypted report drafts                                   |
+| Narrative Agent               | Yes              | Generates from decrypted BeliefAtoms                                |
+| API gateway                   | No               | Only routes encrypted data; no plaintext                            |
+| Worker (BullMQ)               | No               | Only moves encrypted payloads between services                      |
+| Graph store (Memgraph)        | No               | Encrypted at rest; query patterns are acceptable leakage per design |
+| Cache layer                   | No               | Encrypted with per-agency DEKs; vendor reads ciphertext only        |
 
 ### 7.3 AWS Nitro Enclaves architecture
 
@@ -2573,6 +2600,7 @@ If any PCR value fails to match, the tool prints `MISMATCH` and the customer mus
 The observability stack is **identical between SaaS Blind and On-Premises**. This is a key sovereignty requirement: on-prem customers own all their telemetry with no dependency on vendor-operated monitoring infrastructure.
 
 Stack:
+
 - **OpenTelemetry Collector** — aggregation and forwarding hub
 - **Tempo** — distributed tracing backend
 - **Loki** — log aggregation
@@ -2584,21 +2612,22 @@ Stack:
 Every service emits traces, metrics, and logs via OTEL SDK:
 
 **TypeScript services (api, worker):**
+
 ```typescript
 // packages/observability/src/index.ts
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
-import { Resource } from "@opentelemetry/resources";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export function initTelemetry(serviceName: string) {
   const sdk = new NodeSDK({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
       [SemanticResourceAttributes.SERVICE_VERSION]: process.env.APP_VERSION,
-      "chainsight.deployment_mode": process.env.DEPLOYMENT_MODE, // saas_blind | on_premises | air_gapped
+      'chainsight.deployment_mode': process.env.DEPLOYMENT_MODE, // saas_blind | on_premises | air_gapped
     }),
     traceExporter: new OTLPTraceExporter({
       url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
@@ -2613,7 +2642,7 @@ export function initTelemetry(serviceName: string) {
   });
 
   sdk.start();
-  process.on("SIGTERM", () => sdk.shutdown());
+  process.on('SIGTERM', () => sdk.shutdown());
 }
 ```
 
@@ -2621,7 +2650,7 @@ export function initTelemetry(serviceName: string) {
 
 ```typescript
 // apps/api/src/middleware/telemetry.ts
-import { trace } from "@opentelemetry/api";
+import { trace } from '@opentelemetry/api';
 
 export function tenantTelemetryMiddleware(req, reply, done) {
   const span = trace.getActiveSpan();
@@ -2629,8 +2658,8 @@ export function tenantTelemetryMiddleware(req, reply, done) {
     // Tag spans with agency ID for per-tenant filtering
     // IMPORTANT: never include case data or investigation details in spans
     span.setAttributes({
-      "chainsight.agency_id": req.agencyId,
-      "chainsight.user_id": req.userId,
+      'chainsight.agency_id': req.agencyId,
+      'chainsight.user_id': req.userId,
       // No case_id, no address, no tx_hash in telemetry
     });
   }
@@ -2643,6 +2672,7 @@ export function tenantTelemetryMiddleware(req, reply, done) {
 Default dashboards ship as Grafana provisioning files:
 
 **Overview dashboard** — `observability/grafana-dashboards/overview.json`:
+
 - Request rate (p50, p95, p99 latency) per service
 - Error rate per service
 - Queue depth (BullMQ)
@@ -2651,18 +2681,21 @@ Default dashboards ship as Grafana provisioning files:
 - Memory and CPU per container
 
 **Per-tenant dashboard** — `observability/grafana-dashboards/per-tenant.json`:
+
 - Requests per agency (anonymized)
 - API cost per agency (aggregated; no case content)
 - Error rate per agency
 - Active sessions per agency
 
 **AI cost dashboard** — `observability/grafana-dashboards/ai-cost.json`:
+
 - LLM token consumption per model per role
 - Provider API spend by model
 - Cost per case (aggregate — no case identifiers visible to vendor)
 - Cache hit rate for provider calls
 
 **Infrastructure health dashboard** — `observability/grafana-dashboards/infra.json`:
+
 - Postgres connection pool, WAL lag, replication lag
 - Redis memory usage, eviction rate
 - Memgraph query latency, cache hit rate
@@ -2676,22 +2709,22 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: "0.0.0.0:4317"
+        endpoint: '0.0.0.0:4317'
       http:
-        endpoint: "0.0.0.0:4318"
+        endpoint: '0.0.0.0:4318'
 
 processors:
   # Remove any case data that accidentally made it into a span attribute
   # This is a defense-in-depth filter; instrumentation should never include case data
   attributes/scrub_case_data:
     actions:
-      - key: "case.id"
+      - key: 'case.id'
         action: delete
-      - key: "address"
+      - key: 'address'
         action: delete
-      - key: "tx_hash"
+      - key: 'tx_hash'
         action: delete
-      - key: "ioc"
+      - key: 'ioc'
         action: delete
 
   batch:
@@ -2703,19 +2736,19 @@ processors:
 
 exporters:
   otlp/tempo:
-    endpoint: "tempo:4317"
+    endpoint: 'tempo:4317'
     tls:
       insecure: true
 
   loki:
-    endpoint: "http://loki:3100/loki/api/v1/push"
+    endpoint: 'http://loki:3100/loki/api/v1/push'
     labels:
       attributes:
-        service.name: "service"
-        chainsight.agency_id: "agency_id"
+        service.name: 'service'
+        chainsight.agency_id: 'agency_id'
 
   prometheus:
-    endpoint: "0.0.0.0:8889"
+    endpoint: '0.0.0.0:8889'
 
 service:
   pipelines:
@@ -2745,11 +2778,11 @@ datasources:
     url: http://tempo:3200
     jsonData:
       tracesToLogsV2:
-        datasourceUid: "loki"
+        datasourceUid: 'loki'
       serviceMap:
-        datasourceUid: "prometheus"
+        datasourceUid: 'prometheus'
       lokiSearch:
-        datasourceUid: "loki"
+        datasourceUid: 'loki'
 
   - name: Loki
     type: loki
@@ -2783,6 +2816,7 @@ This is a contractual and technical commitment (Pillar 4). The vendor's observab
 | Billing-relevant counters | Which feature tier is active | No case volume, no investigation details |
 
 **What is never in vendor telemetry:**
+
 - Case codenames, IDs, or any case identifiers
 - IOC values (addresses, transaction hashes, names)
 - Attribution data
@@ -2802,10 +2836,10 @@ The opt-in toggle is a real, auditable control. It is not a UI theater element t
 // packages/telemetry/src/index.ts
 
 interface TelemetryConfig {
-  vendorOptIn: boolean;           // default: false
-  detailedFeatureUsage: boolean;  // default: false (opt-in)
-  crashReports: boolean;          // default: false (opt-in)
-  abTestParticipation: boolean;   // default: false (opt-in)
+  vendorOptIn: boolean; // default: false
+  detailedFeatureUsage: boolean; // default: false (opt-in)
+  crashReports: boolean; // default: false (opt-in)
+  abTestParticipation: boolean; // default: false (opt-in)
 }
 
 class TelemetryClient {
@@ -2824,7 +2858,7 @@ class TelemetryClient {
     if (!this.config.vendorOptIn || !this.vendorEndpoint) return;
     // This is the ONLY call to the vendor endpoint
     await fetch(`${this.vendorEndpoint}/billing/heartbeat`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({
         // Opaque agency token — not the agency ID itself
         agency_token: await hashAgencyId(agencyId),
@@ -2842,7 +2876,7 @@ class TelemetryClient {
     // event: {feature: "case_created" | "path_styled" | ..., ts: timestamp}
     // Never includes case IDs, investigator IDs, or content
     await fetch(`${this.vendorEndpoint}/telemetry/feature`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(event),
     });
   }
@@ -2855,7 +2889,7 @@ The opt-in toggle change is logged to the agency's immutable audit trail:
 // When an admin changes the telemetry opt-in setting:
 await auditLog.append({
   actor: adminUserId,
-  action: "TELEMETRY_OPT_IN_CHANGED",
+  action: 'TELEMETRY_OPT_IN_CHANGED',
   target_ref: `agency:${agencyId}:telemetry_config`,
   payload: { from: previousState, to: newState },
 });
@@ -2893,14 +2927,14 @@ SupportAccessGrant {
   granted_by: investigator_id  // Agency admin who approved
   granted_at: timestamp
   expires_at: timestamp        // Hard expiry; cannot be extended without a new grant
-  
+
   scopes: SupportScope[]       // What the vendor can do
   allowed_resources: string[]  // Optional: specific case IDs, tables, etc.
-  
+
   status: enum                 // active | expired | revoked
   revoked_at: timestamp | null
   revoked_by: investigator_id | null
-  
+
   audit_log_ref: string        // Foreign key to the audit log section for this grant
 }
 
@@ -2959,14 +2993,14 @@ The vendor support engineer receives a short-lived JWT scoped to the allowed ope
 // Generated by the admin UI, sent to vendor support engineer via the support portal
 const grantToken = jwt.sign(
   {
-    sub: "support:chainsight.dev",
+    sub: 'support:chainsight.dev',
     agency_id: agencyId,
     grant_id: grantId,
     scopes: grant.scopes,
     exp: Math.floor(grant.expires_at.getTime() / 1000),
   },
-  GRANT_SIGNING_KEY,  // Rotated per-grant; derived from agency KMS root key
-  { algorithm: "EdDSA" }
+  GRANT_SIGNING_KEY, // Rotated per-grant; derived from agency KMS root key
+  { algorithm: 'EdDSA' },
 );
 ```
 
@@ -2975,23 +3009,23 @@ The API checks this token on every request from the support engineer:
 ```typescript
 // apps/api/src/middleware/support-access.ts
 async function checkSupportAccess(req, reply) {
-  const token = req.headers["x-support-grant-token"];
-  if (!token) return;  // Not a support access request
+  const token = req.headers['x-support-grant-token'];
+  if (!token) return; // Not a support access request
 
   const grant = await verifySupportGrantToken(token);
-  if (!grant || grant.status !== "active") {
-    return reply.status(403).send({ error: "Invalid or expired support grant" });
+  if (!grant || grant.status !== 'active') {
+    return reply.status(403).send({ error: 'Invalid or expired support grant' });
   }
 
   // Check the requested action against the grant's scopes
   if (!grant.scopes.includes(req.supportAction)) {
-    return reply.status(403).send({ error: "Action not within grant scope" });
+    return reply.status(403).send({ error: 'Action not within grant scope' });
   }
 
   // Log this action to the agency's audit trail IN REAL TIME
   await auditLog.append({
     actor: `support:${grant.requested_by}`,
-    action: "SUPPORT_ACCESS_ACTION",
+    action: 'SUPPORT_ACCESS_ACTION',
     target_ref: req.url,
     payload: {
       grant_id: grant.id,
@@ -3011,38 +3045,43 @@ async function checkSupportAccess(req, reply) {
 
 ### 11.1 RPO/RTO targets
 
-| Deployment | RPO | RTO | Notes |
-|---|---|---|---|
-| SaaS Blind v1 (Fly.io, Phase 0) | 1 hour | 4 hours | Single-region; limited DR posture |
-| SaaS Blind v2 (AWS, Phase 1+) | 15 minutes | 1 hour | Multi-AZ; automated failover |
-| SaaS Blind v3 (AWS multi-region, Phase 2+) | 5 minutes | 30 minutes | Cross-region replication |
-| On-Premises | Agency-defined | Agency-defined | DR is the agency's responsibility; ChainSight provides scripts |
+| Deployment                                 | RPO            | RTO            | Notes                                                          |
+| ------------------------------------------ | -------------- | -------------- | -------------------------------------------------------------- |
+| SaaS Blind v1 (Fly.io, Phase 0)            | 1 hour         | 4 hours        | Single-region; limited DR posture                              |
+| SaaS Blind v2 (AWS, Phase 1+)              | 15 minutes     | 1 hour         | Multi-AZ; automated failover                                   |
+| SaaS Blind v3 (AWS multi-region, Phase 2+) | 5 minutes      | 30 minutes     | Cross-region replication                                       |
+| On-Premises                                | Agency-defined | Agency-defined | DR is the agency's responsibility; ChainSight provides scripts |
 
 These are targets, not guarantees. The SLAs in the MSA reflect them.
 
 ### 11.2 Backup cadence
 
 **Postgres (primary data store):**
+
 - Continuous WAL archiving to S3/Tigris (point-in-time recovery)
 - Daily full backup snapshot (retained for 30 days)
 - Weekly backup verified by restore to a test instance and hash comparison
 - On-premises: customer configures backup destination; ChainSight provides backup scripts
 
 **Redis:**
+
 - RDB snapshot every 15 minutes to S3/Tigris
 - AOF enabled with `appendfsync everysec`
 - Redis is reconstructible from Postgres for most data (sessions and in-flight queues are the only state not in Postgres); point-in-time restore is a fallback, not the primary recovery path
 
 **Memgraph:**
+
 - Nightly `DUMP DATABASE` to MinIO/S3 via a BullMQ scheduled job
 - Memgraph data is reconstructible from Postgres (the graph is a derived view of the case data); the nightly dump accelerates recovery
 
 **S3/Tigris (object storage):**
+
 - S3 Object Lock (WORM) enabled on audit log buckets
 - Cross-region replication enabled for case documents and Reproducibility Packs (Phase 1+)
 - Versioning enabled on all buckets; delete markers on accidental deletion
 
 **Audit logs:**
+
 - Append-only Postgres table with hash-chained entries
 - Mirrored to S3 with Object Lock on every write (per v1.0 engineering doc)
 - Optional Merkle root anchoring to public chain at case-close (opt-in, per G2)
@@ -3137,7 +3176,7 @@ class CostTracker {
     providerInstallId: string,
     capability: string,
     estimatedCost: Decimal,
-    cacheHit: boolean
+    cacheHit: boolean,
   ) {
     await db.insert(providerCostLog).values({
       agency_id: agencyId,
@@ -3200,17 +3239,17 @@ For SaaS Blind customers, billing data extraction must happen without exposing c
 // Endpoint: GET /api/admin/billing/audit-pack
 // Returns: What billing data the vendor has on this agency
 
-router.get("/billing/audit-pack", async (req, reply) => {
+router.get('/billing/audit-pack', async (req, reply) => {
   const agencyId = req.agencyId;
 
   const pack = {
     generated_at: new Date().toISOString(),
-    agency_token: await hashAgencyId(agencyId),  // Opaque token, not agency ID
+    agency_token: await hashAgencyId(agencyId), // Opaque token, not agency ID
     billing_period: req.query.period,
     active_seats: await countActiveSeats(agencyId),
     feature_tier: await getFeatureTier(agencyId),
     // Gross volume buckets — no case-level breakdown
-    api_volume_bucket: await getVolumeBucket(agencyId),  // "low" | "medium" | "high"
+    api_volume_bucket: await getVolumeBucket(agencyId), // "low" | "medium" | "high"
     // Nothing else — no case IDs, no investigation details, no user identities
   };
 
@@ -3306,8 +3345,7 @@ class FeatureFlags {
     const config = await redis.get(`ff:${flag}`);
     if (!config) return false;
 
-    const { enabled_for_all, enabled_for_agencies, disabled_for_agencies } =
-      JSON.parse(config);
+    const { enabled_for_all, enabled_for_agencies, disabled_for_agencies } = JSON.parse(config);
 
     if (disabled_for_agencies?.includes(agencyId)) return false;
     if (enabled_for_agencies?.includes(agencyId)) return true;
@@ -3350,14 +3388,14 @@ No long-lived signing keys exist. Every signature is tied to a specific GitHub A
 
 ### 14.2 What gets signed
 
-| Artifact | Signed | How |
-|---|---|---|
-| Docker images (per service) | Yes | `cosign sign` on the OCI digest |
-| Helm chart (OCI artifact) | Yes | `cosign sign` on the chart digest |
-| Air-gapped installer bundle | Yes | `cosign sign-blob` on the tar.gz |
-| Release manifest (manifest.json) | Yes | `cosign attest` with custom predicate type |
-| SBOM (per image) | Yes | Embedded in OCI image via `docker buildx --sbom=true` |
-| SLSA provenance | Yes | Generated by `docker buildx --provenance=true` |
+| Artifact                         | Signed | How                                                   |
+| -------------------------------- | ------ | ----------------------------------------------------- |
+| Docker images (per service)      | Yes    | `cosign sign` on the OCI digest                       |
+| Helm chart (OCI artifact)        | Yes    | `cosign sign` on the chart digest                     |
+| Air-gapped installer bundle      | Yes    | `cosign sign-blob` on the tar.gz                      |
+| Release manifest (manifest.json) | Yes    | `cosign attest` with custom predicate type            |
+| SBOM (per image)                 | Yes    | Embedded in OCI image via `docker buildx --sbom=true` |
+| SLSA provenance                  | Yes    | Generated by `docker buildx --provenance=true`        |
 
 ### 14.3 Customer verification tooling
 
@@ -3417,6 +3455,7 @@ A reproducible build check runs quarterly. If a build cannot be reproduced, it i
 Per F44, enterprise and government tier customers receive source-code escrow as part of their contract. The escrow is held by a neutral third party.
 
 **Escrow agent options (customer choice):**
+
 - Iron Mountain (standard; government-accepted)
 - NCC Group Escrow (preferred for technical customers; they can audit the deposit)
 - Escrow London / EscrowTech (international customers)
@@ -3469,12 +3508,14 @@ echo "==> Escrow deposit complete for v${VERSION}"
 ### 15.3 Trigger events and release procedure
 
 Per F44, the escrow is released to customers upon:
+
 - Vendor bankruptcy or dissolution
 - Vendor abandonment (no commercially reasonable maintenance for >12 months)
 - Vendor acquisition by a hostile actor (subject to dispute resolution)
 - Vendor material breach of the MSA
 
 The release procedure is defined in the escrow agreement and requires:
+
 1. The triggering event to be certified by the escrow agent or a court order.
 2. The customer to formally request release.
 3. The escrow agent to decrypt and deliver the source.
@@ -3482,17 +3523,20 @@ The release procedure is defined in the escrow agreement and requires:
 ### 15.4 Customer access mechanics
 
 Upon escrow release, customers receive:
+
 - Full source code (identical to the GitHub repository at the deposited tag)
 - `ESCROW_BUILD_INSTRUCTIONS.md` — step-by-step instructions to build and deploy from source
 - The signed Docker images (or build scripts to reproduce them)
 - A limited license to operate the software for their own use
 
 The license grants the customer rights to:
+
 - Continue running the deposited version indefinitely
 - Modify the source for internal maintenance
 - Hire contractors to maintain it
 
 The license explicitly prohibits:
+
 - Commercial redistribution
 - Operating the platform as a competing service
 
@@ -3506,15 +3550,15 @@ SOC 2 Type 1 audits the design of controls (not operating effectiveness). It req
 
 **DevOps practices required by SOC 2 Type 1:**
 
-| Control area | Required practice | How ChainSight implements it |
-|---|---|---|
-| Change management | All changes go through documented review | GitHub PR-based workflow; no direct pushes to main |
-| Access control | Principle of least privilege | IAM roles per service; no shared credentials; Vault for secrets |
-| Availability | Uptime monitoring, incident response | Grafana alerts; PagerDuty; documented incident runbook |
-| Confidentiality | Encryption at rest and in transit | KMS DEK hierarchy; TLS everywhere; no plaintext storage |
-| Processing integrity | Audit trail of all data operations | Immutable hash-chained audit log; Postgres replication |
-| Security monitoring | Log review, anomaly detection | CloudWatch GuardDuty (AWS); Grafana alerts (Fly) |
-| Vulnerability management | Dependency scanning, penetration testing | Dependabot + Snyk in CI; annual pentest from Phase 2 |
+| Control area             | Required practice                        | How ChainSight implements it                                    |
+| ------------------------ | ---------------------------------------- | --------------------------------------------------------------- |
+| Change management        | All changes go through documented review | GitHub PR-based workflow; no direct pushes to main              |
+| Access control           | Principle of least privilege             | IAM roles per service; no shared credentials; Vault for secrets |
+| Availability             | Uptime monitoring, incident response     | Grafana alerts; PagerDuty; documented incident runbook          |
+| Confidentiality          | Encryption at rest and in transit        | KMS DEK hierarchy; TLS everywhere; no plaintext storage         |
+| Processing integrity     | Audit trail of all data operations       | Immutable hash-chained audit log; Postgres replication          |
+| Security monitoring      | Log review, anomaly detection            | CloudWatch GuardDuty (AWS); Grafana alerts (Fly)                |
+| Vulnerability management | Dependency scanning, penetration testing | Dependabot + Snyk in CI; annual pentest from Phase 2            |
 
 **Continuous-control evidence collection (automated):**
 
@@ -3553,6 +3597,7 @@ cat /var/log/chainsight/backup-verification.log > \
 Type 2 requires 6-12 months of demonstrated control operation. The evidence collection scripts from Phase 2 run continuously; by Phase 3, there is a full year of evidence.
 
 Additional Type 2 requirements:
+
 - Employee security training records (tracked in HR system)
 - Vendor security reviews (for Fly.io, AWS, Sigstore, Upstash)
 - Incident response exercises (tabletop exercises, documented outcomes)
@@ -3574,32 +3619,35 @@ ISO 27001 requires an Information Security Management System (ISMS). The ISMS do
 
 CJIS applies to US state and local law enforcement. Key requirements and their implementation:
 
-| CJIS requirement | Implementation |
-|---|---|
-| Advanced authentication (MFA) | TOTP required; WebAuthn for hardware key support (already in v1.0 engineering) |
-| Encryption in transit | TLS 1.2+ everywhere; TLS 1.3 preferred |
-| Encryption at rest | AES-256 via KMS DEK hierarchy |
-| Audit logging | Immutable hash-chained audit log; retained per CJIS requirement (minimum 1 year) |
-| Personnel screening | Vendor employees with support access undergo background checks |
-| Physical security | AWS data center security; relevant SOC 2 reports from AWS |
-| Incident response | Documented in incident runbook; notifications to agency within CJIS time limits |
+| CJIS requirement              | Implementation                                                                   |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| Advanced authentication (MFA) | TOTP required; WebAuthn for hardware key support (already in v1.0 engineering)   |
+| Encryption in transit         | TLS 1.2+ everywhere; TLS 1.3 preferred                                           |
+| Encryption at rest            | AES-256 via KMS DEK hierarchy                                                    |
+| Audit logging                 | Immutable hash-chained audit log; retained per CJIS requirement (minimum 1 year) |
+| Personnel screening           | Vendor employees with support access undergo background checks                   |
+| Physical security             | AWS data center security; relevant SOC 2 reports from AWS                        |
+| Incident response             | Documented in incident runbook; notifications to agency within CJIS time limits  |
 
 ### 16.5 FedRAMP Moderate — Phase 4
 
 FedRAMP Moderate adds:
 
 **Infrastructure requirements:**
+
 - Deployment exclusively in AWS GovCloud (us-gov-east-1 or us-gov-west-1)
 - Only FedRAMP-authorized services used (AWS services are authorized; Fly.io is not)
 - Separate GovCloud infrastructure isolated from commercial AWS deployment
 
 **Process requirements:**
+
 - Sponsoring federal agency required before authorization begins
 - System Security Plan (SSP) — 200+ page document
 - 3PAO assessment (Third-Party Assessment Organization)
 - ATO (Authority to Operate) from the sponsoring agency
 
 **Timeline (Phase 3 prep → Phase 4 authorization):**
+
 - Phase 3: Identify sponsoring agency; begin SSP; move SaaS to GovCloud
 - Phase 4: Complete 3PAO assessment; authorization process (~12-18 months)
 
@@ -3721,6 +3769,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 1: Repository and CI foundations
 
 **DevOps tasks:**
+
 - Initialize Turborepo monorepo structure (matches v1.0 engineering spec)
 - Configure `pnpm workspaces` and base `turbo.json`
 - Write `Dockerfile` targets (development, production) for all four services
@@ -3736,6 +3785,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 2: Supabase setup + testing infrastructure + anti-feature CI
 
 **DevOps tasks:**
+
 - Create Supabase project (Pro tier); link CLI via `supabase link`
 - Write `supabase/config.toml` with invite-only auth, TOTP + WebAuthn MFA, storage policies
 - Write initial migrations: schema tables, RLS policies, pgvector indexes, storage bucket definitions
@@ -3754,6 +3804,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 3: Fly.io deployment baseline
 
 **DevOps tasks:**
+
 - Set up Fly.io applications: chainsight-api, chainsight-web, chainsight-worker, chainsight-math, chainsight-memgraph
 - Configure Upstash Redis (global replica)
 - Write `fly.toml` for each service (scale-to-zero, health checks, Fly 6PN private networking)
@@ -3766,6 +3817,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 4: Sigstore signing and release pipeline
 
 **DevOps tasks:**
+
 - Install Sigstore cosign in CI (keyless signing via OIDC)
 - Add `cosign sign` step to build-and-push workflow for all images
 - Write `git-cliff.toml` for automated release note generation
@@ -3779,6 +3831,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 5: Observability stack
 
 **DevOps tasks:**
+
 - Add OTEL SDK instrumentation to API, worker, and math service
 - Deploy OTEL Collector, Tempo, Loki, Grafana in local docker-compose
 - Write OTEL Collector config with `attributes/scrub_case_data` processor
@@ -3791,6 +3844,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 6: Offline license validation and sovereignty controls
 
 **DevOps tasks:**
+
 - Implement signed license certificate format (Ed25519 signature over license fields)
 - Write license validation logic in the API startup path (validates against hardcoded public key)
 - Implement telemetry opt-in toggle (no-op when `TELEMETRY_ENABLED=false`)
@@ -3803,6 +3857,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 7: On-premises installer and pre-flight checks
 
 **DevOps tasks:**
+
 - Write `install.sh` for Docker Compose installer
 - Write `preflight.sh` with all system requirement checks
 - Write `validate.sh` for post-install validation
@@ -3817,6 +3872,7 @@ This is the literal week-by-week DevOps work, running in parallel with the backe
 ### Week 8: Air-gapped installer bundle and Phase 0 demo
 
 **DevOps tasks:**
+
 - Write GitHub Actions job to produce the air-gapped installer bundle (`.tar.gz` with all Docker images)
 - Add `manifest.json` generation to the release workflow
 - Sign the installer bundle with cosign
@@ -3838,6 +3894,7 @@ This is a solo developer operating against a fixed 8-week clock. If something mu
 5. **Automated evidence collection scripts** — SOC 2 prep is Phase 2; manual evidence collection is acceptable in Phase 0.
 
 What must NOT slip:
+
 - One-command local bootstrap (developer velocity depends on it every day)
 - Anti-feature CI check (F41 compliance; committed from day one)
 - Sigstore signing (G23 committed from Phase 0)
@@ -3951,4 +4008,4 @@ As the platform grows and revenue supports it, the first DevOps hire will inheri
 
 ---
 
-*Document version: 1.0.0 | June 2026 | All locked decisions from v0.3 through v0.9 honored.*
+_Document version: 1.0.0 | June 2026 | All locked decisions from v0.3 through v0.9 honored._

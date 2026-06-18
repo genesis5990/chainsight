@@ -4,9 +4,7 @@
 export default function HomePage() {
   return (
     <main className="container mx-auto px-6 py-16 max-w-3xl">
-      <h1 className="text-4xl font-semibold tracking-tight text-context-700 mb-4">
-        ChainSight
-      </h1>
+      <h1 className="text-4xl font-semibold tracking-tight text-context-700 mb-4">ChainSight</h1>
       <p className="text-lg text-context-500 mb-8">
         Autonomous, court-defensible blockchain investigation platform.
       </p>

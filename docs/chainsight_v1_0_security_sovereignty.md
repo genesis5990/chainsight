@@ -74,7 +74,7 @@ The SaaS Blind v1 deployment runs across three infrastructure providers plus AWS
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**The layered defense principle:** No single infrastructure provider's compromise should expose case data in plaintext. Supabase holds ciphertext. Fly.io holds plaintext only ephemerally in application memory during request processing. GitHub holds code with no secrets. AWS KMS holds the agency's root key but cannot read case data (it only wraps/unwraps DEKs). Case data is only readable by someone who simultaneously controls the agency's KMS key *and* has access to the ciphertext. Those two controls live in different organizations with different threat profiles.
+**The layered defense principle:** No single infrastructure provider's compromise should expose case data in plaintext. Supabase holds ciphertext. Fly.io holds plaintext only ephemerally in application memory during request processing. GitHub holds code with no secrets. AWS KMS holds the agency's root key but cannot read case data (it only wraps/unwraps DEKs). Case data is only readable by someone who simultaneously controls the agency's KMS key _and_ has access to the ciphertext. Those two controls live in different organizations with different threat profiles.
 
 ### 1.2 Primary Adversary: Vendor-as-Adversary (the ChainSight team)
 
@@ -82,13 +82,13 @@ The design must hold even if the entire ChainSight organization is assumed adver
 
 **What a fully-compromised ChainSight team could access:**
 
-| Layer | Accessible to ChainSight | Defense |
-|---|---|---|
-| Fly.io app server admin | Application process memory during active requests | Plaintext exists only ephemerally in-memory; not logged, not serialized; closes fully in Phase 3 with confidential computing (G22) |
-| Supabase service key (bypasses RLS) | All rows in all tables | Application-layer envelope encryption: all sensitive columns are ciphertext before INSERT; even with Supabase service key, ChainSight sees only encrypted blobs |
-| Supabase Storage | All uploaded objects | Objects encrypted with case DEK before upload; Supabase Storage sees only ciphertext |
-| GitHub repo access | Source code, CI config, GitHub Actions secrets | No case data in repo; no production secrets in repo; Fly secrets separate; Vault for production |
-| AWS billing / usage data | API call counts to KMS | Only metadata (how many decrypt calls); no content |
+| Layer                               | Accessible to ChainSight                          | Defense                                                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fly.io app server admin             | Application process memory during active requests | Plaintext exists only ephemerally in-memory; not logged, not serialized; closes fully in Phase 3 with confidential computing (G22)                              |
+| Supabase service key (bypasses RLS) | All rows in all tables                            | Application-layer envelope encryption: all sensitive columns are ciphertext before INSERT; even with Supabase service key, ChainSight sees only encrypted blobs |
+| Supabase Storage                    | All uploaded objects                              | Objects encrypted with case DEK before upload; Supabase Storage sees only ciphertext                                                                            |
+| GitHub repo access                  | Source code, CI config, GitHub Actions secrets    | No case data in repo; no production secrets in repo; Fly secrets separate; Vault for production                                                                 |
+| AWS billing / usage data            | API call counts to KMS                            | Only metadata (how many decrypt calls); no content                                                                                                              |
 
 ### 1.3 Supabase as Compelled Adversary
 
@@ -97,12 +97,14 @@ Supabase the company could be legally compelled to produce database contents by 
 **This is structurally identical to ChainSight hosting Postgres on AWS RDS.** The defense is identical: application-layer encryption with agency-held keys means Supabase produces ciphertext that has no value without the agency's AWS KMS CMK.
 
 **What Supabase would produce if compelled:**
+
 - Schema structure (table names, column names)
 - Ciphertext blobs in `encrypted_payload` columns
 - Unencrypted metadata that ChainSight deliberately puts in plaintext (status fields, timestamps, agency_id for routing — see §2.3 for the explicit plaintext/ciphertext boundary)
 - Auth records (email addresses of investigators — a real privacy consideration; see §1.8 for mitigation)
 
 **What Supabase cannot produce (without the agency's KMS key):**
+
 - IOC values, addresses, tx hashes
 - Attribution content, belief atom content, report text
 - Document content
@@ -115,11 +117,13 @@ Supabase the company could be legally compelled to produce database contents by 
 ### 1.4 Fly.io as Compelled Adversary
 
 Fly.io hosts the application servers. A compelled Fly.io would produce:
+
 - Container images (the application code — same as what's on GitHub)
 - Fly Secrets (application secrets — not agency KMS keys, which live in AWS; not BYOK credentials, which are encrypted in Supabase)
 - Memory snapshots of running processes — this is the **real exposure window**
 
 **Memory exposure window:** During an active HTTP request, the Fly.io application process briefly holds plaintext case data (the decrypted payload after receiving a case DEK from KMS). This is the same gap that exists on any IaaS host, including AWS EC2. It is the honest v1 limitation. At v1, the mitigation is:
+
 - Plaintext exists only for the duration of a request handler (~50-200ms)
 - No logging of plaintext content
 - No swap file on application servers (`--no-swap` in Fly config)
@@ -131,6 +135,7 @@ This gap closes in Phase 3 with confidential computing (Fly Machines with Intel 
 ### 1.5 GitHub as Compelled Adversary
 
 GitHub hosts source code and CI/CD pipelines. A compelled GitHub would produce:
+
 - The source code (which is openly published or at minimum visible to ChainSight)
 - GitHub Actions run logs
 - GitHub Actions secrets scoped to the `chainsight-io/chainsight` repository
@@ -138,6 +143,7 @@ GitHub hosts source code and CI/CD pipelines. A compelled GitHub would produce:
 **Critical property:** GitHub Actions secrets **never** contain agency KMS keys or BYOK credentials. They contain only ChainSight infrastructure credentials (Docker registry push tokens, Fly deploy tokens). Agency keys live in AWS KMS, never in GitHub.
 
 **Mitigations:**
+
 - Secret scanning enabled — GitHub scans all commits for credential patterns
 - Branch protection: signed commits required on `main`; no direct push without PR + review
 - OIDC-based deployment: GitHub Actions uses OIDC tokens to authenticate to Fly.io, not long-lived secrets
@@ -145,17 +151,17 @@ GitHub hosts source code and CI/CD pipelines. A compelled GitHub would produce:
 
 ### 1.6 Vendor-as-Adversary in SaaS Blind: Complete Access Matrix
 
-| Component | ChainSight sees | Supabase sees | Fly.io sees | AWS KMS sees | Agency sees |
-|---|---|---|---|---|---|
-| Case name / codename | Ciphertext | Ciphertext | Ephemeral plaintext in memory | KMS API calls (no content) | Plaintext |
-| IOC values | Ciphertext | Ciphertext | Ephemeral | API calls | Plaintext |
-| Belief atoms | Ciphertext | Ciphertext | Ephemeral | API calls | Plaintext |
-| BYOK API keys | Ciphertext | Ciphertext | Ephemeral | API calls | Plaintext |
-| Investigator email | Supabase Auth record | Auth record | N/A | N/A | Plaintext |
-| Seat count (billing) | Plaintext | Plaintext | Plaintext | N/A | Plaintext |
-| Table schema | Plaintext | Plaintext | Plaintext | N/A | N/A |
-| Service health metrics | Plaintext | DB metrics | Fly metrics | N/A | Opt-in |
-| KMS API call count | Via CloudTrail grant | N/A | N/A | Plaintext | Via CloudTrail |
+| Component              | ChainSight sees      | Supabase sees | Fly.io sees                   | AWS KMS sees               | Agency sees    |
+| ---------------------- | -------------------- | ------------- | ----------------------------- | -------------------------- | -------------- |
+| Case name / codename   | Ciphertext           | Ciphertext    | Ephemeral plaintext in memory | KMS API calls (no content) | Plaintext      |
+| IOC values             | Ciphertext           | Ciphertext    | Ephemeral                     | API calls                  | Plaintext      |
+| Belief atoms           | Ciphertext           | Ciphertext    | Ephemeral                     | API calls                  | Plaintext      |
+| BYOK API keys          | Ciphertext           | Ciphertext    | Ephemeral                     | API calls                  | Plaintext      |
+| Investigator email     | Supabase Auth record | Auth record   | N/A                           | N/A                        | Plaintext      |
+| Seat count (billing)   | Plaintext            | Plaintext     | Plaintext                     | N/A                        | Plaintext      |
+| Table schema           | Plaintext            | Plaintext     | Plaintext                     | N/A                        | N/A            |
+| Service health metrics | Plaintext            | DB metrics    | Fly metrics                   | N/A                        | Opt-in         |
+| KMS API call count     | Via CloudTrail grant | N/A           | N/A                           | Plaintext                  | Via CloudTrail |
 
 ### 1.7 Compromised Provider Keys (BYOK Credentials)
 
@@ -168,9 +174,10 @@ Two separate organizations must be compromised simultaneously. This is the belt-
 
 ### 1.8 Investigator Identity in Supabase Auth
 
-**The real gap:** Supabase Auth stores investigator email addresses in cleartext as part of its auth user records. This means Supabase (and a compelled Supabase) can see that `investigator@agency.gov` has an account in ChainSight. This does not reveal case data, but it does reveal *which investigators use the platform* — potentially sensitive for undercover or intelligence operations.
+**The real gap:** Supabase Auth stores investigator email addresses in cleartext as part of its auth user records. This means Supabase (and a compelled Supabase) can see that `investigator@agency.gov` has an account in ChainSight. This does not reveal case data, but it does reveal _which investigators use the platform_ — potentially sensitive for undercover or intelligence operations.
 
 **v1 mitigation:**
+
 - Agencies that have this sensitivity concern are routed to On-Prem immediately (On-Prem uses no Supabase)
 - For SaaS Blind, document this explicitly in the MSA and data processing agreement
 - Consider: agency-assigned pseudonymous login IDs for highly sensitive investigator accounts (not real email addresses)
@@ -182,6 +189,7 @@ Two separate organizations must be compromised simultaneously. This is the belt-
 An investigator, administrator, or IT staff member at the agency with legitimate access credentials could exfiltrate case data. The platform's security posture for insider threats is detection, attribution, and forensic support — not prevention (which is impossible without destroying usability).
 
 **Defenses:**
+
 - Full hash-chained audit trail: every read, write, export, print, and share is logged with actor identity, timestamp, and content reference
 - Chain of custody: every artifact access generates a custody event (F29, §8)
 - RBAC + case-scoped ABAC: investigators see only assigned cases
@@ -207,17 +215,17 @@ See §14 for the full on-prem air-gapped hardening section. On-Prem deployments 
 
 ### 1.13 Threat Model Summary
 
-| Threat | Primary defense | Secondary defense | v1 honest gap |
-|---|---|---|---|
-| ChainSight as adversary | Supabase holds ciphertext; no plaintext in DB | Audited support access; agency-revocable | Ephemeral in-memory plaintext on Fly.io |
-| Supabase as compelled adversary | App-layer encryption before INSERT | RLS (belt) | Investigator email in Supabase Auth |
-| Fly.io as compelled adversary | Ephemeral in-memory only; no logging | No swap; process isolation | Memory snapshot during active request |
-| GitHub as compelled adversary | No case data in repo; no agency keys in CI | Sigstore-signed releases | Build log metadata |
-| AWS compelled (KMS) | KMS holds only wrapped DEKs; no content | CloudTrail visible to agency | Agency must trust AWS KMS |
-| Insider at agency | Audit log; CoC; RBAC | WebAuthn for high-impact actions | Authorized over-sharing |
-| Court order to vendor | Vendor has only ciphertext | MSA pre-drafted response | Auth metadata in Supabase |
-| Hostile acquirer | Source escrow; encryption unchanged | Perpetual on-prem license | Acquisition notification timing |
-| Supply chain | Sigstore-signed releases; secret scanning | Branch protection; signed commits | Zero-day in dependencies |
+| Threat                          | Primary defense                               | Secondary defense                        | v1 honest gap                           |
+| ------------------------------- | --------------------------------------------- | ---------------------------------------- | --------------------------------------- |
+| ChainSight as adversary         | Supabase holds ciphertext; no plaintext in DB | Audited support access; agency-revocable | Ephemeral in-memory plaintext on Fly.io |
+| Supabase as compelled adversary | App-layer encryption before INSERT            | RLS (belt)                               | Investigator email in Supabase Auth     |
+| Fly.io as compelled adversary   | Ephemeral in-memory only; no logging          | No swap; process isolation               | Memory snapshot during active request   |
+| GitHub as compelled adversary   | No case data in repo; no agency keys in CI    | Sigstore-signed releases                 | Build log metadata                      |
+| AWS compelled (KMS)             | KMS holds only wrapped DEKs; no content       | CloudTrail visible to agency             | Agency must trust AWS KMS               |
+| Insider at agency               | Audit log; CoC; RBAC                          | WebAuthn for high-impact actions         | Authorized over-sharing                 |
+| Court order to vendor           | Vendor has only ciphertext                    | MSA pre-drafted response                 | Auth metadata in Supabase               |
+| Hostile acquirer                | Source escrow; encryption unchanged           | Perpetual on-prem license                | Acquisition notification timing         |
+| Supply chain                    | Sigstore-signed releases; secret scanning     | Branch protection; signed commits        | Zero-day in dependencies                |
 
 ---
 
@@ -277,16 +285,17 @@ Agency KMS Root Key (Customer Master Key)
 
 All application-layer encryption uses **libsodium** (`sodium-native` for Node.js; `PyNaCl` for Python math service). A `CryptoService` abstraction layer wraps all primitives so Phase 3 can swap to OpenSSL FIPS without business-logic changes (see Q-SEC-7 in §19).
 
-| Use case | Primitive | Key size | Notes |
-|---|---|---|---|
-| Symmetric encryption (DEK-encrypted payloads) | `crypto_secretbox_xsalsa20poly1305` | 32 bytes | Authenticated encryption. 24-byte random nonce prepended to ciphertext output. |
-| Key derivation (child DEK from parent + context) | `crypto_kdf_hkdf_sha256` | Variable → 32 bytes | RFC 5869 HKDF-SHA256. Context string = `agency_id + purpose` to prevent cross-context key reuse. |
-| Content addressing | `crypto_generichash_blake2b` | output: 32 bytes | BLAKE2b-256. Used for all content hashes: Reproducibility Pack files, CoC chain links, Merkle roots. |
-| Audit log HMAC chaining | `crypto_auth_hmacsha256` | 32 bytes | HMAC-SHA256 per entry. |
-| Nonce generation | `randombytes_buf` | 24 bytes | libsodium CSPRNG. New nonce per plaintext. Never reused. |
-| Investigator signing (manifests, declarations) | `crypto_sign_ed25519` | 64-byte keypair | Ed25519. Private key in agency KMS or hardware key. Public key published. |
+| Use case                                         | Primitive                           | Key size            | Notes                                                                                                |
+| ------------------------------------------------ | ----------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| Symmetric encryption (DEK-encrypted payloads)    | `crypto_secretbox_xsalsa20poly1305` | 32 bytes            | Authenticated encryption. 24-byte random nonce prepended to ciphertext output.                       |
+| Key derivation (child DEK from parent + context) | `crypto_kdf_hkdf_sha256`            | Variable → 32 bytes | RFC 5869 HKDF-SHA256. Context string = `agency_id + purpose` to prevent cross-context key reuse.     |
+| Content addressing                               | `crypto_generichash_blake2b`        | output: 32 bytes    | BLAKE2b-256. Used for all content hashes: Reproducibility Pack files, CoC chain links, Merkle roots. |
+| Audit log HMAC chaining                          | `crypto_auth_hmacsha256`            | 32 bytes            | HMAC-SHA256 per entry.                                                                               |
+| Nonce generation                                 | `randombytes_buf`                   | 24 bytes            | libsodium CSPRNG. New nonce per plaintext. Never reused.                                             |
+| Investigator signing (manifests, declarations)   | `crypto_sign_ed25519`               | 64-byte keypair     | Ed25519. Private key in agency KMS or hardware key. Public key published.                            |
 
 **KMS operations (key wrapping / unwrapping):**
+
 - AWS KMS: `GenerateDataKey`, `Decrypt` API calls — plaintext DEK returned to app process memory only; key material never crosses the Supabase trust boundary
 - HashiCorp Vault: `transit/datakey/plaintext` and `transit/decrypt` endpoints — same semantics
 
@@ -296,33 +305,33 @@ The most important design decision in the schema is the explicit boundary betwee
 
 **Columns Supabase sees in plaintext (acceptable metadata):**
 
-| Column | Table | Why plaintext | Privacy exposure |
-|---|---|---|---|
-| `id` | All tables | Routing / FK references | Random UUID — no content |
-| `agency_id` | All tables | Multi-tenancy routing | Reveals agency has an account |
-| `created_at`, `updated_at` | All tables | Time-based queries | Reveals activity timing |
-| `status` | `cases`, `belief_atoms`, etc. | State-machine queries | Reveals workflow state; not content |
-| `tier` | `belief_atoms` | Confidence tier queries | T0/T1/T2/T3 — no content |
-| `seq` | `audit_log_entries` | Monotonic ordering | Audit sequence number |
-| `prior_hash`, `this_hash` | `audit_log_entries`, `coc_records` | Tamper-evidence | HMAC outputs — no content |
-| `s3_object_key` | `audit_log_entries`, `case_documents` | Storage routing | Random UUIDs |
-| `key_version` | All encrypted tables | Rotation tracking | Integer; no content |
+| Column                     | Table                                 | Why plaintext           | Privacy exposure                    |
+| -------------------------- | ------------------------------------- | ----------------------- | ----------------------------------- |
+| `id`                       | All tables                            | Routing / FK references | Random UUID — no content            |
+| `agency_id`                | All tables                            | Multi-tenancy routing   | Reveals agency has an account       |
+| `created_at`, `updated_at` | All tables                            | Time-based queries      | Reveals activity timing             |
+| `status`                   | `cases`, `belief_atoms`, etc.         | State-machine queries   | Reveals workflow state; not content |
+| `tier`                     | `belief_atoms`                        | Confidence tier queries | T0/T1/T2/T3 — no content            |
+| `seq`                      | `audit_log_entries`                   | Monotonic ordering      | Audit sequence number               |
+| `prior_hash`, `this_hash`  | `audit_log_entries`, `coc_records`    | Tamper-evidence         | HMAC outputs — no content           |
+| `s3_object_key`            | `audit_log_entries`, `case_documents` | Storage routing         | Random UUIDs                        |
+| `key_version`              | All encrypted tables                  | Rotation tracking       | Integer; no content                 |
 
 **Columns that are always ciphertext (encrypted_payload BYTEA pattern):**
 
-| Table | What lives in encrypted_payload |
-|---|---|
-| `belief_atoms` | subject_ref, predicate, object, provenance_json, derivation_json, signoff_id |
-| `cases` | codename, narrative, classification, all content fields |
-| `iocs` | value (address, tx hash, entity name) |
-| `case_documents` | filename, document_type metadata |
-| `trace_paths` | name, ordered_steps_json, all path content |
-| `wallets` | name, addresses, analysis content |
-| `reports` | draft_md, all report content |
-| `personal_attributions` | label, category, description |
-| `agency_provider_installs` | credential_blob (the BYOK API key, double-encrypted: Credential DEK + Tenant DEK) |
-| `cache_entries` | response_payload |
-| `agent_calls` | inputs_hash, outputs_hash (hashes of content, not content itself — still encrypted) |
+| Table                      | What lives in encrypted_payload                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| `belief_atoms`             | subject_ref, predicate, object, provenance_json, derivation_json, signoff_id        |
+| `cases`                    | codename, narrative, classification, all content fields                             |
+| `iocs`                     | value (address, tx hash, entity name)                                               |
+| `case_documents`           | filename, document_type metadata                                                    |
+| `trace_paths`              | name, ordered_steps_json, all path content                                          |
+| `wallets`                  | name, addresses, analysis content                                                   |
+| `reports`                  | draft_md, all report content                                                        |
+| `personal_attributions`    | label, category, description                                                        |
+| `agency_provider_installs` | credential_blob (the BYOK API key, double-encrypted: Credential DEK + Tenant DEK)   |
+| `cache_entries`            | response_payload                                                                    |
+| `agent_calls`              | inputs_hash, outputs_hash (hashes of content, not content itself — still encrypted) |
 
 **The rule:** If a column contains investigation content, it is ciphertext. If a column contains only operational metadata needed for routing, filtering, or integrity checking, it may be plaintext. This rule is enforced via a code review checklist item on every new Supabase migration.
 
@@ -370,39 +379,37 @@ async function uploadCaseDocument(
   caseId: string,
   agencyId: string,
   filename: string,
-  plaintext: Buffer
+  plaintext: Buffer,
 ): Promise<StorageRef> {
   const caseDEK = await getCaseDEK(caseId, agencyId); // from KMS + Supabase
-  
+
   try {
     // Generate per-document DEK for large files (wrapped under Case DEK)
     const docDEK = sodium.randombytes_buf(32);
     try {
       const encryptedContent = cryptoService.encrypt(plaintext, docDEK);
       const wrappedDocDEK = cryptoService.encrypt(docDEK, caseDEK);
-      
+
       // The object key in Supabase Storage is a random UUID — no content in the key
       const objectKey = `${agencyId}/${caseId}/${randomUUID()}`;
-      
+
       // Upload ONLY ciphertext to Supabase Storage
       // Supabase Storage sees: a UUID key + opaque bytes
-      await supabaseStorage
-        .from("case-documents")
-        .upload(objectKey, encryptedContent.buffer, {
-          contentType: "application/octet-stream",
-          // Supabase's own server-side encryption is ALSO applied (SSE-S3)
-          // Belt and suspenders: even if SSE were somehow bypassed, the payload is our ciphertext
-        });
-      
+      await supabaseStorage.from('case-documents').upload(objectKey, encryptedContent.buffer, {
+        contentType: 'application/octet-stream',
+        // Supabase's own server-side encryption is ALSO applied (SSE-S3)
+        // Belt and suspenders: even if SSE were somehow bypassed, the payload is our ciphertext
+      });
+
       // Store the wrapped doc DEK and object key in Postgres (also encrypted via case DEK)
       const docRef = await db.createCaseDocumentRecord({
         case_id: caseId,
         agency_id: agencyId,
-        storage_key: objectKey,                    // plaintext: random UUID
-        wrapped_doc_dek: wrappedDocDEK.toString("base64"),  // stored encrypted_payload
-        content_hash: blake2b256(plaintext).toString("hex"), // hash of original plaintext
+        storage_key: objectKey, // plaintext: random UUID
+        wrapped_doc_dek: wrappedDocDEK.toString('base64'), // stored encrypted_payload
+        content_hash: blake2b256(plaintext).toString('hex'), // hash of original plaintext
       });
-      
+
       return docRef;
     } finally {
       sodium.memzero(docDEK);
@@ -457,21 +464,21 @@ GRANT SELECT, INSERT, UPDATE ON belief_atoms TO chainsight_app;
 // Serialize to MessagePack (compact, deterministic) → encrypt
 interface BeliefAtomPayload {
   subject_type: string;
-  subject_ref: string;       // e.g., "eth:0xabc123..."
-  predicate: string;         // e.g., "is_controlled_by"
-  object: unknown;           // the attributed entity, finding, etc.
+  subject_ref: string; // e.g., "eth:0xabc123..."
+  predicate: string; // e.g., "is_controlled_by"
+  object: unknown; // the attributed entity, finding, etc.
   confidence: number;
   provenance_json: ProviderResolutionRef[];
   derivation_json: ReasoningStep[];
   signoff_id: string | null;
   superseded_by: string | null;
   retracted_by: string | null;
-  created_by: string;        // investigator ID
+  created_by: string; // investigator ID
 }
 
 function encryptBeliefAtomPayload(
   payload: BeliefAtomPayload,
-  caseDEK: Buffer
+  caseDEK: Buffer,
 ): { encrypted_payload: Buffer; nonce: Buffer } {
   const plaintext = msgpack.encode(payload);
   const nonce = Buffer.from(sodium.randombytes_buf(24));
@@ -484,6 +491,7 @@ function encryptBeliefAtomPayload(
 ### 2.7 Key Rotation Strategy
 
 **Scheduled rotation:**
+
 - Agency KMS Root Key: annual (AWS KMS automatic rotation; key ID unchanged, new key material)
 - Tenant DEK: 90 days (automated job)
 - Case DEKs: not rotated on schedule (they live as long as the case; rotated on-demand if Case DEK believed compromised)
@@ -500,27 +508,35 @@ async function rotateTenantDEK(agencyId: string): Promise<void> {
   try {
     // 2. Re-wrap all Case DEKs under the new Tenant DEK
     // (We do NOT re-encrypt case content — just the envelope)
-    const cases = await supabase.from("cases").select("id, encryption_config_json")
-      .eq("agency_id", agencyId);
+    const cases = await supabase
+      .from('cases')
+      .select('id, encryption_config_json')
+      .eq('agency_id', agencyId);
 
     for (const c of cases.data!) {
       const oldCaseDEK = await decryptCaseDEK(c.encryption_config_json, agencyId);
       try {
         const newWrappedCaseDEK = cryptoService.encrypt(oldCaseDEK, newDEKPlaintext);
-        await supabase.from("cases").update({
-          encryption_config_json: { ...c.encryption_config_json,
-            wrapped_case_dek: newWrappedCaseDEK.toString("base64"),
-            key_version: c.encryption_config_json.key_version + 1
-          }
-        }).eq("id", c.id);
+        await supabase
+          .from('cases')
+          .update({
+            encryption_config_json: {
+              ...c.encryption_config_json,
+              wrapped_case_dek: newWrappedCaseDEK.toString('base64'),
+              key_version: c.encryption_config_json.key_version + 1,
+            },
+          })
+          .eq('id', c.id);
       } finally {
         sodium.memzero(oldCaseDEK);
       }
     }
 
     // 3. Re-wrap all Credential DEKs
-    const installs = await supabase.from("agency_provider_installs")
-      .select("id, credential_blob").eq("agency_id", agencyId);
+    const installs = await supabase
+      .from('agency_provider_installs')
+      .select('id, credential_blob')
+      .eq('agency_id', agencyId);
 
     for (const install of installs.data!) {
       // Re-wrap credential DEK under new Tenant DEK
@@ -528,15 +544,21 @@ async function rotateTenantDEK(agencyId: string): Promise<void> {
     }
 
     // 4. Store new Tenant DEK ciphertext
-    await supabase.from("agency_encryption_config").update({
-      wrapped_tenant_dek: newDEKCiphertext.toString("base64"),
-      key_version: sql`key_version + 1`,
-      rotated_at: new Date().toISOString()
-    }).eq("agency_id", agencyId);
+    await supabase
+      .from('agency_encryption_config')
+      .update({
+        wrapped_tenant_dek: newDEKCiphertext.toString('base64'),
+        key_version: sql`key_version + 1`,
+        rotated_at: new Date().toISOString(),
+      })
+      .eq('agency_id', agencyId);
 
-    await appendAuditEntry({ actor: "system:key-rotation", action: "key.tenant_dek_rotated",
-      target_ref: `agency:${agencyId}`, ts: new Date() });
-
+    await appendAuditEntry({
+      actor: 'system:key-rotation',
+      action: 'key.tenant_dek_rotated',
+      target_ref: `agency:${agencyId}`,
+      ts: new Date(),
+    });
   } finally {
     sodium.memzero(newDEKPlaintext);
   }
@@ -548,6 +570,7 @@ async function rotateTenantDEK(agencyId: string): Promise<void> {
 ### 2.8 Cryptographic Separation Between Agencies
 
 Agency A's data can never be decrypted with Agency B's keys, by construction:
+
 - Each agency has its own CMK in its own AWS account (or on its own Vault)
 - Each Tenant DEK is wrapped under that agency's CMK
 - Each Case DEK is wrapped under that agency's Tenant DEK
@@ -579,19 +602,15 @@ Agency A's data can never be decrypted with Agency B's keys, by construction:
     {
       "Sid": "AgencyFullControl",
       "Effect": "Allow",
-      "Principal": {"AWS": "arn:aws:iam::AGENCY_ACCOUNT:root"},
+      "Principal": { "AWS": "arn:aws:iam::AGENCY_ACCOUNT:root" },
       "Action": "kms:*",
       "Resource": "*"
     },
     {
       "Sid": "ChainSightOperationalGrant",
       "Effect": "Allow",
-      "Principal": {"AWS": "arn:aws:iam::CHAINSIGHT_ACCOUNT:role/fly-chainsight-app"},
-      "Action": [
-        "kms:GenerateDataKey",
-        "kms:GenerateDataKeyWithoutPlaintext",
-        "kms:Decrypt"
-      ],
+      "Principal": { "AWS": "arn:aws:iam::CHAINSIGHT_ACCOUNT:role/fly-chainsight-app" },
+      "Action": ["kms:GenerateDataKey", "kms:GenerateDataKeyWithoutPlaintext", "kms:Decrypt"],
       "Resource": "*",
       "Condition": {
         "StringEquals": {
@@ -602,7 +621,7 @@ Agency A's data can never be decrypted with Agency B's keys, by construction:
     {
       "Sid": "ExplicitlyDenyChainSightAdmin",
       "Effect": "Deny",
-      "Principal": {"AWS": "arn:aws:iam::CHAINSIGHT_ACCOUNT:root"},
+      "Principal": { "AWS": "arn:aws:iam::CHAINSIGHT_ACCOUNT:root" },
       "Action": ["kms:Decrypt", "kms:GenerateDataKey"],
       "Resource": "*"
     }
@@ -629,6 +648,7 @@ The access key (whatever form) gives ChainSight's application the ability to cal
 **v2: Customer-provided KMS in SaaS Blind**
 
 Some agencies will have existing AWS accounts and want to provide their own CMK ARN. The v1 onboarding wizard already supports this (agency enters ARN; ChainSight stores it in the tenants config; all KMS calls use that ARN). Extensions in v2:
+
 - AWS KMS External Key Store (XKS): agency's CMK backed by their own on-prem HSM, while still running SaaS Blind
 - Azure Key Vault: for agencies locked into Azure (same pattern, different API)
 - Google Cloud KMS: same
@@ -670,22 +690,23 @@ async function generateDEKViaVault(context: KeyContext): Promise<{
   plaintextDEK: Buffer;
   wrappedDEK: string;
 }> {
-  const contextB64 = Buffer.from(JSON.stringify(context)).toString("base64");
+  const contextB64 = Buffer.from(JSON.stringify(context)).toString('base64');
 
-  const resp = await vault.write(
-    "transit/datakey/plaintext/chainsight-master-key",
-    { bits: 256, context: contextB64 }
-  );
+  const resp = await vault.write('transit/datakey/plaintext/chainsight-master-key', {
+    bits: 256,
+    context: contextB64,
+  });
 
   return {
-    plaintextDEK: Buffer.from(resp.data.plaintext, "base64"),
-    wrappedDEK: resp.data.ciphertext,  // stored in Postgres / local DB
+    plaintextDEK: Buffer.from(resp.data.plaintext, 'base64'),
+    wrappedDEK: resp.data.ciphertext, // stored in Postgres / local DB
   };
 }
 // Always: sodium.memzero(plaintextDEK) after use
 ```
 
 **Vault HA and availability:**
+
 - Deploy 3-node Vault HA cluster with Raft storage (no Consul dependency)
 - Auto-unseal via AWS KMS or local HSM (avoids manual unseal ceremony)
 - ChainSight fails-safe on Vault unavailability: encryption operations fail with a clear error; no silent degradation or key caching
@@ -710,21 +731,25 @@ ChainSight's code does not change for either option. The KMS/Vault client interf
 The SaaS Blind v1 trust model is explicit: there are four parties who could theoretically access your data, and this is what each can and cannot see:
 
 **ChainSight (the vendor):**
+
 - Can see: service health metrics, billing counters, table schema, ciphertext in Supabase
 - Cannot see: any case content, investigator notes, IOC values, provider credentials in plaintext
 - Why: all sensitive content is encrypted with agency-held keys before it reaches Supabase
 
 **Supabase:**
+
 - Can see: table schema, metadata columns in plaintext (IDs, timestamps, status fields), ciphertext blobs, investigator email addresses in Auth
 - Cannot see: investigation content (ciphertext), BYOK credentials (ciphertext)
 - Why: application-layer encryption before INSERT; Supabase never receives plaintext case content
 
 **Fly.io:**
+
 - Can see: application code, request/response traffic at the application layer, ephemeral process memory during request handling (~50-200ms)
 - Cannot see: persistent plaintext; case data survives Fly.io access only as ciphertext in Supabase
 - Why: no plaintext written to disk; no logging of case content; process isolation
 
 **AWS KMS (in the agency's account):**
+
 - Can see: API call metadata (who called, when, with what context), usage statistics
 - Cannot see: case content, the plaintext of the CMK itself (HSM-protected), DEK content beyond the API call that produces it
 - Why: KMS is an HSM-backed service; the CMK never leaves the HSM in plaintext; DEK plaintext is returned to the calling application only
@@ -735,21 +760,22 @@ The SaaS Blind v1 trust model is explicit: there are four parties who could theo
 
 **Supabase observably holds:**
 
-| Data | Form | Location |
-|---|---|---|
-| Investigator accounts | Plaintext email addresses | Supabase Auth `auth.users` table |
-| Table schema | Plaintext DDL | Supabase metadata |
-| Row counts per table per agency | Plaintext integer | Supabase metrics |
-| Timestamps on all rows | Plaintext datetime | All tables |
-| Case status values | Plaintext enum values | `cases.status` |
-| Belief atom tier values | Plaintext T0/T1/T2/T3 | `belief_atoms.tier` |
-| Audit log sequence numbers | Plaintext integers | `audit_log_entries.seq` |
-| HMAC chain hashes | Plaintext HMAC-SHA256 digests | `audit_log_entries.prior_hash`, `this_hash` |
-| All content fields | Ciphertext BYTEA | `encrypted_payload` columns |
-| BYOK credentials | Ciphertext BYTEA | `agency_provider_installs.credential_blob` |
-| Storage objects | Ciphertext byte streams | Supabase Storage |
+| Data                            | Form                          | Location                                    |
+| ------------------------------- | ----------------------------- | ------------------------------------------- |
+| Investigator accounts           | Plaintext email addresses     | Supabase Auth `auth.users` table            |
+| Table schema                    | Plaintext DDL                 | Supabase metadata                           |
+| Row counts per table per agency | Plaintext integer             | Supabase metrics                            |
+| Timestamps on all rows          | Plaintext datetime            | All tables                                  |
+| Case status values              | Plaintext enum values         | `cases.status`                              |
+| Belief atom tier values         | Plaintext T0/T1/T2/T3         | `belief_atoms.tier`                         |
+| Audit log sequence numbers      | Plaintext integers            | `audit_log_entries.seq`                     |
+| HMAC chain hashes               | Plaintext HMAC-SHA256 digests | `audit_log_entries.prior_hash`, `this_hash` |
+| All content fields              | Ciphertext BYTEA              | `encrypted_payload` columns                 |
+| BYOK credentials                | Ciphertext BYTEA              | `agency_provider_installs.credential_blob`  |
+| Storage objects                 | Ciphertext byte streams       | Supabase Storage                            |
 
 **Supabase does NOT hold:**
+
 - Case names, codenames, or IOC values
 - Addresses, transaction hashes, entity names
 - Investigation findings, attribution content, report text
@@ -757,6 +783,7 @@ The SaaS Blind v1 trust model is explicit: there are four parties who could theo
 - KMS keys or DEK plaintexts
 
 **Fly.io observably holds:**
+
 - Container images (application code — same as GitHub)
 - Fly application secrets (ChainSight infrastructure credentials — NOT agency keys)
 - Application logs (stripped of case content per logging policy)
@@ -779,6 +806,7 @@ Supabase can observe which rows are queried (at the PostgreSQL statement level i
 - This is consistent with the v0.7 design for encrypted indexes.
 
 **Acknowledged remaining leakage (documented):**
+
 - Activity timing: request rates reveal when agencies are actively working
 - Volume: row counts reveal case load (at aggregate level)
 - Case count per agency: number of active cases is observable from row counts
@@ -816,23 +844,23 @@ The Sigstore-signed release hash (§10) becomes the PCR measurement the agency's
 
 At v1 SaaS Blind launch:
 
-| Control | Status | Who it stops |
-|---|---|---|
-| Application-layer encryption (libsodium) before Supabase | ✅ Phase 0 | Supabase compelled disclosure; ChainSight DB admin |
-| Per-agency KMS root key in agency's AWS account | ✅ Phase 0 | ChainSight accessing data without agency KMS grant |
-| Agency KMS grant revocability | ✅ Phase 0 | Instant cut-off of ChainSight decryption capability |
-| Supabase RLS for cross-tenant isolation | ✅ Phase 0 | Application bugs leaking data across agencies |
-| No case content in logs or telemetry | ✅ Phase 0 | Passive observation of application logs |
-| Audited support access (agency-granted tokens) | ✅ Phase 1 | Unauthorized ChainSight support access |
-| Agency CloudTrail for all KMS calls | ✅ Phase 0 | Silent key misuse by ChainSight |
-| Secrets in Fly secrets (not in code or Supabase) | ✅ Phase 0 | GitHub repository compromise |
+| Control                                                  | Status     | Who it stops                                        |
+| -------------------------------------------------------- | ---------- | --------------------------------------------------- |
+| Application-layer encryption (libsodium) before Supabase | ✅ Phase 0 | Supabase compelled disclosure; ChainSight DB admin  |
+| Per-agency KMS root key in agency's AWS account          | ✅ Phase 0 | ChainSight accessing data without agency KMS grant  |
+| Agency KMS grant revocability                            | ✅ Phase 0 | Instant cut-off of ChainSight decryption capability |
+| Supabase RLS for cross-tenant isolation                  | ✅ Phase 0 | Application bugs leaking data across agencies       |
+| No case content in logs or telemetry                     | ✅ Phase 0 | Passive observation of application logs             |
+| Audited support access (agency-granted tokens)           | ✅ Phase 1 | Unauthorized ChainSight support access              |
+| Agency CloudTrail for all KMS calls                      | ✅ Phase 0 | Silent key misuse by ChainSight                     |
+| Secrets in Fly secrets (not in code or Supabase)         | ✅ Phase 0 | GitHub repository compromise                        |
 
-| Gap | Expected close | Note |
-|---|---|---|
-| Ephemeral in-memory plaintext on Fly.io | Phase 3 | Confidential computing; same gap as any IaaS host |
-| Investigator email in Supabase Auth | Phase 2 | Migration to self-hosted auth; pseudonymous IDs interim |
-| Query pattern leakage | Partially Phase 0; fully Phase 3 | Hashed indexes for sensitive queries; full opacity needs enclaves |
-| Supabase Auth metadata | Phase 2 | Auth migration eliminates Supabase Auth entirely |
+| Gap                                     | Expected close                   | Note                                                              |
+| --------------------------------------- | -------------------------------- | ----------------------------------------------------------------- |
+| Ephemeral in-memory plaintext on Fly.io | Phase 3                          | Confidential computing; same gap as any IaaS host                 |
+| Investigator email in Supabase Auth     | Phase 2                          | Migration to self-hosted auth; pseudonymous IDs interim           |
+| Query pattern leakage                   | Partially Phase 0; fully Phase 3 | Hashed indexes for sensitive queries; full opacity needs enclaves |
+| Supabase Auth metadata                  | Phase 2                          | Auth migration eliminates Supabase Auth entirely                  |
 
 ---
 
@@ -841,6 +869,7 @@ At v1 SaaS Blind launch:
 ### 5.1 Design Principles
 
 No support access to any case content — in Supabase or in the Fly.io application — without:
+
 - An explicit agency-initiated grant with defined scope
 - A hard time limit the agency sets (no extension without a new grant)
 - Real-time agency-visible logging: every action the vendor takes appears in the agency's own audit trail as the vendor takes it
@@ -882,16 +911,16 @@ No support access to any case content — in Supabase or in the Fly.io applicati
 
 ### 5.3 Scope Table
 
-| Scope | Allows | Does NOT allow |
-|---|---|---|
-| `health_read` | Service health metrics (latency, error rates, resource) | Any case data |
-| `config_read` | Tenant config (feature flags, provider install metadata) | Case content |
-| `log_read` | Sanitized application error logs (no case content) | Case content, audit log |
-| `db_schema_read` | Table schema, row counts per table | Row contents |
-| `job_queue_read` | BullMQ queue state (job types, durations, failures) | Job payloads (which are case content) |
-| `case_metadata_read` | Case status counts, workflow state | Case content, IOC values |
-| `case_content_read` | **NOT OFFERED** — requires agency to decrypt + share manually | — |
-| `supabase_admin` | **NOT OFFERED** — ChainSight support cannot access Supabase service key via this mechanism | — |
+| Scope                | Allows                                                                                     | Does NOT allow                        |
+| -------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `health_read`        | Service health metrics (latency, error rates, resource)                                    | Any case data                         |
+| `config_read`        | Tenant config (feature flags, provider install metadata)                                   | Case content                          |
+| `log_read`           | Sanitized application error logs (no case content)                                         | Case content, audit log               |
+| `db_schema_read`     | Table schema, row counts per table                                                         | Row contents                          |
+| `job_queue_read`     | BullMQ queue state (job types, durations, failures)                                        | Job payloads (which are case content) |
+| `case_metadata_read` | Case status counts, workflow state                                                         | Case content, IOC values              |
+| `case_content_read`  | **NOT OFFERED** — requires agency to decrypt + share manually                              | —                                     |
+| `supabase_admin`     | **NOT OFFERED** — ChainSight support cannot access Supabase service key via this mechanism | —                                     |
 
 **Why `case_content_read` does not exist:** Granting it would require the agency to also grant KMS decryption access to the support engineer — an action completely outside ChainSight's token system. The agency would need to explicitly add a new KMS grant in their AWS account. This is the structural enforcement: decryption requires the agency's KMS, which is the agency's choice alone.
 
@@ -901,14 +930,14 @@ No support access to any case content — in Supabase or in the Fly.io applicati
 interface SupportAccessToken {
   token_id: string;
   agency_id: string;
-  granted_by: string;           // agency admin user ID
+  granted_by: string; // agency admin user ID
   granted_at: Date;
-  expires_at: Date;             // hard expiry; max 24h
+  expires_at: Date; // hard expiry; max 24h
   revoked_at: Date | null;
   scopes: SupportScope[];
   support_engineer_id: string;
-  justification: string;        // permanently logged
-  
+  justification: string; // permanently logged
+
   // Signed with the agency's audit HMAC key
   // → agency can independently verify token wasn't forged
   signature: string;
@@ -916,13 +945,13 @@ interface SupportAccessToken {
 
 // Middleware: validate every request under a support token
 const supportTokenMiddleware: FastifyMiddleware = async (req, reply) => {
-  const rawToken = req.headers["x-support-token"] as string | undefined;
+  const rawToken = req.headers['x-support-token'] as string | undefined;
   if (!rawToken) return;
 
   const token = await resolveAndValidateSupportToken(rawToken);
 
   if (!token || token.revoked_at || token.expires_at < new Date()) {
-    throw new ForbiddenError("Invalid, revoked, or expired support token");
+    throw new ForbiddenError('Invalid, revoked, or expired support token');
   }
 
   const requiredScope = ENDPOINT_SCOPE_MAP[req.routerPath]?.[req.method];
@@ -930,21 +959,21 @@ const supportTokenMiddleware: FastifyMiddleware = async (req, reply) => {
     // Log denied attempt
     await appendAuditEntry({
       actor: `support:${token.support_engineer_id}`,
-      action: "support.action_denied",
+      action: 'support.action_denied',
       target_ref: req.url,
       ts: new Date(),
-      metadata_json: { reason: "insufficient_scope", required: requiredScope }
+      metadata_json: { reason: 'insufficient_scope', required: requiredScope },
     });
-    throw new ForbiddenError("Insufficient scope");
+    throw new ForbiddenError('Insufficient scope');
   }
 
   // Log every accepted action in real time to the agency's audit trail
   await appendAuditEntry({
     actor: `support:${token.support_engineer_id}`,
-    action: "support.action_performed",
+    action: 'support.action_performed',
     target_ref: req.url,
     ts: new Date(),
-    metadata_json: { scope_used: requiredScope, token_id: token.token_id }
+    metadata_json: { scope_used: requiredScope, token_id: token.token_id },
   });
 
   req.supportToken = token;
@@ -958,11 +987,13 @@ const supportTokenMiddleware: FastifyMiddleware = async (req, reply) => {
 ### 6.1 Supabase Auth for SaaS Blind v1
 
 **Supabase Auth** replaces Clerk for v1 SaaS Blind. The decision drivers:
+
 - The founder already uses Supabase; Supabase Auth is natively integrated with Supabase Postgres (JWT claims, RLS policies using `auth.jwt()`)
 - Reduces external dependencies in the v1 stack
 - MFA support: TOTP (authenticator app) and WebAuthn (FIDO2/passkey) are both supported in Supabase Auth
 
 **Supabase Auth provides:**
+
 - Email/password authentication with bcrypt password hashing
 - TOTP MFA (`supabase.auth.enrollMFA()`, `supabase.auth.verifyMFA()`)
 - WebAuthn/passkey support (available in Supabase Auth v2)
@@ -982,16 +1013,16 @@ DECLARE
   user_role text;
 BEGIN
   claims := event->'claims';
-  
+
   -- Look up the user's agency and role
   SELECT agency_id, role INTO user_agency_id, user_role
   FROM public.investigators
   WHERE id = (event->>'user_id')::uuid;
-  
+
   -- Add to JWT claims
   claims := jsonb_set(claims, '{agency_id}', to_jsonb(user_agency_id));
   claims := jsonb_set(claims, '{role}', to_jsonb(user_role));
-  
+
   RETURN jsonb_set(event, '{claims}', claims);
 END;
 $$ LANGUAGE plpgsql STABLE;
@@ -1007,21 +1038,22 @@ GRANT EXECUTE ON FUNCTION public.custom_access_token_hook TO supabase_auth_admin
 // When auth migrates to Ory Kratos, only the JWKS URL changes — no business logic changes.
 const jwtValidator = createJWTValidator({
   jwksUri: `${process.env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`,
-  algorithms: ["RS256"],
+  algorithms: ['RS256'],
   audience: process.env.SUPABASE_PROJECT_REF,
   issuer: `${process.env.SUPABASE_URL}/auth/v1`,
 });
 
 const authMiddleware: FastifyMiddleware = async (req, reply) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) throw new UnauthorizedError("No token");
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) throw new UnauthorizedError('No token');
 
-  const payload = await jwtValidator.verify(token) as ChainSightJWT;
+  const payload = (await jwtValidator.verify(token)) as ChainSightJWT;
 
   // Enforce MFA verification for all case-data-accessing endpoints
   if (REQUIRES_MFA_ENDPOINTS.has(req.routerPath)) {
-    if (!payload.aal || payload.aal < "aal1") {  // Supabase AAL (Authenticator Assurance Level)
-      throw new MFARequired("MFA required");
+    if (!payload.aal || payload.aal < 'aal1') {
+      // Supabase AAL (Authenticator Assurance Level)
+      throw new MFARequired('MFA required');
     }
   }
 
@@ -1048,7 +1080,7 @@ Supabase Auth is a SaaS product — it cannot run on the customer's infrastructu
 
 ```typescript
 // Agency admin triggers MFA enrollment for a new investigator
-const { data: enrollment } = await supabase.auth.mfa.enroll({ factorType: "totp" });
+const { data: enrollment } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
 // Returns: { id: "factor_id", totp: { qr_code: "data:image/svg...", secret: "BASE32..." } }
 // Display QR code to investigator; they scan with authenticator app
 
@@ -1057,7 +1089,7 @@ const { data: challenge } = await supabase.auth.mfa.challenge({ factorId: enroll
 const { data: verify } = await supabase.auth.mfa.verify({
   factorId: enrollment.id,
   challengeId: challenge.id,
-  code: investigatorEnteredCode
+  code: investigatorEnteredCode,
 });
 // On success: Supabase session is at AAL2 (MFA-verified)
 ```
@@ -1066,16 +1098,16 @@ const { data: verify } = await supabase.auth.mfa.verify({
 
 The following actions require a hardware key authentication challenge even after TOTP login:
 
-| Action | Rationale |
-|---|---|
-| Submit a freeze request | Irreversible real-world action |
-| Sign off a seizure recommendation | Irreversible real-world action |
-| Promote BeliefAtom to court-grade | Signature on an evidentiary claim |
-| Export a Reproducibility Pack | Evidence custody event; mass data movement |
-| Grant support access to vendor | Security control activation |
-| Revoke support access | Security control activation |
-| Initiate key rotation | Cryptographic operation with broad impact |
-| Bulk export or case transfer | Mass data movement |
+| Action                            | Rationale                                  |
+| --------------------------------- | ------------------------------------------ |
+| Submit a freeze request           | Irreversible real-world action             |
+| Sign off a seizure recommendation | Irreversible real-world action             |
+| Promote BeliefAtom to court-grade | Signature on an evidentiary claim          |
+| Export a Reproducibility Pack     | Evidence custody event; mass data movement |
+| Grant support access to vendor    | Security control activation                |
+| Revoke support access             | Security control activation                |
+| Initiate key rotation             | Cryptographic operation with broad impact  |
+| Bulk export or case transfer      | Mass data movement                         |
 
 **WebAuthn challenge implementation:**
 
@@ -1084,21 +1116,24 @@ The following actions require a hardware key authentication challenge even after
 async function generateHighImpactChallenge(
   userId: string,
   actionType: HighImpactAction,
-  targetResourceId: string
+  targetResourceId: string,
 ): Promise<WebAuthnChallenge> {
   const challenge = crypto.randomBytes(32);
   // The challenge includes the action context so a passkey signature for
   // "freeze case A" cannot be replayed as "freeze case B"
   const contextHash = sha256(`${actionType}:${targetResourceId}:${userId}:${Date.now()}`);
 
-  await redis.setex(`webauthn:challenge:${userId}`, 60,
-    JSON.stringify({ challenge: challenge.toString("base64"), contextHash }));
+  await redis.setex(
+    `webauthn:challenge:${userId}`,
+    60,
+    JSON.stringify({ challenge: challenge.toString('base64'), contextHash }),
+  );
 
   return {
-    challenge: challenge.toString("base64"),
-    contextHash,                    // displayed to investigator to confirm what they're signing
+    challenge: challenge.toString('base64'),
+    contextHash, // displayed to investigator to confirm what they're signing
     rpId: process.env.RELYING_PARTY_ID,
-    userVerification: "required",   // biometric or PIN always required
+    userVerification: 'required', // biometric or PIN always required
     timeout: 60000,
   };
 }
@@ -1110,12 +1145,12 @@ async function generateHighImpactChallenge(
 
 Four base roles, enforced via JWT claims + Supabase RLS:
 
-| Role | Capabilities |
-|---|---|
-| `investigator` | Create/read/update own cases; read shared cases; trace, attribute, draft reports; initiate freeze (pending supervisor approval per F27) |
-| `supervisor` | All investigator capabilities; supervisor dashboard (F27); approve freeze/seizure/declaration; reassign cases; view all cases in span of control |
-| `admin` | All supervisor capabilities; user management; KMS key management; BYOK provider management; support access grants; billing |
-| `read_only` | Read cases they are explicitly added to; no writes; for outside counsel, oversight, compliance auditors |
+| Role           | Capabilities                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `investigator` | Create/read/update own cases; read shared cases; trace, attribute, draft reports; initiate freeze (pending supervisor approval per F27)          |
+| `supervisor`   | All investigator capabilities; supervisor dashboard (F27); approve freeze/seizure/declaration; reassign cases; view all cases in span of control |
+| `admin`        | All supervisor capabilities; user management; KMS key management; BYOK provider management; support access grants; billing                       |
+| `read_only`    | Read cases they are explicitly added to; no writes; for outside counsel, oversight, compliance auditors                                          |
 
 ### 6.4 Attribute-Based Access Control (ABAC) for Cases
 
@@ -1123,10 +1158,10 @@ RBAC governs base capabilities. ABAC governs per-case access:
 
 ```typescript
 interface CasePermission {
-  role: "owner" | "collaborator" | "observer" | "reviewer";
+  role: 'owner' | 'collaborator' | 'observer' | 'reviewer';
   can_export: boolean;
   can_add_collaborators: boolean;
-  expiry: Date | null;  // for time-limited access (outside counsel, etc.)
+  expiry: Date | null; // for time-limited access (outside counsel, etc.)
 }
 ```
 
@@ -1136,14 +1171,14 @@ Enforced at the application layer (case_id + user ABAC check before any case DEK
 
 ```typescript
 type SupervisoryPermission =
-  | "view_active_cases"
-  | "view_caseload_metrics"
-  | "approve_freeze"
-  | "approve_seizure"
-  | "approve_expert_declaration"
-  | "reassign_case"
-  | "close_case"
-  | "audit_actions";
+  | 'view_active_cases'
+  | 'view_caseload_metrics'
+  | 'approve_freeze'
+  | 'approve_seizure'
+  | 'approve_expert_declaration'
+  | 'reassign_case'
+  | 'close_case'
+  | 'audit_actions';
 ```
 
 Middleware validates both the JWT role (`supervisor` or `admin`) and the specific `SupervisoryPermission` required for each endpoint, and that the target case is within the supervisor's configured span of control.
@@ -1155,11 +1190,12 @@ Middleware validates both the JWT role (`supervisor` or `admin`) and the specifi
 ### 7.1 Design Goals
 
 The audit log is:
+
 1. **Append-only in Supabase:** PostgreSQL RLS + role separation prevents modifications
 2. **Tamper-evident:** HMAC-SHA256 hash chain links every entry to the prior
 3. **Agency-owned:** Agency has direct Supabase read access to their own audit entries; the hash chain is verifiable independently
 4. **Mirrored:** Asynchronous copy to S3-compatible storage with Object Lock
-5. **Supabase-opaque in content:** The audit log records *what happened* (action type, actor, resource ID) but no investigation content; Supabase can see the audit trail structure but not case data
+5. **Supabase-opaque in content:** The audit log records _what happened_ (action type, actor, resource ID) but no investigation content; Supabase can see the audit trail structure but not case data
 
 ### 7.2 Hash-Chained Audit Log Schema
 
@@ -1168,22 +1204,22 @@ CREATE TABLE audit_log_entries (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agency_id     UUID NOT NULL,       -- plaintext: for RLS + CloudWatch routing
   seq           BIGSERIAL NOT NULL,  -- monotonic sequence per tenant
-  
+
   -- Event content (plaintext: audit log must be independently verifiable)
   actor         TEXT NOT NULL,       -- "user:{user_id}" | "system:{svc}" | "support:{id}"
   action        TEXT NOT NULL,       -- action type (see §7.6 taxonomy)
   target_ref    TEXT NOT NULL,       -- resource identifier (no case content)
   ts            TIMESTAMPTZ NOT NULL DEFAULT now(),
   metadata_json JSONB,               -- action-specific metadata (no case content in values)
-  
+
   -- Hash chain (tamper-evidence)
   prior_hash    BYTEA NOT NULL,      -- HMAC-SHA256 of prior entry's canonical form
   this_hash     BYTEA NOT NULL,      -- HMAC-SHA256 of (seq ‖ actor ‖ action ‖ target_ref ‖ ts ‖ prior_hash)
-  
+
   -- S3 mirror reference
   s3_object_key TEXT,
   s3_etag       TEXT,
-  
+
   -- Optional public-chain anchor (G2)
   anchor_batch_id UUID,
   anchor_tx_hash  TEXT
@@ -1212,15 +1248,15 @@ async function appendAuditEntry(entry: AuditEntryInput): Promise<void> {
   const agencyHMACKey = await getAgencyAuditHMACKey(entry.agency_id); // from KMS
 
   const { data: prior } = await supabase
-    .from("audit_log_entries")
-    .select("this_hash, seq")
-    .eq("agency_id", entry.agency_id)
-    .order("seq", { ascending: false })
+    .from('audit_log_entries')
+    .select('this_hash, seq')
+    .eq('agency_id', entry.agency_id)
+    .order('seq', { ascending: false })
     .limit(1)
     .single();
 
   const priorHash = prior
-    ? Buffer.from(prior.this_hash as string, "hex")
+    ? Buffer.from(prior.this_hash as string, 'hex')
     : hmacSHA256(agencyHMACKey, Buffer.from(`GENESIS:${entry.agency_id}`));
 
   const nextSeq = prior ? (prior.seq as number) + 1 : 1;
@@ -1235,7 +1271,7 @@ async function appendAuditEntry(entry: AuditEntryInput): Promise<void> {
   ]);
   const thisHash = hmacSHA256(agencyHMACKey, content);
 
-  await supabase.from("audit_log_entries").insert({
+  await supabase.from('audit_log_entries').insert({
     agency_id: entry.agency_id,
     seq: nextSeq,
     actor: entry.actor,
@@ -1243,8 +1279,8 @@ async function appendAuditEntry(entry: AuditEntryInput): Promise<void> {
     target_ref: entry.target_ref,
     ts: entry.ts.toISOString(),
     metadata_json: entry.metadata_json ?? null,
-    prior_hash: priorHash.toString("hex"),
-    this_hash: thisHash.toString("hex"),
+    prior_hash: priorHash.toString('hex'),
+    this_hash: thisHash.toString('hex'),
   });
 
   // Async mirror to S3 with Object Lock
@@ -1255,6 +1291,7 @@ async function appendAuditEntry(entry: AuditEntryInput): Promise<void> {
 ### 7.3 S3 Object Lock Mirror
 
 The Supabase Postgres audit log is the primary store and append-only via RLS. The S3 mirror provides:
+
 - A second independent copy (Supabase delete would require defeating two systems)
 - Object Lock COMPLIANCE mode (7-year default retention; cannot be shortened without AWS root account action)
 - Verifiable integrity independent of Supabase
@@ -1269,15 +1306,17 @@ async function mirrorAuditEntryToS3(seq: number, agencyId: string): Promise<void
     Bucket: AUDIT_MIRROR_BUCKET,
     Key: key,
     Body: body,
-    ContentType: "application/json",
-    ObjectLockMode: "COMPLIANCE",
+    ContentType: 'application/json',
+    ObjectLockMode: 'COMPLIANCE',
     ObjectLockRetainUntilDate: addYears(new Date(), 7),
-    ChecksumSHA256: sha256(body).toString("base64"),
+    ChecksumSHA256: sha256(body).toString('base64'),
   });
 
-  await supabase.from("audit_log_entries")
+  await supabase
+    .from('audit_log_entries')
     .update({ s3_object_key: key, s3_etag: s3Result.ETag })
-    .eq("agency_id", agencyId).eq("seq", seq);
+    .eq('agency_id', agencyId)
+    .eq('seq', seq);
 }
 ```
 
@@ -1289,30 +1328,30 @@ Background job (runs hourly) verifies the entire hash chain for each agency:
 async function verifyAuditChain(agencyId: string): Promise<ChainVerificationResult> {
   const agencyHMACKey = await getAgencyAuditHMACKey(agencyId);
   const { data: entries } = await supabase
-    .from("audit_log_entries")
-    .select("*")
-    .eq("agency_id", agencyId)
-    .order("seq", { ascending: true });
+    .from('audit_log_entries')
+    .select('*')
+    .eq('agency_id', agencyId)
+    .order('seq', { ascending: true });
 
   let expectedPriorHash = hmacSHA256(agencyHMACKey, Buffer.from(`GENESIS:${agencyId}`));
   const errors: ChainError[] = [];
 
   for (const entry of entries!) {
-    const entryPriorHash = Buffer.from(entry.prior_hash as string, "hex");
+    const entryPriorHash = Buffer.from(entry.prior_hash as string, 'hex');
     if (!entryPriorHash.equals(expectedPriorHash)) {
-      errors.push({ type: "PRIOR_HASH_MISMATCH", seq: entry.seq });
+      errors.push({ type: 'PRIOR_HASH_MISMATCH', seq: entry.seq });
     }
     // Recompute this_hash and compare
     const expectedThisHash = hmacSHA256(agencyHMACKey, buildContent(entry, expectedPriorHash));
-    const entryThisHash = Buffer.from(entry.this_hash as string, "hex");
+    const entryThisHash = Buffer.from(entry.this_hash as string, 'hex');
     if (!entryThisHash.equals(expectedThisHash)) {
-      errors.push({ type: "THIS_HASH_MISMATCH", seq: entry.seq });
+      errors.push({ type: 'THIS_HASH_MISMATCH', seq: entry.seq });
     }
     expectedPriorHash = entryThisHash;
   }
 
   if (errors.length > 0) {
-    await alertAgencySecurityAdmin(agencyId, "AUDIT_CHAIN_TAMPER_DETECTED", errors);
+    await alertAgencySecurityAdmin(agencyId, 'AUDIT_CHAIN_TAMPER_DETECTED', errors);
   }
 
   return { entries_verified: entries!.length, errors, verified_at: new Date() };
@@ -1329,24 +1368,54 @@ At case-close, the platform builds a Merkle tree of all audit log entry hashes f
 
 ```typescript
 type AuditAction =
-  | "auth.login" | "auth.logout" | "auth.mfa_enrolled" | "auth.mfa_challenged"
-  | "auth.webauthn_verified" | "auth.session_expired" | "auth.force_logout"
-  | "case.created" | "case.opened" | "case.closed" | "case.status_changed"
-  | "belief.atom_asserted" | "belief.atom_challenged" | "belief.atom_retracted"
-  | "belief.atom_court_graded"
-  | "document.uploaded" | "document.viewed" | "document.exported" | "document.printed"
-  | "custody.collected" | "custody.viewed" | "custody.exported"
-  | "custody.produced_in_discovery" | "custody.signed" | "custody.sealed"
-  | "credential.added" | "credential.rotated" | "credential.removed"
-  | "capability.resolved"
-  | "support.access_requested" | "support.access_granted"
-  | "support.access_revoked" | "support.action_performed" | "support.action_denied"
-  | "freeze.drafted" | "freeze.approved" | "freeze.submitted"
-  | "seizure.recommended" | "seizure.approved"
-  | "declaration.signed"
-  | "key.tenant_dek_rotated" | "key.case_dek_reencrypted"
-  | "pack.created" | "pack.signed" | "pack.exported"
-  | "audit.chain_verified" | "audit.chain_anchor_published" | "audit.tamper_detected";
+  | 'auth.login'
+  | 'auth.logout'
+  | 'auth.mfa_enrolled'
+  | 'auth.mfa_challenged'
+  | 'auth.webauthn_verified'
+  | 'auth.session_expired'
+  | 'auth.force_logout'
+  | 'case.created'
+  | 'case.opened'
+  | 'case.closed'
+  | 'case.status_changed'
+  | 'belief.atom_asserted'
+  | 'belief.atom_challenged'
+  | 'belief.atom_retracted'
+  | 'belief.atom_court_graded'
+  | 'document.uploaded'
+  | 'document.viewed'
+  | 'document.exported'
+  | 'document.printed'
+  | 'custody.collected'
+  | 'custody.viewed'
+  | 'custody.exported'
+  | 'custody.produced_in_discovery'
+  | 'custody.signed'
+  | 'custody.sealed'
+  | 'credential.added'
+  | 'credential.rotated'
+  | 'credential.removed'
+  | 'capability.resolved'
+  | 'support.access_requested'
+  | 'support.access_granted'
+  | 'support.access_revoked'
+  | 'support.action_performed'
+  | 'support.action_denied'
+  | 'freeze.drafted'
+  | 'freeze.approved'
+  | 'freeze.submitted'
+  | 'seizure.recommended'
+  | 'seizure.approved'
+  | 'declaration.signed'
+  | 'key.tenant_dek_rotated'
+  | 'key.case_dek_reencrypted'
+  | 'pack.created'
+  | 'pack.signed'
+  | 'pack.exported'
+  | 'audit.chain_verified'
+  | 'audit.chain_anchor_published'
+  | 'audit.tamper_detected';
 ```
 
 ---
@@ -1366,26 +1435,26 @@ CREATE TABLE chain_of_custody_records (
   case_id               UUID NOT NULL,
   artifact_ref          TEXT NOT NULL,       -- "case_document:{id}" | "belief_atom:{id}" | etc.
   artifact_content_hash TEXT NOT NULL,       -- BLAKE2b-256 of artifact at creation (hex)
-  
+
   -- Encrypted payload: event details with sensitive content
   encrypted_events_json BYTEA NOT NULL,      -- libsodium-encrypted JSON array of CustodyEvents
   events_nonce          BYTEA NOT NULL,
-  
+
   -- Plaintext metadata for queries
   current_custodian     TEXT NOT NULL,
   classification        TEXT NOT NULL DEFAULT 'unclassified',
   event_count           INTEGER NOT NULL DEFAULT 0,
   last_event_at         TIMESTAMPTZ NOT NULL,
-  
+
   -- Tamper-evident chain per artifact
   prior_record_hash     TEXT,                -- BLAKE2b-256 of prior state (hex)
   this_record_hash      TEXT NOT NULL,       -- BLAKE2b-256 of current state (hex)
   key_version           INTEGER NOT NULL DEFAULT 1,
-  
+
   -- Optional RFC 3161 timestamp
   tsa_timestamp_token   BYTEA,
   tsa_timestamp_ts      TIMESTAMPTZ,
-  
+
   -- Optional public-chain anchor
   chain_anchor_tx_hash  TEXT,
   chain_anchor_ts       TIMESTAMPTZ
@@ -1404,24 +1473,38 @@ GRANT SELECT, INSERT, UPDATE ON chain_of_custody_records TO chainsight_app;
 ```typescript
 interface CustodyEvent {
   event_type:
-    | "collected" | "viewed" | "exported" | "printed" | "shared"
-    | "signed" | "modified" | "sealed" | "unsealed" | "destroyed"
-    | "produced_in_discovery";
-  actor: string;          // user_id or "system:{service}"
-  timestamp: string;      // ISO 8601
-  authority: "warrant" | "subpoena" | "court_order" | "mlat"
-           | "voluntary" | "internal_authority" | "none";
-  authority_ref: string | null;   // document reference
+    | 'collected'
+    | 'viewed'
+    | 'exported'
+    | 'printed'
+    | 'shared'
+    | 'signed'
+    | 'modified'
+    | 'sealed'
+    | 'unsealed'
+    | 'destroyed'
+    | 'produced_in_discovery';
+  actor: string; // user_id or "system:{service}"
+  timestamp: string; // ISO 8601
+  authority:
+    | 'warrant'
+    | 'subpoena'
+    | 'court_order'
+    | 'mlat'
+    | 'voluntary'
+    | 'internal_authority'
+    | 'none';
+  authority_ref: string | null; // document reference
   rationale: string;
-  recipient: string | null;       // for shares/exports/productions
-  hash_at_event: string;          // BLAKE2b-256 of artifact content at this event (hex)
+  recipient: string | null; // for shares/exports/productions
+  hash_at_event: string; // BLAKE2b-256 of artifact content at this event (hex)
 }
 ```
 
 ### 8.4 Hash Chaining Per Artifact
 
 ```typescript
-function computeRecordHash(record: Omit<CoCRecord, "this_record_hash">): string {
+function computeRecordHash(record: Omit<CoCRecord, 'this_record_hash'>): string {
   const canonical = msgpack.encode({
     id: record.id,
     case_id: record.case_id,
@@ -1430,9 +1513,9 @@ function computeRecordHash(record: Omit<CoCRecord, "this_record_hash">): string 
     // Use HMAC of decrypted events for the hash, not the ciphertext
     // (so the hash is stable regardless of nonce changes)
     events_digest: blake2b256(record.decryptedEventsBuffer),
-    prior_record_hash: record.prior_record_hash ?? "GENESIS",
+    prior_record_hash: record.prior_record_hash ?? 'GENESIS',
   });
-  return blake2b256(canonical).toString("hex");
+  return blake2b256(canonical).toString('hex');
 }
 ```
 
@@ -1449,6 +1532,7 @@ When evidence is produced to opposing counsel, the platform generates a `Discove
 Every Reproducibility Pack is content-addressed: the pack's identity is its cryptographic hash, computed as the Merkle root of all file hashes in the pack manifest.
 
 **Pack structure:**
+
 ```
 reproducibility_pack_{case_id}_{ts}.zip
 ├── manifest.json          ← Merkle root of all files; this IS the pack identity
@@ -1497,20 +1581,23 @@ function buildPackManifest(files: PackFile[]): PackManifest {
 Court-grade packs are signed by the producing investigator using their Ed25519 key (stored in the agency's KMS or on a hardware key). The signature covers the entire serialized manifest (which includes the Merkle root, which covers every file in the pack):
 
 ```typescript
-async function signPackManifest(manifest: PackManifest, investigatorId: string): Promise<PackManifest> {
+async function signPackManifest(
+  manifest: PackManifest,
+  investigatorId: string,
+): Promise<PackManifest> {
   const manifestBytes = msgpack.encode(manifest);
   const signingKey = await getInvestigatorSigningKey(investigatorId); // from KMS
   const signature = ed25519Sign(signingKey.privateKey, manifestBytes);
 
   await appendAuditEntry({
     actor: `user:${investigatorId}`,
-    action: "pack.signed",
+    action: 'pack.signed',
     target_ref: `pack:${manifest.case_id}`,
     ts: new Date(),
-    metadata_json: { merkle_root: manifest.merkle_root }
+    metadata_json: { merkle_root: manifest.merkle_root },
   });
 
-  return { ...manifest, investigator_signature: signature.toString("base64") };
+  return { ...manifest, investigator_signature: signature.toString('base64') };
 }
 ```
 
@@ -1521,6 +1608,7 @@ Reproducibility Pack `.zip` files are encrypted with the Case DEK and uploaded t
 ### 9.5 Replay Verification
 
 The `replay.sh` script in each pack:
+
 1. Verifies all file hashes against the manifest
 2. Verifies the manifest Merkle root
 3. Verifies the investigator Ed25519 signature (if signed)
@@ -1562,12 +1650,12 @@ name: Release
 
 on:
   push:
-    tags: ["v*.*.*"]
+    tags: ['v*.*.*']
 
 permissions:
   contents: read
   packages: write
-  id-token: write   # Required for Sigstore OIDC keyless signing
+  id-token: write # Required for Sigstore OIDC keyless signing
 
 jobs:
   build-sign-release:
@@ -1646,7 +1734,7 @@ jobs:
       - name: Deploy to Fly.io
         uses: superfly/flyctl-actions@1.5
         with:
-          args: "deploy --image ghcr.io/chainsight-io/chainsight-api:${{ github.ref_name }}"
+          args: 'deploy --image ghcr.io/chainsight-io/chainsight-api:${{ github.ref_name }}'
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 ```
@@ -1732,7 +1820,7 @@ class CredentialStore {
   async storeCredential(
     agencyId: string,
     installId: string,
-    plaintextCredential: Buffer  // Buffer, not string — so sodium.memzero works
+    plaintextCredential: Buffer, // Buffer, not string — so sodium.memzero works
   ): Promise<void> {
     // Unwrap Tenant DEK from KMS
     const tenantDEK = await this.kms.decryptTenantDEK(agencyId);
@@ -1743,7 +1831,7 @@ class CredentialStore {
         // Encrypt the credential with its DEK
         const nonce = Buffer.from(sodium.randombytes_buf(24));
         const credCiphertext = Buffer.alloc(
-          plaintextCredential.length + sodium.crypto_secretbox_MACBYTES
+          plaintextCredential.length + sodium.crypto_secretbox_MACBYTES,
         );
         sodium.crypto_secretbox_easy(credCiphertext, plaintextCredential, nonce, credDEK);
 
@@ -1752,17 +1840,18 @@ class CredentialStore {
 
         // Build the credential blob (all ciphertext; Supabase sees only this)
         const blob = {
-          format: "v1",
-          wrapped_cred_dek: wrappedCredDEK.ciphertext.toString("base64"),
-          wrapped_cred_dek_nonce: wrappedCredDEK.nonce.toString("base64"),
-          cred_ciphertext: credCiphertext.toString("base64"),
-          cred_nonce: nonce.toString("base64"),
+          format: 'v1',
+          wrapped_cred_dek: wrappedCredDEK.ciphertext.toString('base64'),
+          wrapped_cred_dek_nonce: wrappedCredDEK.nonce.toString('base64'),
+          cred_ciphertext: credCiphertext.toString('base64'),
+          cred_nonce: nonce.toString('base64'),
           key_version: 1,
         };
 
-        await supabase.from("agency_provider_installs")
+        await supabase
+          .from('agency_provider_installs')
           .update({ credential_blob: blob })
-          .eq("id", installId);
+          .eq('id', installId);
 
         // Never log, never return to UI, never include in error messages
       } finally {
@@ -1771,18 +1860,18 @@ class CredentialStore {
     } finally {
       sodium.memzero(tenantDEK);
     }
-    sodium.memzero(plaintextCredential);  // also zero the input
+    sodium.memzero(plaintextCredential); // also zero the input
   }
 
   async resolveCredential<T>(
     agencyId: string,
     installId: string,
-    callback: (cred: Buffer) => Promise<T>  // credential lives ONLY within this scope
+    callback: (cred: Buffer) => Promise<T>, // credential lives ONLY within this scope
   ): Promise<T> {
     const { data: install } = await supabase
-      .from("agency_provider_installs")
-      .select("credential_blob")
-      .eq("id", installId)
+      .from('agency_provider_installs')
+      .select('credential_blob')
+      .eq('id', installId)
       .single();
 
     const blob = install!.credential_blob as CredentialBlob;
@@ -1791,25 +1880,27 @@ class CredentialStore {
     try {
       // Unwrap credential DEK
       const credDEK = cryptoService.decrypt(
-        { ciphertext: Buffer.from(blob.wrapped_cred_dek, "base64"),
-          nonce: Buffer.from(blob.wrapped_cred_dek_nonce, "base64") },
-        tenantDEK
+        {
+          ciphertext: Buffer.from(blob.wrapped_cred_dek, 'base64'),
+          nonce: Buffer.from(blob.wrapped_cred_dek_nonce, 'base64'),
+        },
+        tenantDEK,
       );
       try {
         // Decrypt the credential
         const plaintext = Buffer.alloc(
-          Buffer.from(blob.cred_ciphertext, "base64").length - sodium.crypto_secretbox_MACBYTES
+          Buffer.from(blob.cred_ciphertext, 'base64').length - sodium.crypto_secretbox_MACBYTES,
         );
         const ok = sodium.crypto_secretbox_open_easy(
           plaintext,
-          Buffer.from(blob.cred_ciphertext, "base64"),
-          Buffer.from(blob.cred_nonce, "base64"),
-          credDEK
+          Buffer.from(blob.cred_ciphertext, 'base64'),
+          Buffer.from(blob.cred_nonce, 'base64'),
+          credDEK,
         );
-        if (!ok) throw new DecryptionError("Credential authentication failed");
+        if (!ok) throw new DecryptionError('Credential authentication failed');
 
         try {
-          return await callback(plaintext);  // credential exists only inside this call
+          return await callback(plaintext); // credential exists only inside this call
         } finally {
           sodium.memzero(plaintext);
         }
@@ -1831,22 +1922,22 @@ AI provider credentials (Anthropic API key, OpenAI API key, etc.) follow the exa
 
 ```typescript
 // BANNED — ESLint rule: no-credential-logging
-logger.info(`Calling provider with key: ${credential}`);     // ❌
+logger.info(`Calling provider with key: ${credential}`); // ❌
 
 // BANNED — no credential in error messages
-throw new Error(`Provider call failed: key=${credential}`);  // ❌
+throw new Error(`Provider call failed: key=${credential}`); // ❌
 
 // BANNED — no credential returned to API layer
-return { install, credential: plaintextCred };               // ❌
+return { install, credential: plaintextCred }; // ❌
 
 // BANNED — no credential caching in Redis
-await redis.set(`cred:${installId}`, cred, "EX", 3600);     // ❌
+await redis.set(`cred:${installId}`, cred, 'EX', 3600); // ❌
 
 // BANNED — no credential in URL query parameters
-fetch(`https://api.provider.com/data?key=${cred}`);         // ❌ (use Authorization header)
+fetch(`https://api.provider.com/data?key=${cred}`); // ❌ (use Authorization header)
 
 // BANNED — no credential in Supabase Realtime events
-supabase.channel("updates").send({ credential: cred });     // ❌
+supabase.channel('updates').send({ credential: cred }); // ❌
 ```
 
 ---
@@ -1913,30 +2004,30 @@ fly secrets set JWT_SECRET=...
 ### 12.3 Security Headers (Fastify)
 
 ```typescript
-import helmet from "@fastify/helmet";
-import cors from "@fastify/cors";
+import helmet from '@fastify/helmet';
+import cors from '@fastify/cors';
 
 app.register(helmet, {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'nonce-{nonce}'"],  // nonce-based CSP
-      styleSrc: ["'self'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:"],
+      scriptSrc: ["'self'", "'nonce-{nonce}'"], // nonce-based CSP
+      styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+      imgSrc: ["'self'", 'data:'],
       connectSrc: ["'self'", process.env.SUPABASE_URL!],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameSrc: ["'none'"],
     },
   },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 });
 
 app.register(cors, {
-  origin: process.env.ALLOWED_ORIGINS!.split(","),
+  origin: process.env.ALLOWED_ORIGINS!.split(','),
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 });
 ```
 
@@ -1961,13 +2052,13 @@ Short-lived service certificates issued by an internal CA (Vault PKI secrets eng
 
 On-prem sovereign deployments maintain explicit egress allowlists:
 
-| Destination | Port | Purpose |
-|---|---|---|
-| BYOK provider API endpoints (agency-configured) | 443 | Capability router calls |
-| HashiCorp Vault (internal) | 8200 | KMS operations |
-| Agency blockchain RPC nodes (internal or configured) | 8545/8546 | Chain data |
-| Agency LLM inference (internal vLLM/Ollama) | Configurable | AI model calls |
-| NTP (agency's own) | 123 | Time synchronization |
+| Destination                                          | Port         | Purpose                 |
+| ---------------------------------------------------- | ------------ | ----------------------- |
+| BYOK provider API endpoints (agency-configured)      | 443          | Capability router calls |
+| HashiCorp Vault (internal)                           | 8200         | KMS operations          |
+| Agency blockchain RPC nodes (internal or configured) | 8545/8546    | Chain data              |
+| Agency LLM inference (internal vLLM/Ollama)          | Configurable | AI model calls          |
+| NTP (agency's own)                                   | 123          | Time synchronization    |
 
 No outbound connections to Supabase, GitHub, Fly.io, or AWS in sovereign deployments. Zero.
 
@@ -1977,11 +2068,11 @@ No outbound connections to Supabase, GitHub, Fly.io, or AWS in sovereign deploym
 
 ### 13.1 The Three-Environment Secret Hierarchy
 
-| Environment | Tool | Notes |
-|---|---|---|
-| Local development | `.env.local` + `direnv` (or Doppler CLI) | Not committed; `.env.example` documents required vars with fake values |
-| CI/CD (GitHub Actions) | GitHub Actions secrets + OIDC tokens | No agency keys; no BYOK credentials; only ChainSight infra creds |
-| Production (Fly.io SaaS Blind) | Fly Secrets + AWS KMS (for agency DEKs) | All sensitive app secrets in Fly; agency keys in their own AWS |
+| Environment                    | Tool                                     | Notes                                                                  |
+| ------------------------------ | ---------------------------------------- | ---------------------------------------------------------------------- |
+| Local development              | `.env.local` + `direnv` (or Doppler CLI) | Not committed; `.env.example` documents required vars with fake values |
+| CI/CD (GitHub Actions)         | GitHub Actions secrets + OIDC tokens     | No agency keys; no BYOK credentials; only ChainSight infra creds       |
+| Production (Fly.io SaaS Blind) | Fly Secrets + AWS KMS (for agency DEKs)  | All sensitive app secrets in Fly; agency keys in their own AWS         |
 
 ### 13.2 Fly Secrets Management
 
@@ -2010,6 +2101,7 @@ fly secrets set AWS_ACCESS_KEY_ID="AKIA..." AWS_SECRET_ACCESS_KEY="..."
 ### 13.3 Supabase Service Key Handling
 
 The Supabase service key (`service_role`) bypasses RLS. It is held only in Fly Secrets. It is:
+
 - Never committed to GitHub
 - Never stored in Supabase itself
 - Never returned via API responses
@@ -2017,15 +2109,15 @@ The Supabase service key (`service_role`) bypasses RLS. It is held only in Fly S
 
 ### 13.4 Rotation Cadence
 
-| Secret | Rotation cadence | Method |
-|---|---|---|
-| Agency KMS Root Key (CMK) | Annual | AWS KMS automatic key rotation |
-| Tenant DEK | 90 days | Automated job (§2.7) |
-| Fly Secrets (AWS access key) | Quarterly until OIDC; then per-session | Manual rotation / OIDC |
-| Supabase service key | On any suspected exposure | Supabase console regeneration |
-| JWT secret | Annual | Fly `secrets set` + rolling session invalidation |
-| TLS certificates | 90 days | Fly.io automated (Let's Encrypt) |
-| Supabase database password | Annual | Supabase console + update connection string |
+| Secret                       | Rotation cadence                       | Method                                           |
+| ---------------------------- | -------------------------------------- | ------------------------------------------------ |
+| Agency KMS Root Key (CMK)    | Annual                                 | AWS KMS automatic key rotation                   |
+| Tenant DEK                   | 90 days                                | Automated job (§2.7)                             |
+| Fly Secrets (AWS access key) | Quarterly until OIDC; then per-session | Manual rotation / OIDC                           |
+| Supabase service key         | On any suspected exposure              | Supabase console regeneration                    |
+| JWT secret                   | Annual                                 | Fly `secrets set` + rolling session invalidation |
+| TLS certificates             | 90 days                                | Fly.io automated (Let's Encrypt)                 |
+| Supabase database password   | Annual                                 | Supabase console + update connection string      |
 
 ### 13.5 On-Prem Secrets (HashiCorp Vault)
 
@@ -2051,16 +2143,16 @@ vault write transit/keys/jwt-signing-key type=ed25519
 
 This is the clean separation. For On-Prem Sovereign deployments:
 
-| SaaS Blind component | On-Prem replacement |
-|---|---|
-| Supabase Postgres | Self-hosted Postgres 16 (Docker/K8s) |
-| Supabase Auth | Ory Kratos (self-hosted) |
-| Supabase Storage | MinIO or agency NFS/Ceph |
-| Supabase Realtime | Postgres LISTEN/NOTIFY + Redis Pub/Sub |
-| Supabase pgvector | pgvector extension on self-hosted Postgres |
-| Fly.io app hosting | Docker Compose or Kubernetes (Helm chart) |
-| GitHub CI/CD | Agency's own CI, or offline installer |
-| AWS KMS | HashiCorp Vault + optional HSM |
+| SaaS Blind component | On-Prem replacement                        |
+| -------------------- | ------------------------------------------ |
+| Supabase Postgres    | Self-hosted Postgres 16 (Docker/K8s)       |
+| Supabase Auth        | Ory Kratos (self-hosted)                   |
+| Supabase Storage     | MinIO or agency NFS/Ceph                   |
+| Supabase Realtime    | Postgres LISTEN/NOTIFY + Redis Pub/Sub     |
+| Supabase pgvector    | pgvector extension on self-hosted Postgres |
+| Fly.io app hosting   | Docker Compose or Kubernetes (Helm chart)  |
+| GitHub CI/CD         | Agency's own CI, or offline installer      |
+| AWS KMS              | HashiCorp Vault + optional HSM             |
 
 **The application code is identical.** Deployment configuration changes; business logic does not. This is the value of the abstraction layers (CryptoService, AuthService, StorageService, DatabaseClient).
 
@@ -2135,33 +2227,33 @@ cosign verify-blob \
 
 ```typescript
 interface LicenseCertificate {
-  version: "1";
+  version: '1';
   agency_id: string;
   agency_name: string;
-  tier: "investigator" | "team" | "department" | "agency" | "classified";
+  tier: 'investigator' | 'team' | 'department' | 'agency' | 'classified';
   features: string[];
   seat_limit: number;
   valid_from: string;
-  valid_until: string | null;  // null = perpetual
+  valid_until: string | null; // null = perpetual
   update_subscription_until: string;
-  signature: string;           // Ed25519 over the rest of the fields
+  signature: string; // Ed25519 over the rest of the fields
   issuer_public_key_fp: string;
 }
 
 function validateLicense(certPath: string): ValidationResult {
-  const cert = JSON.parse(fs.readFileSync(certPath, "utf8"));
+  const cert = JSON.parse(fs.readFileSync(certPath, 'utf8'));
   const { signature, ...payload } = cert;
 
   // Verify against the BUNDLED issuer public key (no network call, no phone-home)
   const valid = ed25519Verify(
-    Buffer.from(signature, "base64"),
+    Buffer.from(signature, 'base64'),
     Buffer.from(JSON.stringify(payload)),
-    BUNDLED_ISSUER_PUBLIC_KEY  // shipped with the installer; updated only via signed updates
+    BUNDLED_ISSUER_PUBLIC_KEY, // shipped with the installer; updated only via signed updates
   );
 
-  if (!valid) return { valid: false, reason: "Invalid signature" };
+  if (!valid) return { valid: false, reason: 'Invalid signature' };
   if (cert.valid_until && new Date(cert.valid_until) < new Date())
-    return { valid: false, reason: "Expired", gracePeriodDays: 30 };
+    return { valid: false, reason: 'Expired', gracePeriodDays: 30 };
 
   return { valid: true, license: cert };
 }
@@ -2171,13 +2263,13 @@ function validateLicense(certPath: string): ValidationResult {
 
 ### 14.5 STIG-Hardened OS
 
-| Component | Recommended OS | STIG Baseline |
-|---|---|---|
-| All servers | RHEL 9 / Rocky Linux 9 | DISA STIG for RHEL 9 |
-| Container runtime | Podman (rootless) or Docker CE | Docker CE STIG |
-| Kubernetes | RKE2 | DISA STIG for RKE2 |
-| Postgres | Postgres 16 on RHEL 9 | PostgreSQL STIG |
-| Vault | RHEL 9 | RHEL 9 STIG |
+| Component         | Recommended OS                 | STIG Baseline        |
+| ----------------- | ------------------------------ | -------------------- |
+| All servers       | RHEL 9 / Rocky Linux 9         | DISA STIG for RHEL 9 |
+| Container runtime | Podman (rootless) or Docker CE | Docker CE STIG       |
+| Kubernetes        | RKE2                           | DISA STIG for RKE2   |
+| Postgres          | Postgres 16 on RHEL 9          | PostgreSQL STIG      |
+| Vault             | RHEL 9                         | RHEL 9 STIG          |
 
 Key STIG controls: FIPS mode (`fips=1` kernel param); SELinux enforcing; `auditd` covering ChainSight data paths; SSH hardened (no password, no root login, 4096-bit RSA or Ed25519 key only); `firewalld` allowlist policy; USB storage blocked at udev.
 
@@ -2202,28 +2294,33 @@ Key STIG controls: FIPS mode (`fips=1` kernel param); SELinux enforcing; `auditd
 **Tests that fail the build if anti-features are added:**
 
 ```typescript
-describe("Anti-feature commitments (F41)", () => {
-  test("capability router always requires case_id", async () => {
-    await expect(router.resolve("get_address_attribution", {
-      chain: "ethereum", address: "0xabc"
-      // Missing: case_id
-    })).rejects.toThrow("case_id required");
+describe('Anti-feature commitments (F41)', () => {
+  test('capability router always requires case_id', async () => {
+    await expect(
+      router.resolve('get_address_attribution', {
+        chain: 'ethereum',
+        address: '0xabc',
+        // Missing: case_id
+      }),
+    ).rejects.toThrow('case_id required');
   });
 
-  test("watcher rules require investigative predicate", async () => {
-    await expect(watcherService.createRule({
-      address_pattern: "*",
-      chain: "ethereum",
-      // Missing: case_id, predicate_documentation
-    })).rejects.toThrow("investigative predicate required");
+  test('watcher rules require investigative predicate', async () => {
+    await expect(
+      watcherService.createRule({
+        address_pattern: '*',
+        chain: 'ethereum',
+        // Missing: case_id, predicate_documentation
+      }),
+    ).rejects.toThrow('investigative predicate required');
   });
 
-  test("no mass surveillance mode exists", () => {
+  test('no mass surveillance mode exists', () => {
     // Enumerate all exported API functions; none should match the pattern
     // "monitor all addresses in chain/jurisdiction without case context"
-    const exported = Object.keys(require("../capability-router"));
+    const exported = Object.keys(require('../capability-router'));
     const massSurveillancePattern = /monitorAll|watchAll|dragnet|massMonitor/i;
-    exported.forEach(fn => expect(fn).not.toMatch(massSurveillancePattern));
+    exported.forEach((fn) => expect(fn).not.toMatch(massSurveillancePattern));
   });
 });
 ```
@@ -2231,6 +2328,7 @@ describe("Anti-feature commitments (F41)", () => {
 ### 15.2 Civil-Liberties Review Board Interface (Phase 2)
 
 All features in these categories require CLRB review before release:
+
 - Mass-clustering or wallet analysis features
 - Attribution promotion mechanisms
 - Watcher/monitoring rule expansions
@@ -2241,14 +2339,14 @@ All features in these categories require CLRB review before release:
 
 Nightly CI regression run measures actual vs. target FPR for all seven detectors. Any breach blocks feature releases for that detector category until remediated.
 
-| Detector | Published FPR target |
-|---|---|
-| CIH clustering (UTXO) | < 1% |
-| Change-output detection | < 5% |
-| Mixer attribution | < 0.5% |
-| Sanctions-list matching | < 0.1% |
-| Peel-chain detection | < 3% |
-| ML-based attribution | < 2% |
+| Detector                      | Published FPR target         |
+| ----------------------------- | ---------------------------- |
+| CIH clustering (UTXO)         | < 1%                         |
+| Change-output detection       | < 5%                         |
+| Mixer attribution             | < 0.5%                       |
+| Sanctions-list matching       | < 0.1%                       |
+| Peel-chain detection          | < 3%                         |
+| ML-based attribution          | < 2%                         |
 | AI-generated path suggestions | < 5% (gated by Critic Agent) |
 
 ---
@@ -2331,24 +2429,24 @@ The structural defense remains: ciphertext without the agency's CMK is worthless
 
 The Supabase + Fly.io + GitHub stack has compliance implications:
 
-| Provider | SOC 2 Status | Impact on ChainSight SOC 2 |
-|---|---|---|
-| Supabase | SOC 2 Type 2 compliant | Supabase's SOC 2 report covers the infrastructure layer; ChainSight's report covers the application layer and encryption controls |
-| Fly.io | SOC 2 Type 2 compliant | Same scoping; ChainSight responsible for application-layer controls |
-| GitHub | SOC 2 Type 2 compliant | CI/CD and source code management covered |
-| AWS KMS | FedRAMP High authorized | Strongest compliance baseline; agency KMS account may have independent compliance posture |
+| Provider | SOC 2 Status            | Impact on ChainSight SOC 2                                                                                                        |
+| -------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase | SOC 2 Type 2 compliant  | Supabase's SOC 2 report covers the infrastructure layer; ChainSight's report covers the application layer and encryption controls |
+| Fly.io   | SOC 2 Type 2 compliant  | Same scoping; ChainSight responsible for application-layer controls                                                               |
+| GitHub   | SOC 2 Type 2 compliant  | CI/CD and source code management covered                                                                                          |
+| AWS KMS  | FedRAMP High authorized | Strongest compliance baseline; agency KMS account may have independent compliance posture                                         |
 
 ChainSight's SOC 2 scope is the application layer: access controls, encryption key management, audit logging, incident response, change management. The infrastructure providers' SOC 2 reports cover their layers.
 
 **Evidence collection hooks:**
 
-| SOC 2 Criterion | Automated evidence source |
-|---|---|
-| CC6.1 — Logical access | Supabase Auth user records; RLS policy exports; JWT claim validation logs |
-| CC6.7 — Transmission security | Fly.io TLS configuration export; certificate transparency logs |
-| CC7.1 — Anomaly detection | Audit chain verification run logs; failed auth event counts |
-| CC7.2 — Monitoring | FPR monitoring reports; nightly regression run results |
-| CC8.1 — Change management | GitHub Actions run logs; Cosign signature records in Rekor |
+| SOC 2 Criterion               | Automated evidence source                                                 |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| CC6.1 — Logical access        | Supabase Auth user records; RLS policy exports; JWT claim validation logs |
+| CC6.7 — Transmission security | Fly.io TLS configuration export; certificate transparency logs            |
+| CC7.1 — Anomaly detection     | Audit chain verification run logs; failed auth event counts               |
+| CC7.2 — Monitoring            | FPR monitoring reports; nightly regression run results                    |
+| CC8.1 — Change management     | GitHub Actions run logs; Cosign signature records in Rekor                |
 
 **Phase 2 migration note:** The move from Supabase/Fly.io to AWS (planned for Phase 2 SOC 2 readiness) changes the infrastructure providers but not the application-layer controls. The encryption hierarchy is identical; only the underlying storage and hosting move. The SOC 2 audit of the application layer is the same in both configurations.
 
@@ -2374,54 +2472,54 @@ Phase 4 FedRAMP path requires migrating from Fly.io to AWS GovCloud (or an AWS r
 
 **Week 1-2: Supabase Foundation + Auth**
 
-| Task | Priority | Notes |
-|---|---|---|
+| Task                                          | Priority | Notes                                                         |
+| --------------------------------------------- | -------- | ------------------------------------------------------------- |
 | Supabase project setup with security defaults | Critical | Disable public schema, enable RLS on all tables from creation |
-| Supabase Auth + TOTP MFA | Critical | `supabase.auth.mfa.enroll`; require AAL2 before case access |
-| Custom JWT claims hook (agency_id, role) | Critical | SQL hook in Supabase; §6.1 |
-| Fastify JWT validation middleware | Critical | Provider-agnostic; JWKS from Supabase |
-| Basic RBAC (admin/investigator) | Critical | Role in JWT; middleware validates |
-| Fly.io initial deployment + Fly Secrets | Critical | No secrets in code, no secrets in fly.toml |
-| TLS configuration (1.3, HSTS) | Critical | Fly.io proxy handles cert; configure HSTS headers in Fastify |
-| Security headers (Helmet, CSP) | Required | §12.3 |
+| Supabase Auth + TOTP MFA                      | Critical | `supabase.auth.mfa.enroll`; require AAL2 before case access   |
+| Custom JWT claims hook (agency_id, role)      | Critical | SQL hook in Supabase; §6.1                                    |
+| Fastify JWT validation middleware             | Critical | Provider-agnostic; JWKS from Supabase                         |
+| Basic RBAC (admin/investigator)               | Critical | Role in JWT; middleware validates                             |
+| Fly.io initial deployment + Fly Secrets       | Critical | No secrets in code, no secrets in fly.toml                    |
+| TLS configuration (1.3, HSTS)                 | Critical | Fly.io proxy handles cert; configure HSTS headers in Fastify  |
+| Security headers (Helmet, CSP)                | Required | §12.3                                                         |
 
 **Week 3-4: Encryption Foundation**
 
-| Task | Priority | Notes |
-|---|---|---|
-| `CryptoService` abstraction (§2.2 + §19 Q-SEC-7) | Critical | libsodium Phase 0; swappable to OpenSSL FIPS at Phase 3 |
-| AWS KMS CMK provisioning wizard for agencies | Critical | Agency enters their CMK ARN; stored in tenant config |
-| Tenant DEK generation + Supabase storage | Critical | `agency_encryption_config` table; wrapped DEK ciphertext only |
-| Per-case DEK generation and wrapping | Critical | On `cases` INSERT; wrap under Tenant DEK |
-| Encrypted column pattern for case tables | Critical | `encrypted_payload BYTEA` + `nonce BYTEA` + `key_version INT` |
-| RLS policies for all case-bearing tables | Critical | `agency_id = auth.jwt()->>'agency_id'` |
-| Supabase role separation (no UPDATE/DELETE on audit table) | Critical | Postgres GRANT/REVOKE |
-| BYOK `CredentialStore` service (§11.2) | Critical | Encrypt before storing; zero after use |
+| Task                                                       | Priority | Notes                                                         |
+| ---------------------------------------------------------- | -------- | ------------------------------------------------------------- |
+| `CryptoService` abstraction (§2.2 + §19 Q-SEC-7)           | Critical | libsodium Phase 0; swappable to OpenSSL FIPS at Phase 3       |
+| AWS KMS CMK provisioning wizard for agencies               | Critical | Agency enters their CMK ARN; stored in tenant config          |
+| Tenant DEK generation + Supabase storage                   | Critical | `agency_encryption_config` table; wrapped DEK ciphertext only |
+| Per-case DEK generation and wrapping                       | Critical | On `cases` INSERT; wrap under Tenant DEK                      |
+| Encrypted column pattern for case tables                   | Critical | `encrypted_payload BYTEA` + `nonce BYTEA` + `key_version INT` |
+| RLS policies for all case-bearing tables                   | Critical | `agency_id = auth.jwt()->>'agency_id'`                        |
+| Supabase role separation (no UPDATE/DELETE on audit table) | Critical | Postgres GRANT/REVOKE                                         |
+| BYOK `CredentialStore` service (§11.2)                     | Critical | Encrypt before storing; zero after use                        |
 
 **Week 5-6: Audit Log + Chain of Custody**
 
-| Task | Priority | Notes |
-|---|---|---|
-| Audit log table + HMAC hash chain | Critical | §7.2; append-only via RLS + role |
-| S3 Object Lock mirror setup | Required | Async; fail-open if S3 unavailable |
-| Audit event taxonomy (auth.*, case.*, credential.*) | Critical | §7.6 |
+| Task                                                 | Priority | Notes                                 |
+| ---------------------------------------------------- | -------- | ------------------------------------- |
+| Audit log table + HMAC hash chain                    | Critical | §7.2; append-only via RLS + role      |
+| S3 Object Lock mirror setup                          | Required | Async; fail-open if S3 unavailable    |
+| Audit event taxonomy (auth._, case._, credential.\*) | Critical | §7.6                                  |
 | `appendAuditEntry` function wired to all key actions | Critical | Every auth event, every case mutation |
-| Chain of Custody table + hash chain (F29) | Critical | §8.2; Phase 0 locked — do not defer |
-| CoC event recording for document upload/view/export | Critical | §8.3 |
-| Supabase Storage upload with pre-encryption (§2.5) | Critical | Encrypt with Case DEK BEFORE upload |
+| Chain of Custody table + hash chain (F29)            | Critical | §8.2; Phase 0 locked — do not defer   |
+| CoC event recording for document upload/view/export  | Critical | §8.3                                  |
+| Supabase Storage upload with pre-encryption (§2.5)   | Critical | Encrypt with Case DEK BEFORE upload   |
 
 **Week 7-8: Signing, Secrets, and Sovereignty**
 
-| Task | Priority | Notes |
-|---|---|---|
-| GitHub Actions release pipeline with Cosign signing | Critical | §10.2; G23 commitment |
-| Branch protection: signed commits required on main | Required | GitHub repo settings |
-| Secret scanning enabled on GitHub repo | Required | GitHub security settings; Dependabot enabled |
-| Reproducibility Pack Merkle-root hashing | Critical | §9.2 |
-| Offline license validation (Ed25519 signed cert) | Required | §14.4 |
-| Minimal telemetry (billing-only; no case content) | Critical | §4.1; verify with test that no case content appears in logs |
-| `no-credential-logging` ESLint rule | Critical | §11.4; enforced at CI |
-| Anti-feature CI checks | Required | §15.1 |
+| Task                                                | Priority | Notes                                                       |
+| --------------------------------------------------- | -------- | ----------------------------------------------------------- |
+| GitHub Actions release pipeline with Cosign signing | Critical | §10.2; G23 commitment                                       |
+| Branch protection: signed commits required on main  | Required | GitHub repo settings                                        |
+| Secret scanning enabled on GitHub repo              | Required | GitHub security settings; Dependabot enabled                |
+| Reproducibility Pack Merkle-root hashing            | Critical | §9.2                                                        |
+| Offline license validation (Ed25519 signed cert)    | Required | §14.4                                                       |
+| Minimal telemetry (billing-only; no case content)   | Critical | §4.1; verify with test that no case content appears in logs |
+| `no-credential-logging` ESLint rule                 | Critical | §11.4; enforced at CI                                       |
+| Anti-feature CI checks                              | Required | §15.1                                                       |
 
 ### 18.2 What Is Absolutely Required at Phase 0 Ship
 
@@ -2439,10 +2537,12 @@ Phase 4 FedRAMP path requires migrating from Fly.io to AWS GovCloud (or an AWS r
 10. No case content in any log, telemetry, or error message
 
 **Required but can ship within first 2 weeks post-launch:**
+
 - WebAuthn for high-impact actions (TOTP in the interim — document the interim gap)
 - S3 Object Lock configuration for the audit mirror
 
 **Can wait for Phase 1:**
+
 - Audited support access token automation (manual access discipline in the interim)
 - Key rotation automation
 - Air-gapped hardening and signed offline packages
@@ -2450,6 +2550,7 @@ Phase 4 FedRAMP path requires migrating from Fly.io to AWS GovCloud (or an AWS r
 - Ory Kratos auth migration
 
 **Can wait for Phase 3:**
+
 - Confidential computing (G22)
 - FIPS 140-2 mode (CryptoService swap to OpenSSL FIPS)
 - RFC 3161 timestamp integration
@@ -2474,6 +2575,7 @@ These are specific decisions requiring founder/principal clarity before the corr
 **Question:** Supabase Auth + AWS KMS requires every agency to have an AWS account to create a CMK. For the Investigator tier (solo PI, forensic accountant), this may be friction-prohibitive.
 
 **Options:**
+
 - A) Require AWS KMS for all tiers (full blind guarantee for everyone)
 - B) Offer ChainSight-managed KMS for Investigator tier with a clear documented reduced-guarantee notice; require agency KMS for Team+ tiers
 - C) For Investigator tier, use a per-user derived key from a ChainSight-managed root, documented honestly as "ChainSight-managed encryption" (not blind) with a migration path to agency KMS
@@ -2537,28 +2639,28 @@ Candidates: (a) Phase 2 SOC 2 preparation; (b) first On-Prem customer closes; (c
 
 Decisions locked in this document:
 
-| ID | Decision | Phase |
-|---|---|---|
-| S1 | `CryptoService` abstraction wrapping libsodium (Phase 0–2) → OpenSSL FIPS (Phase 3) | Phase 0 |
-| S2 | BLAKE2b-256 for all content addressing and hash chains | Phase 0 |
-| S3 | Ed25519 for investigator/manifest signing | Phase 0 |
-| S4 | HMAC-SHA256 for audit log chain | Phase 0 |
-| S5 | AWS KMS (agency CMK) for SaaS Blind v1; HashiCorp Vault for On-Prem | Phase 0 |
-| S6 | Envelope encryption: root CMK → Tenant DEK → Case DEK (→ Document DEK) | Phase 0 |
-| S7 | Application-layer libsodium encryption BEFORE Supabase INSERT (every sensitive column) | Phase 0 |
-| S8 | Supabase RLS on all case-bearing tables (belt on top of encryption suspenders) | Phase 0 |
-| S9 | Supabase Storage: encrypt with Case DEK BEFORE upload; Storage sees only ciphertext | Phase 0 |
-| S10 | Hash-chained append-only audit log in Supabase Postgres + S3 Object Lock mirror | Phase 0 |
-| S11 | Supabase Auth for SaaS Blind v1; Ory Kratos for On-Prem (and SaaS Blind migration Phase 2) | Phase 0 |
-| S12 | TOTP MFA (all accounts) + WebAuthn (high-impact actions) | Phase 0 (WebAuthn) |
-| S13 | Sigstore/Cosign/Rekor for release signing (G23) | Phase 0 |
-| S14 | Confidential computing deferred to Phase 3 (G22) | Phase 3 |
-| S15 | No vendor-held key escrow, ever | Architectural commitment |
-| S16 | Support access requires agency-issued, scoped, time-limited, audited token | Phase 1 |
-| S17 | TLS 1.3 minimum everywhere; no TLS 1.2 | Phase 0 |
-| S18 | No case content in any log, telemetry, or error message | Phase 0 |
-| S19 | Supabase anon key is public by design; service_role key in Fly Secrets only | Phase 0 |
-| S20 | Supabase Realtime messages containing case content must be DEK-encrypted | Phase 0 |
+| ID  | Decision                                                                                   | Phase                    |
+| --- | ------------------------------------------------------------------------------------------ | ------------------------ |
+| S1  | `CryptoService` abstraction wrapping libsodium (Phase 0–2) → OpenSSL FIPS (Phase 3)        | Phase 0                  |
+| S2  | BLAKE2b-256 for all content addressing and hash chains                                     | Phase 0                  |
+| S3  | Ed25519 for investigator/manifest signing                                                  | Phase 0                  |
+| S4  | HMAC-SHA256 for audit log chain                                                            | Phase 0                  |
+| S5  | AWS KMS (agency CMK) for SaaS Blind v1; HashiCorp Vault for On-Prem                        | Phase 0                  |
+| S6  | Envelope encryption: root CMK → Tenant DEK → Case DEK (→ Document DEK)                     | Phase 0                  |
+| S7  | Application-layer libsodium encryption BEFORE Supabase INSERT (every sensitive column)     | Phase 0                  |
+| S8  | Supabase RLS on all case-bearing tables (belt on top of encryption suspenders)             | Phase 0                  |
+| S9  | Supabase Storage: encrypt with Case DEK BEFORE upload; Storage sees only ciphertext        | Phase 0                  |
+| S10 | Hash-chained append-only audit log in Supabase Postgres + S3 Object Lock mirror            | Phase 0                  |
+| S11 | Supabase Auth for SaaS Blind v1; Ory Kratos for On-Prem (and SaaS Blind migration Phase 2) | Phase 0                  |
+| S12 | TOTP MFA (all accounts) + WebAuthn (high-impact actions)                                   | Phase 0 (WebAuthn)       |
+| S13 | Sigstore/Cosign/Rekor for release signing (G23)                                            | Phase 0                  |
+| S14 | Confidential computing deferred to Phase 3 (G22)                                           | Phase 3                  |
+| S15 | No vendor-held key escrow, ever                                                            | Architectural commitment |
+| S16 | Support access requires agency-issued, scoped, time-limited, audited token                 | Phase 1                  |
+| S17 | TLS 1.3 minimum everywhere; no TLS 1.2                                                     | Phase 0                  |
+| S18 | No case content in any log, telemetry, or error message                                    | Phase 0                  |
+| S19 | Supabase anon key is public by design; service_role key in Fly Secrets only                | Phase 0                  |
+| S20 | Supabase Realtime messages containing case content must be DEK-encrypted                   | Phase 0                  |
 
 ---
 
@@ -2593,8 +2695,8 @@ AWS KMS             KMS API call metadata        Case content (not held)
 
 ---
 
-*Document version: v1.1 — incorporates SaaS Blind v1 stack update (Supabase + Fly.io + GitHub)*
-*Prior version: v1.0 (Clerk + generic IaaS assumptions)*
-*Updated: June 2026*
-*Author: Security & Cryptography Architecture Agent*
-*Status: Design complete — pending Phase 0 implementation*
+_Document version: v1.1 — incorporates SaaS Blind v1 stack update (Supabase + Fly.io + GitHub)_
+_Prior version: v1.0 (Clerk + generic IaaS assumptions)_
+_Updated: June 2026_
+_Author: Security & Cryptography Architecture Agent_
+_Status: Design complete — pending Phase 0 implementation_

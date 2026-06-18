@@ -7,6 +7,7 @@
 > **Scope:** This document is the authoritative deep-pass engineering design for ChainSight's AI/ML layer. It translates the locked strategy from v0.9, the accuracy spine from v0.2 B1-B8, and every agent touchpoint across the design pack into buildable specifications: schemas, pseudocode, prompt templates, Python/TypeScript signatures, routing rules, fine-tuning pipelines, evaluation harness, and a week-by-week Phase 0 implementation plan.
 >
 > **Locked decisions cited throughout:**
+>
 > - G1: court-grade attribution requires investigator signoff_id
 > - B1–B8: belief state, tiered determinism, reproducibility, confidence calculus, critic, verifier, ground-truth flywheel, privacy
 > - F41: anti-feature commitments (no predictive policing, no demographic correlation)
@@ -37,76 +38,76 @@ Every agent, without exception, conforms to this protocol:
 // ─── Agent input contract ───────────────────────────────────────────
 interface AgentInput {
   case_id: string;
-  agent_run_id: string;               // UUID, unique per invocation
-  task: AgentTask;                    // discriminated union per agent type
+  agent_run_id: string; // UUID, unique per invocation
+  task: AgentTask; // discriminated union per agent type
   belief_context: BeliefContextSlice; // relevant BeliefAtoms for this task
-  model_card: ModelCardRef;           // which model to use (from LLM registry)
-  budget: AgentBudget;                // cost cap, token limits
-  ai_toggle: AIToggleState;           // agency/role/case/action toggles
-  idempotency_key: string;            // for retry safety
+  model_card: ModelCardRef; // which model to use (from LLM registry)
+  budget: AgentBudget; // cost cap, token limits
+  ai_toggle: AIToggleState; // agency/role/case/action toggles
+  idempotency_key: string; // for retry safety
 }
 
 interface AgentTask {
-  type: string;        // e.g. "decode_calldata", "trace_hop", "attribute_address"
+  type: string; // e.g. "decode_calldata", "trace_hop", "attribute_address"
   inputs: Record<string, unknown>;
-  priority: "high" | "normal" | "low";
+  priority: 'high' | 'normal' | 'low';
   max_latency_ms: number | null;
-  required_confidence: number;         // minimum confidence for primary output
+  required_confidence: number; // minimum confidence for primary output
 }
 
 interface BeliefContextSlice {
-  atoms: BeliefAtom[];                 // relevant atoms, not the whole case
-  path_context: TracePathRef | null;   // if this task is on a specific path
-  open_challenges: Challenge[];        // challenges the agent should be aware of
+  atoms: BeliefAtom[]; // relevant atoms, not the whole case
+  path_context: TracePathRef | null; // if this task is on a specific path
+  open_challenges: Challenge[]; // challenges the agent should be aware of
 }
 
 interface AgentBudget {
   max_input_tokens: number;
   max_output_tokens: number;
-  max_cost_usd: number | null;         // null = use model tier default
-  tier_ceiling: "A" | "B" | "C";      // hard limit on model tier for this call
+  max_cost_usd: number | null; // null = use model tier default
+  tier_ceiling: 'A' | 'B' | 'C'; // hard limit on model tier for this call
 }
 
 // ─── Agent output contract ──────────────────────────────────────────
 interface AgentOutput {
-  agent_run_id: string;                // echoed from input
-  status: "success" | "partial" | "failed" | "skipped_ai_off";
-  
+  agent_run_id: string; // echoed from input
+  status: 'success' | 'partial' | 'failed' | 'skipped_ai_off';
+
   // Primary outputs (agent-specific, discriminated by task type)
-  result: AgentResult;                 // discriminated union per agent type
-  
+  result: AgentResult; // discriminated union per agent type
+
   // BeliefAtom emissions (mandatory for every successful output)
   belief_atoms_emitted: BeliefAtomEmission[];
-  
+
   // Confidence
-  output_confidence: number;           // overall output confidence [0, 1]
+  output_confidence: number; // overall output confidence [0, 1]
   confidence_breakdown: ConfidenceComponent[];
-  
+
   // Provenance
-  model_card_id: string;               // which model/version was used
-  prompt_template_hash: string;        // reproducibility: which prompt was used
-  tool_calls_made: ToolCallRecord[];   // every tool call with inputs/outputs
+  model_card_id: string; // which model/version was used
+  prompt_template_hash: string; // reproducibility: which prompt was used
+  tool_calls_made: ToolCallRecord[]; // every tool call with inputs/outputs
   provider_responses: ProviderResponseSnapshot[];
-  
+
   // Latency and cost
   duration_ms: number;
   input_tokens: number;
   output_tokens: number;
-  cost_usd: number;                    // 0 for self-hosted models
-  
+  cost_usd: number; // 0 for self-hosted models
+
   // Errors
   errors: AgentError[];
-  degraded_mode: boolean;              // true if AI was off and non-AI fallback ran
+  degraded_mode: boolean; // true if AI was off and non-AI fallback ran
 }
 
 // ─── BeliefAtom emission contract ───────────────────────────────────
 interface BeliefAtomEmission {
-  subject_type: "address" | "transaction" | "entity" | "path" | "cluster" | "hypothesis";
+  subject_type: 'address' | 'transaction' | 'entity' | 'path' | 'cluster' | 'hypothesis';
   subject_ref: string;
   predicate: BeliefPredicate;
   object: unknown;
   confidence: number;
-  tier: "T0" | "T1" | "T2" | "T3";
+  tier: 'T0' | 'T1' | 'T2' | 'T3';
   provenance: ProvenanceRecord[];
   derivation: DerivationStep[];
   // note: status defaults to "asserted"; court_grade requires separate signoff
@@ -117,20 +118,20 @@ interface AgentError {
   code: AgentErrorCode;
   message: string;
   recoverable: boolean;
-  retry_strategy: "backoff" | "escalate_tier" | "human_review" | "none";
+  retry_strategy: 'backoff' | 'escalate_tier' | 'human_review' | 'none';
   partial_result_available: boolean;
 }
 
 type AgentErrorCode =
-  | "model_unavailable"
-  | "context_too_large"
-  | "confidence_below_floor"
-  | "tool_call_failed"
-  | "budget_exceeded"
-  | "grounding_check_failed"   // Verifier rejected output
-  | "critic_hard_block"        // Critic issued blocking challenge
-  | "ai_toggle_off"
-  | "math_service_error";
+  | 'model_unavailable'
+  | 'context_too_large'
+  | 'confidence_below_floor'
+  | 'tool_call_failed'
+  | 'budget_exceeded'
+  | 'grounding_check_failed' // Verifier rejected output
+  | 'critic_hard_block' // Critic issued blocking challenge
+  | 'ai_toggle_off'
+  | 'math_service_error';
 ```
 
 ### 1.3 The orchestrator loop
@@ -139,7 +140,7 @@ The orchestrator is a Tier C model (Claude Opus 4.6 default) that runs the inves
 
 ```python
 # packages/agents/src/orchestrator.py
-# 
+#
 # The orchestrator loop. This is NOT LangGraph. It's a direct SDK call loop
 # with explicit state management via the Belief State Service.
 #
@@ -154,8 +155,8 @@ from cost_tracker import CostTracker
 from typing import Generator
 
 ORCHESTRATOR_SYSTEM_PROMPT = """
-You are the ChainSight investigation orchestrator. Your job is to coordinate 
-specialist agents to build a complete, court-defensible trace of cryptocurrency 
+You are the ChainSight investigation orchestrator. Your job is to coordinate
+specialist agents to build a complete, court-defensible trace of cryptocurrency
 funds for the investigation case you have been given.
 
 Your working constraints:
@@ -163,13 +164,13 @@ Your working constraints:
 2. You NEVER assert entity attributions without citing a BeliefAtom.
 3. You NEVER promote a conclusion to court-grade without investigator signoff.
 4. Every specialist agent you invoke writes BeliefAtoms; you read from them.
-5. Stop when: (a) confidence falls below the case threshold, (b) the path 
-   reaches a terminus (known entity, privacy boundary, off-chain), or 
+5. Stop when: (a) confidence falls below the case threshold, (b) the path
+   reaches a terminus (known entity, privacy boundary, off-chain), or
    (c) the investigator's budget is exhausted.
-6. At every decision point, check whether the Critic Agent has issued open 
+6. At every decision point, check whether the Critic Agent has issued open
    challenges on the atoms you are reasoning from.
 
-The Belief State you receive is your authoritative source. If it conflicts with 
+The Belief State you receive is your authoritative source. If it conflicts with
 your reasoning, trust the Belief State and emit a challenge.
 
 Current model tier constraints: {tier_ceiling}
@@ -188,27 +189,27 @@ def run_orchestrator(
 ) -> Generator[OrchestratorEvent, None, OrchestratorResult]:
     """
     Main orchestration loop. Yields events for streaming to the investigator UI.
-    
+
     Design: structured as a multi-turn conversation with the Tier C model.
     Each turn: (1) build context from Belief State, (2) call the model,
     (3) dispatch tool calls (agent invocations), (4) write results to Belief State,
     (5) repeat until done or budget exhausted.
     """
-    
+
     client = anthropic.Anthropic()
     messages = []
     run_id = generate_run_id()
-    
+
     # --- Initial context build ---
     belief_context = belief_client.get_relevant_slice(case_id, task_description)
     open_challenges = belief_client.get_open_challenges(case_id)
-    
+
     system = ORCHESTRATOR_SYSTEM_PROMPT.format(
         tier_ceiling=config.tier_ceiling,
         remaining_budget=cost_tracker.remaining(case_id),
         ai_toggle_state=config.ai_toggle.serialize(),
     )
-    
+
     # Seed the conversation with the task
     messages.append({
         "role": "user",
@@ -216,19 +217,19 @@ def run_orchestrator(
             task_description, belief_context, open_challenges, config
         ),
     })
-    
+
     max_turns = config.max_orchestrator_turns  # default 40
-    
+
     for turn in range(max_turns):
-        
+
         # --- Check budget before each turn ---
         if cost_tracker.budget_exhausted(case_id):
             yield OrchestratorEvent(type="budget_exhausted")
             break
-        
+
         # --- Call the orchestrator model ---
         model = model_router.resolve_for_role("orchestrator", config)
-        
+
         response = client.messages.create(
             model=model.id,
             max_tokens=config.max_orchestrator_output_tokens,
@@ -237,7 +238,7 @@ def run_orchestrator(
             tools=build_orchestrator_tools(agent_registry),
             tool_choice={"type": "auto"},
         )
-        
+
         # Track cost
         cost_tracker.record(
             case_id=case_id,
@@ -246,27 +247,27 @@ def run_orchestrator(
             input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
         )
-        
+
         # --- Process the response ---
         messages.append({"role": "assistant", "content": response.content})
-        
+
         # If the model is done (no more tool calls), we're done
         if response.stop_reason == "end_turn":
             result = extract_final_orchestrator_result(response)
             yield OrchestratorEvent(type="complete", result=result)
             break
-        
+
         # --- Dispatch tool calls (agent invocations) ---
         tool_results = []
-        
+
         for tool_use in [b for b in response.content if b.type == "tool_use"]:
-            
+
             yield OrchestratorEvent(
                 type="agent_dispatched",
                 agent=tool_use.name,
                 inputs=tool_use.input
             )
-            
+
             # Look up the agent, route the model, execute
             agent = agent_registry.get(tool_use.name)
             agent_model = model_router.resolve_for_role(
@@ -274,20 +275,20 @@ def run_orchestrator(
                 config=config,
                 task_complexity=estimate_task_complexity(tool_use.input),
             )
-            
+
             agent_result = agent.run(
                 inputs=tool_use.input,
                 model=agent_model,
                 belief_client=belief_client,
                 config=config,
             )
-            
+
             # Write BeliefAtoms from the agent result
             if agent_result.status == "success":
                 for atom_emission in agent_result.belief_atoms_emitted:
                     atom_id = belief_client.write_atom(case_id, atom_emission, run_id)
                     yield OrchestratorEvent(type="belief_atom_written", atom_id=atom_id)
-            
+
             # Parallel: fire the Critic on each emitted atom
             # (Critic runs asynchronously; challenges will appear in subsequent turns)
             if agent_result.belief_atoms_emitted:
@@ -296,7 +297,7 @@ def run_orchestrator(
                     atoms=[e.as_belief_atom() for e in agent_result.belief_atoms_emitted],
                     config=config,
                 )
-            
+
             # Cost tracking
             cost_tracker.record(
                 case_id=case_id,
@@ -306,24 +307,24 @@ def run_orchestrator(
                 output_tokens=agent_result.output_tokens,
                 cost_usd=agent_result.cost_usd,
             )
-            
+
             tool_results.append({
                 "type": "tool_result",
                 "tool_use_id": tool_use.id,
                 "content": serialize_agent_result(agent_result),
             })
-            
+
             yield OrchestratorEvent(
                 type="agent_completed",
                 agent=tool_use.name,
                 status=agent_result.status,
                 confidence=agent_result.output_confidence,
             )
-        
+
         # Refresh Belief State context with latest atoms (including Critic challenges)
         belief_context = belief_client.get_relevant_slice(case_id, task_description)
         open_challenges = belief_client.get_open_challenges(case_id)
-        
+
         # Append tool results + refreshed Belief State summary
         messages.append({
             "role": "user",
@@ -334,7 +335,7 @@ def run_orchestrator(
                 }
             ],
         })
-    
+
     else:
         # max_turns hit
         yield OrchestratorEvent(type="max_turns_exceeded", turns=max_turns)
@@ -513,40 +514,43 @@ Each agent is a service with a defined interface. All TypeScript signatures live
 **Default model tier:** Tier A (Phi-4 14B with Entity Extractor LoRA)
 
 **Inputs:**
+
 ```typescript
 interface IntakeAgentTask {
-  type: "extract_iocs";
-  raw_text: string;           // complaint narrative, affidavit, referral text
-  document_type: "complaint" | "affidavit" | "referral" | "email" | "other";
+  type: 'extract_iocs';
+  raw_text: string; // complaint narrative, affidavit, referral text
+  document_type: 'complaint' | 'affidavit' | 'referral' | 'email' | 'other';
   source_document_id: string | null;
 }
 ```
 
 **Outputs:**
+
 ```typescript
 interface IntakeAgentResult {
   extracted_iocs: ExtractedIOC[];
   extracted_entities: ExtractedEntity[];
   extracted_timeline: TimelineEvent[];
   extraction_confidence: number;
-  unextracted_passages: string[];  // text the model couldn't extract from
+  unextracted_passages: string[]; // text the model couldn't extract from
 }
 
 interface ExtractedIOC {
-  value: string;           // the raw extracted value
-  ioc_type: "address" | "tx_hash" | "email" | "username" | "amount";
+  value: string; // the raw extracted value
+  ioc_type: 'address' | 'tx_hash' | 'email' | 'username' | 'amount';
   chain: string | null;
   normalized: string;
   confidence: float;
-  source_passage: string;  // the exact text it came from
+  source_passage: string; // the exact text it came from
   page_number: int | null;
   bounding_box: BBox | null;
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a blockchain forensics intake specialist. Extract all cryptocurrency 
+You are a blockchain forensics intake specialist. Extract all cryptocurrency
 indicators of compromise (IOCs) from the provided document with high precision.
 
 EXTRACTION RULES:
@@ -558,7 +562,7 @@ EXTRACTION RULES:
 6. Do NOT compute any values. Report raw extracted numbers only.
 7. Return JSON matching the ExtractedIOC schema exactly.
 
-CITATION TOKEN FORMAT: Every claim must include a citation_token pointing to 
+CITATION TOKEN FORMAT: Every claim must include a citation_token pointing to
 the source passage. Format: [SOURCE:passage_index:char_start:char_end]
 ```
 
@@ -567,6 +571,7 @@ the source passage. Format: [SOURCE:passage_index:char_start:char_end]
 **Success criteria:** Recall ≥ 0.95 on labeled extraction test set; zero hallucinated IOCs not present in the source document (Verifier enforces this)
 
 **Failure modes:**
+
 - Documents with complex tables → falls back to Extraction Agent with document intelligence pipeline
 - Heavily redacted documents → partial extraction with honest coverage score
 - Non-English text → language-detection gate routes to multilingual specialist (Phase 4)
@@ -582,9 +587,10 @@ the source passage. Format: [SOURCE:passage_index:char_start:char_end]
 **Default model tier:** Tier A (Qwen 3.5 8B — fast, cheap, constrained task)
 
 **Inputs:**
+
 ```typescript
 interface ScopeAgentTask {
-  type: "estimate_scope";
+  type: 'estimate_scope';
   seed_addresses: string[];
   seed_txs: string[];
   chains: string[];
@@ -594,6 +600,7 @@ interface ScopeAgentTask {
 ```
 
 **Outputs:**
+
 ```typescript
 interface ScopeAgentResult {
   estimated_tx_count: number;
@@ -602,21 +609,22 @@ interface ScopeAgentResult {
   confidence_at_max_depth: ConfidenceInterval;
   estimated_provider_cost_usd: CostEstimate;
   estimated_duration_seconds: number;
-  scope_warnings: ScopeWarning[];  // e.g. "high-volume mixer detected at hop 3"
-  recommendation: "proceed" | "narrow_scope" | "increase_budget" | "review_manually";
+  scope_warnings: ScopeWarning[]; // e.g. "high-volume mixer detected at hop 3"
+  recommendation: 'proceed' | 'narrow_scope' | 'increase_budget' | 'review_manually';
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a blockchain investigation scope estimator. Given seed indicators, 
+You are a blockchain investigation scope estimator. Given seed indicators,
 estimate the breadth and depth of a trace without running it.
 
-Use the get_address_tx_count and get_address_history_sample tools to gather 
+Use the get_address_tx_count and get_address_history_sample tools to gather
 signals. Do NOT trace — only estimate.
 
-Confidence at depth formula: Use the call_math_service tool with operation 
-"compound_confidence" to compute expected confidence decay. Never compute 
+Confidence at depth formula: Use the call_math_service tool with operation
+"compound_confidence" to compute expected confidence decay. Never compute
 this yourself.
 ```
 
@@ -633,42 +641,50 @@ this yourself.
 **Default model tier:** Tier B (DeepSeek V4 Pro) — elevates to Tier C for ambiguous branches, privacy-boundary decisions, and mixer adjacency
 
 **Inputs:**
+
 ```typescript
 interface TracerAgentTask {
-  type: "trace_hop";
-  source_ref: string;              // address or tx, chain-qualified
-  direction: "forward" | "backward";
-  hops: number;                    // 1-5
+  type: 'trace_hop';
+  source_ref: string; // address or tx, chain-qualified
+  direction: 'forward' | 'backward';
+  hops: number; // 1-5
   confidence_floor: number;
   include_internal_calls: boolean;
-  filter_dust: boolean;            // ignore < $1 outputs
+  filter_dust: boolean; // ignore < $1 outputs
 }
 ```
 
 **Outputs:**
+
 ```typescript
 interface TracerAgentResult {
   discovered_nodes: DiscoveredNode[];
   discovered_edges: DiscoveredEdge[];
-  termination_reason: "hops_exhausted" | "confidence_floor" | "privacy_boundary" 
-                    | "exchange_terminus" | "loop_detected" | "budget_exhausted";
+  termination_reason:
+    | 'hops_exhausted'
+    | 'confidence_floor'
+    | 'privacy_boundary'
+    | 'exchange_terminus'
+    | 'loop_detected'
+    | 'budget_exhausted';
 }
 
 interface DiscoveredNode {
-  node_type: "address" | "transaction";
+  node_type: 'address' | 'transaction';
   chain_qualified_ref: string;
   hop_from_source: number;
   cumulative_confidence: number;
-  tier: "T0" | "T1" | "T2" | "T3";
-  attribution_hint: string | null;   // from any installed provider, not authoritative
+  tier: 'T0' | 'T1' | 'T2' | 'T3';
+  attribution_hint: string | null; // from any installed provider, not authoritative
 }
 ```
 
 **System prompt outline:**
+
 ```
 You are a blockchain transaction tracer. For each hop:
 1. Fetch the transaction using fetch_tx tool
-2. Decode the action type using decode_calldata tool (or swap_agent for swaps, 
+2. Decode the action type using decode_calldata tool (or swap_agent for swaps,
    bridge_agent for bridges)
 3. Compute value flow using call_math_service — NEVER compute values yourself
 4. For each discovered address, check existing Belief State attributions
@@ -681,7 +697,7 @@ You are a blockchain transaction tracer. For each hop:
    - A known mixer (Tornado, CoinJoin, Sinbad, ChipMixer historical)
    - A privacy chain (Monero, Zcash shielded)
    - A dead end (address with no history)
-   
+
 Confidence calculation: call_math_service with operation "hop_confidence_decay"
 ```
 
@@ -690,6 +706,7 @@ Confidence calculation: call_math_service with operation "hop_confidence_decay"
 **Elevation to Tier C trigger:** confidence < 0.7 AND topic is mixer-adjacent, bridge-heuristic, or multiple competing interpretations exist
 
 **Failure modes:**
+
 - Rate limit on chain data provider → capability router failover to alternate provider
 - Unknown contract → Swap Agent attempted; falls back to raw calldata with confidence T3
 - Privacy boundary → emits boundary marker BeliefAtom, stops trace, surfaces investigation options
@@ -703,32 +720,35 @@ Confidence calculation: call_math_service with operation "hop_confidence_decay"
 **Default model tier:** Tier A (Qwen 3.5 8B with Bridge Correlator LoRA)
 
 **Inputs:**
+
 ```typescript
 interface BridgeAgentTask {
-  type: "correlate_bridge";
+  type: 'correlate_bridge';
   source_tx: string;
   source_chain: string;
-  bridge_protocol: BridgeProtocol;  // layerzero | cctp | wormhole | across | hop | synapse | stargate
+  bridge_protocol: BridgeProtocol; // layerzero | cctp | wormhole | across | hop | synapse | stargate
   time_window_hours: number;
   max_candidates: number;
 }
 ```
 
 **Outputs:**
+
 ```typescript
 interface BridgeAgentResult {
   matched_destination_tx: string | null;
   matched_destination_chain: string | null;
-  match_method: "message_id" | "amount_correlation" | "timing_heuristic" | "no_match";
+  match_method: 'message_id' | 'amount_correlation' | 'timing_heuristic' | 'no_match';
   match_confidence: number;
-  alternative_candidates: BridgeCandidate[];  // Critic reviews these
-  message_id: string | null;                  // protocol-level correlation ID if available
+  alternative_candidates: BridgeCandidate[]; // Critic reviews these
+  message_id: string | null; // protocol-level correlation ID if available
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a cross-chain bridge correlator. Given a source bridge transaction, 
+You are a cross-chain bridge correlator. Given a source bridge transaction,
 find the matching destination-side event.
 
 Correlation priority:
@@ -738,8 +758,8 @@ Correlation priority:
    - Wormhole: sequence number from LogMessagePublished
    - Across: depositId from V3FundsDeposited
 2. If no message_id: amount + time window correlation (T3, flag for Critic)
-3. NEVER conflate two different deposits of the same amount — always prefer 
-   message-ID correlation. If you cannot correlate with message_id, output 
+3. NEVER conflate two different deposits of the same amount — always prefer
+   message-ID correlation. If you cannot correlate with message_id, output
    match_method = "timing_heuristic" and confidence ≤ 0.70.
 ```
 
@@ -754,9 +774,10 @@ Correlation priority:
 **Default model tier:** Tier A (Phi-4 14B with Token Swap Specialist LoRA)
 
 **Inputs:**
+
 ```typescript
 interface SwapAgentTask {
-  type: "decode_swap";
+  type: 'decode_swap';
   tx_hash: string;
   chain: string;
   calldata: string;
@@ -766,41 +787,43 @@ interface SwapAgentTask {
 ```
 
 **Outputs:**
+
 ```typescript
 interface SwapAgentResult {
   decoded_action: DecodedSwap;
   decode_confidence: number;
-  abi_source: "verified_sourcify" | "4byte_selector" | "heuristic" | "unknown";
+  abi_source: 'verified_sourcify' | '4byte_selector' | 'heuristic' | 'unknown';
 }
 
 interface DecodedSwap {
-  protocol: string;          // "uniswap_v3", "curve_exchange", etc.
+  protocol: string; // "uniswap_v3", "curve_exchange", etc.
   function_name: string;
   token_in: TokenRef;
-  amount_in: Decimal;        // always Decimal, never float
+  amount_in: Decimal; // always Decimal, never float
   token_out: TokenRef;
   amount_out: Decimal;
   recipient: string;
   route: RouteHop[];
-  slippage_actual: Decimal;  // computed by Math Service
+  slippage_actual: Decimal; // computed by Math Service
   lp_fees: Decimal;
   price_impact: Decimal;
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a DeFi calldata decoder specialized in token swaps. Decode the 
+You are a DeFi calldata decoder specialized in token swaps. Decode the
 provided transaction calldata and event logs into structured swap data.
 
 RULES:
 1. Use the fetch_abi tool first. If ABI exists, use it. If not, try 4byte lookup.
-2. All decimal values must be output as strings (never floats) — the Math 
+2. All decimal values must be output as strings (never floats) — the Math
    Service will handle arithmetic.
 3. For multi-hop routes, enumerate every pool in the path.
-4. If you cannot decode with confidence ≥ 0.80, output decode_confidence < 0.80 
+4. If you cannot decode with confidence ≥ 0.80, output decode_confidence < 0.80
    and let the orchestrator decide whether to escalate.
-5. Do NOT compute amounts — extract them from calldata/logs as raw hex, 
+5. Do NOT compute amounts — extract them from calldata/logs as raw hex,
    then use call_math_service to convert to decimal with correct decimals.
 ```
 
@@ -815,9 +838,10 @@ RULES:
 **Default model tier:** Tier B (DeepSeek V4 Pro) — elevated to Tier C when providers sharply disagree
 
 **Inputs:**
+
 ```typescript
 interface AttributionAgentTask {
-  type: "attribute_address";
+  type: 'attribute_address';
   address: string;
   chain: string;
   include_personal_attributions: boolean;
@@ -827,6 +851,7 @@ interface AttributionAgentTask {
 ```
 
 **Outputs:**
+
 ```typescript
 interface AttributionAgentResult {
   attribution: UnifiedAttribution | null;
@@ -840,9 +865,9 @@ interface UnifiedAttribution {
   entity_type: EntityType;
   confidence: number;
   confidence_breakdown: ConfidenceComponent[];
-  tier: "T1" | "T2" | "T3";   // T2 = provider-attested, T3 = inferred
+  tier: 'T1' | 'T2' | 'T3'; // T2 = provider-attested, T3 = inferred
   provenance: ProvenanceRecord[];
-  pinned_snapshot_ids: string[];   // one per contributing provider
+  pinned_snapshot_ids: string[]; // one per contributing provider
   // NEVER promoted to court_grade without investigator signoff — D1 lock
 }
 
@@ -851,24 +876,25 @@ interface AttributionDisagreement {
   provider_b: string;
   label_a: string;
   label_b: string;
-  severity: "minor" | "significant" | "contradictory";
+  severity: 'minor' | 'significant' | 'contradictory';
   recommendation: string;
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a blockchain attribution synthesizer. Given multiple provider 
+You are a blockchain attribution synthesizer. Given multiple provider
 responses for the same address, synthesize a unified attribution.
 
 SYNTHESIS RULES:
-1. Higher-confidence providers receive more weight (weights are configurable 
+1. Higher-confidence providers receive more weight (weights are configurable
    per agency provider install).
 2. When providers agree: confidence is boosted (multi-source corroboration).
-3. When providers disagree on entity label: output a disagreement record 
+3. When providers disagree on entity label: output a disagreement record
    and set confidence ≤ 0.65. Never pick one arbitrarily.
 4. NEVER assert an entity label that no provider has provided.
-5. Personal attributions (subpoena-confirmed) override commercial provider 
+5. Personal attributions (subpoena-confirmed) override commercial provider
    labels but must be cited with their basis.
 6. All attribution outputs must include provenance to the pinned snapshot.
    Format: attribution.[provider_name].[entity_label].[snapshot_id]
@@ -886,31 +912,33 @@ SYNTHESIS RULES:
 **Default model tier:** Tier B (DeepSeek V4 Pro or Claude Sonnet 4.6)
 
 **Inputs:**
+
 ```typescript
 interface OSINTAgentTask {
-  type: "gather_osint";
+  type: 'gather_osint';
   targets: OSINTTarget[];
-  providers: string[];     // installed BYOK OSINT providers
-  depth: "shallow" | "standard" | "deep";
-  include_dark_web: boolean;  // requires specific BYOK provider
+  providers: string[]; // installed BYOK OSINT providers
+  depth: 'shallow' | 'standard' | 'deep';
+  include_dark_web: boolean; // requires specific BYOK provider
 }
 ```
 
 **Outputs:** Structured entity reports per target, with BeliefAtoms for each confirmed fact, all at T3 confidence (OSINT = probabilistic) unless confirmed via subpoena.
 
 **System prompt outline:**
+
 ```
-You are a blockchain forensics OSINT analyst. For each target, gather 
+You are a blockchain forensics OSINT analyst. For each target, gather
 publicly available intelligence without making legal conclusions.
 
 RULES:
 1. Report only what you find. Absence of information is "no result found."
-2. All entity attributions from OSINT are T3 — they require corroboration 
+2. All entity attributions from OSINT are T3 — they require corroboration
    before court-grade use.
-3. Do not access any source that would violate privacy laws for the case 
+3. Do not access any source that would violate privacy laws for the case
    jurisdiction.
 4. Cite every finding with its source URL and retrieval timestamp.
-5. Distinguish between the target entity self-reporting (T2-adjacent) vs. 
+5. Distinguish between the target entity self-reporting (T2-adjacent) vs.
    third-party claims (T3).
 ```
 
@@ -923,23 +951,25 @@ RULES:
 **Default model tier:** Tier A (Qwen 3.5 8B — formatting only, no reasoning required)
 
 **Inputs:**
+
 ```typescript
 interface AccountingAgentTask {
-  type: "compute_taint" | "compute_fees" | "compute_value_flow";
+  type: 'compute_taint' | 'compute_fees' | 'compute_value_flow';
   path_id: string;
-  at_node: string | null;   // null = full path
+  at_node: string | null; // null = full path
   methodologies: AccountingMethodology[];
-  fiat_currency: string;    // ISO 4217 code
+  fiat_currency: string; // ISO 4217 code
   price_snapshot_id: string;
 }
 ```
 
 **Outputs:**
+
 ```typescript
 interface AccountingAgentResult {
   results_by_methodology: Record<AccountingMethodology, TaintResult>;
-  formatted_summary: string;   // LLM-formatted for report insertion
-  math_service_call_log: MathServiceCall[];  // every computation, reproducible
+  formatted_summary: string; // LLM-formatted for report insertion
+  math_service_call_log: MathServiceCall[]; // every computation, reproducible
 }
 ```
 
@@ -954,48 +984,55 @@ interface AccountingAgentResult {
 **Default model tier:** Tier C (Claude Opus 4.6) — the highest-stakes generative task in the system
 
 **Inputs:**
+
 ```typescript
 interface NarrativeAgentTask {
-  type: "draft_narrative";
-  narrative_type: "tx_summary" | "path_segment" | "case_section" 
-                | "executive_summary" | "handoff_doc";
-  context_ref: string;       // case_id, path_id, tx_hash, etc.
-  belief_context: BeliefContextSlice;  // all relevant atoms
-  tone: "court_grade" | "investigative" | "executive";
+  type: 'draft_narrative';
+  narrative_type:
+    | 'tx_summary'
+    | 'path_segment'
+    | 'case_section'
+    | 'executive_summary'
+    | 'handoff_doc';
+  context_ref: string; // case_id, path_id, tx_hash, etc.
+  belief_context: BeliefContextSlice; // all relevant atoms
+  tone: 'court_grade' | 'investigative' | 'executive';
   methodology: AccountingMethodology | null;
   max_words: number;
 }
 ```
 
 **Outputs:**
+
 ```typescript
 interface NarrativeAgentResult {
-  draft_text: string;          // raw draft from LLM
-  citation_tokens: CitationToken[];   // all citations embedded
-  verifier_status: "passed" | "failed" | "partial";
+  draft_text: string; // raw draft from LLM
+  citation_tokens: CitationToken[]; // all citations embedded
+  verifier_status: 'passed' | 'failed' | 'partial';
   verifier_flagged_sentences: FlaggedSentence[];
-  math_values_used: MathServiceRef[];  // every number must reference Math Service
+  math_values_used: MathServiceRef[]; // every number must reference Math Service
 }
 ```
 
 **System prompt outline:**
+
 ```
-You are a blockchain forensics expert writer drafting court-grade reports. 
+You are a blockchain forensics expert writer drafting court-grade reports.
 Every sentence you write must:
-1. Cite a specific BeliefAtom or T0 source using the citation token format: 
+1. Cite a specific BeliefAtom or T0 source using the citation token format:
    [CITE:atom_id] or [CITE:tx_hash:field_name]
-2. NEVER include a number unless you first called call_math_service and are 
+2. NEVER include a number unless you first called call_math_service and are
    citing its output. Format: [MATH:math_call_id:value]
 3. NEVER mention entity names without citing an attribution:
    Format: [ATTR:attribution_snapshot_id:label]
-4. Use passive voice for AI-derived conclusions: "analysis indicates" not 
+4. Use passive voice for AI-derived conclusions: "analysis indicates" not
    "the defendant did"
 5. Include the methodology disclosure whenever describing taint values:
    "Under FIFO methodology, [MATH:...] was traceable."
 6. Flag sentences you cannot ground with [NEEDS_HUMAN_REVIEW].
 
 The Verifier will reject any sentence without valid citation tokens.
-Write with the precision of a technical expert, not the speculation of an 
+Write with the precision of a technical expert, not the speculation of an
 inference engine.
 ```
 
@@ -1044,9 +1081,10 @@ def draft_alert_message(
 **Default model tier:** Tier B (DeepSeek V4 Pro or Claude Sonnet 4.6)
 
 **Inputs:**
+
 ```typescript
 interface SuggestionAgentTask {
-  type: "generate_suggestions";
+  type: 'generate_suggestions';
   case_id: string;
   focus: string | null;
   exclude_already_explored: boolean;
@@ -1055,24 +1093,26 @@ interface SuggestionAgentTask {
 ```
 
 **Outputs:**
+
 ```typescript
 interface SuggestionAgentResult {
   suggestions: InvestigativeSuggestion[];
 }
 
 interface InvestigativeSuggestion {
-  suggestion_text: string;      // one-sentence human-readable suggestion
-  rationale: string;            // why this is recommended
-  action_type: "trace_forward" | "trace_backward" | "attribute" | "subpoena" | "osint";
+  suggestion_text: string; // one-sentence human-readable suggestion
+  rationale: string; // why this is recommended
+  action_type: 'trace_forward' | 'trace_backward' | 'attribute' | 'subpoena' | 'osint';
   target_ref: string;
   expected_confidence_gain: number;
   estimated_cost_usd: number;
-  priority: number;             // 1-5
-  critic_reviewed: boolean;     // Critic must review before showing to investigator
+  priority: number; // 1-5
+  critic_reviewed: boolean; // Critic must review before showing to investigator
 }
 ```
 
 **System prompt outline:**
+
 ```
 You are a senior blockchain forensics investigator advising on next steps.
 Given the current Belief State:
@@ -1104,8 +1144,8 @@ Given the current Belief State:
 
 ```python
 async def run_inspector(
-    tx_hash: str, 
-    chain: str, 
+    tx_hash: str,
+    chain: str,
     case_id: str,
     config: InspectorConfig,
 ) -> TransactionAnalysis:
@@ -1113,37 +1153,37 @@ async def run_inspector(
     Inspector fan-out. All sections run in parallel where possible.
     Streaming is enabled: each section delivers independently.
     """
-    
+
     # Section 1-2: Deterministic (no LLM needed)
     tx_data_task = asyncio.create_task(fetch_tx_data(tx_hash, chain))
     structured_facts_task = asyncio.create_task(build_structured_facts(tx_hash, chain))
-    
+
     # Section 3: Decoded action (Tier A SLM)
     decoded_action_task = asyncio.create_task(
         invoke_swap_agent(tx_hash, chain)  # or bridge_agent, or raw decoder
     )
-    
+
     # Section 4: Counterparty intelligence (Tier B)
     attribution_tasks = []  # fan out per address involved
-    
+
     # Section 5: Case context (deterministic, Belief State query)
     case_context_task = asyncio.create_task(
         get_tx_case_context(tx_hash, case_id)
     )
-    
+
     # Section 6: Obfuscation findings (rule-based + Tier A ML)
     obfuscation_task = asyncio.create_task(
         run_obfuscation_detectors(tx_hash, chain, case_id)
     )
-    
+
     # Section 1: Plain-language summary (Tier B/C — Narrative Agent)
     # Runs AFTER other sections complete (needs their output as context)
-    
+
     # Section 7: Critic notes (Tier C — parallel with all above)
     critic_task = asyncio.create_task(
         invoke_critic_agent(tx_hash, chain, case_id)
     )
-    
+
     # Gather and assemble
     results = await asyncio.gather(
         tx_data_task, structured_facts_task, decoded_action_task,
@@ -1151,13 +1191,13 @@ async def run_inspector(
         *attribution_tasks,
         return_exceptions=True,
     )
-    
+
     # Draft summary once all facts are known
     narrative_task = await invoke_narrative_agent(
         narrative_type="tx_summary",
         context=assemble_inspector_context(results),
     )
-    
+
     return assemble_transaction_analysis(results, narrative_task)
 ```
 
@@ -1172,16 +1212,17 @@ async def run_inspector(
 **Inputs:** CaseDocument with OCR/layout from the document intelligence pipeline
 
 **System prompt outline:**
+
 ```
-You are a forensic document analyst. Extract structured evidence from the 
+You are a forensic document analyst. Extract structured evidence from the
 provided document.
 
 EXTRACTION RULES:
 1. Extract ONLY what is explicitly stated. Never infer values.
 2. For every extracted value, record: exact text, page number, bounding box.
-3. Numeric values must be extracted as strings — Math Service handles 
+3. Numeric values must be extracted as strings — Math Service handles
    arithmetic.
-4. For subpoena returns: use the format-specific playbook for this exchange 
+4. For subpoena returns: use the format-specific playbook for this exchange
    (Binance / Coinbase / Kraken / etc.) to identify field positions.
 5. Flag any fields you could not extract with confidence < 0.7.
 6. Output ExtractedEntity objects — one per item.
@@ -1220,43 +1261,43 @@ def resolve_model_for_agent(
     3. Check demotion constraints — budget, toggles, cost preference
     4. Resolve to specific model from the agency's installed models
     """
-    
+
     # Step 1: Default tier
     default_tier = AGENT_TIER_MAP[agent_role]
-    
+
     # Step 2: Promotion signals
     resolved_tier = default_tier
     promotion_reason = None
-    
+
     if should_promote_to_tier_c(agent_role, task):
         resolved_tier = "C"
         promotion_reason = get_promotion_reason(agent_role, task)
     elif should_promote_to_tier_b(agent_role, task):
         resolved_tier = "B" if default_tier == "A" else default_tier
         promotion_reason = get_promotion_reason(agent_role, task)
-    
+
     # Step 3: Demotion constraints
     budget_remaining = cost_tracker.remaining(case_id)
     tier_ceiling = config.tier_ceiling  # agency-level constraint
-    
+
     # Honor tier ceiling (agency may restrict all calls to Tier A for cost)
     resolved_tier = min_tier(resolved_tier, tier_ceiling)
-    
+
     # Budget pressure: if < $1 remaining and task is non-critical, demote
     if budget_remaining < 1.00 and task.priority != "high":
         resolved_tier = min_tier(resolved_tier, "B")
-    
+
     # AI toggle: if role is off, return None (caller handles non-AI fallback)
     if not config.ai_toggle.is_enabled_for_role(agent_role):
         return None
-    
+
     # Resolve to specific model
     model = config.installed_models.best_for_tier(
         tier=resolved_tier,
         role=agent_role,
         capabilities_required=AGENT_REQUIRED_CAPABILITIES[agent_role],
     )
-    
+
     return RoutingDecision(
         model_id=model.id,
         provider_id=model.provider_id,
@@ -1310,7 +1351,7 @@ TIER_B_PROMOTION_SIGNALS = {
 }
 
 def should_promote_to_tier_c(
-    agent_role: str, 
+    agent_role: str,
     task: AgentTask,
     context: RoutingContext,
 ) -> bool:
@@ -1399,6 +1440,7 @@ tools/fine-tune/
 
 **Artifact storage (SaaS Blind v1):**
 Training datasets and produced LoRA adapter `.safetensors` files are stored in **Supabase Storage**, bucket `fine-tune-artifacts`. Path convention:
+
 ```
 fine-tune-artifacts/{specialist_name}/{base_model}/{run_id}/adapter_model.safetensors
 fine-tune-artifacts/{specialist_name}/{base_model}/{run_id}/adapter_config.json
@@ -1406,6 +1448,7 @@ fine-tune-artifacts/{specialist_name}/{base_model}/{run_id}/training_dataset.jso
 ```
 
 `registry_push.py` uploads the adapter to Supabase Storage, then writes a record to the `model_registry` table in Supabase Postgres:
+
 ```python
 # tools/fine-tune/common/registry_push.py (SaaS Blind path)
 
@@ -1431,7 +1474,7 @@ def push_adapter_to_registry(
         key=storage_key,
         file_path=adapter_path,
     )
-    
+
     # Write model_registry record (Supabase Postgres on SaaS Blind)
     record = {
         "specialist_name": specialist_name,
@@ -1454,12 +1497,14 @@ def push_adapter_to_registry(
 **Task:** Decode arbitrary EVM contract calldata into a structured action description.
 
 **Training data source:**
+
 - Public blockchain data: all verified contracts on Etherscan / Sourcify with their ABIs (≈ 4M verified contracts as of 2026)
 - Known function selector database: 4byte.directory (≈ 900k function signatures)
 - Historical decoded transactions: Dune Analytics public datasets, Allium public data
 - Synthetic: generate calldata for known ABIs with random valid arguments
 
 **Dataset construction:**
+
 ```python
 # tools/fine-tune/specialists/calldata_decoder/dataset/build.py
 
@@ -1467,12 +1512,12 @@ def build_calldata_decoder_dataset() -> list[TrainingExample]:
     """
     Input: raw calldata hex string + optional contract address + chain
     Output: structured DecodedAction JSON
-    
+
     Positive examples: calldata with known ABI, decoded ground truth
     Hard negatives: calldata with partial ABI, multiple selector matches
     """
     examples = []
-    
+
     # Source 1: Etherscan verified ABIs + historical txs
     for contract in load_verified_contracts():
         abi = contract.abi
@@ -1487,31 +1532,32 @@ def build_calldata_decoder_dataset() -> list[TrainingExample]:
                 ))
             except DecodingError:
                 pass
-    
+
     # Source 2: Synthetic examples from ABI schemas
     for protocol_abi in KNOWN_PROTOCOL_ABIS:
         examples.extend(generate_synthetic_examples(protocol_abi, count=500))
-    
+
     return examples
 ```
 
 **Base model:** Phi-4 14B (MIT license)
 
 **LoRA config:**
+
 ```yaml
 # tools/fine-tune/specialists/calldata_decoder/config/lora.yaml
 base_model: microsoft/phi-4
 lora_r: 16
 lora_alpha: 32
 lora_dropout: 0.05
-target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+target_modules: ['q_proj', 'v_proj', 'k_proj', 'o_proj']
 training:
   num_epochs: 3
   batch_size: 8
   learning_rate: 2e-4
   warmup_steps: 100
   max_seq_length: 2048
-  use_unsloth: true          # 2x speedup on single GPU
+  use_unsloth: true # 2x speedup on single GPU
   gradient_checkpointing: true
   bf16: true
 dataset:
@@ -1521,11 +1567,13 @@ dataset:
 ```
 
 **Evaluation metrics:**
+
 - Field-level exact match for function_name, token addresses, amounts (as strings)
 - Protocol classification accuracy (Uniswap V3 vs. V2 vs. Curve, etc.)
 - Partial-ABI robustness: accuracy when only 50% of ABI is known
 
 **Release criteria:**
+
 - Field-level F1 ≥ 0.95 on holdout set of verified ABIs
 - Partial-ABI accuracy ≥ 0.80
 - Zero hallucinated token addresses not present in input
@@ -1544,6 +1592,7 @@ dataset:
 **Key training signal:** Token path reconstruction — the hardest part of swap decoding is unrolling multi-hop encoded paths.
 
 **Evaluation metrics:**
+
 - Route reconstruction accuracy (exact hop sequence match): ≥ 0.97
 - Amount extraction accuracy (correct decimal conversion): 1.00
 - Slippage computation accuracy (vs. Math Service ground truth): 1.00
@@ -1558,6 +1607,7 @@ dataset:
 **Task:** Given a source-side bridge event, match it to the destination-side event using message IDs and/or amount-timing correlation.
 
 **Training data:**
+
 - Historical bridge messages from LayerZero (all chains, public relayer data)
 - CCTP message attestations (public Circle attestation API history)
 - Wormhole VAAs (public Guardian network history)
@@ -1569,6 +1619,7 @@ dataset:
 **Training emphasis:** Hard negatives are critical — many false correlations arise from same-amount deposits in busy time windows. Oversample them.
 
 **Evaluation metrics:**
+
 - Message-ID match recall: ≥ 0.99
 - Timing-heuristic precision: ≥ 0.90 (false correlations are costly)
 - Multi-bridge (same funds through N bridges) chain reconstruction: ≥ 0.85
@@ -1581,6 +1632,7 @@ dataset:
 **Task:** Extract structured entities (addresses, tx hashes, names, amounts, dates, account numbers) from forensic documents — subpoena returns, bank statements, victim narratives, court orders.
 
 **Training data:**
+
 - Public court filings from PACER (criminal crypto cases): ≈ 5k documents
 - Synthetic subpoena returns generated from real exchange return format templates
 - SEC enforcement action PDFs (public record): ≈ 2k documents
@@ -1592,6 +1644,7 @@ dataset:
 **Key design choice:** Training data includes bounding-box information so the model can output source location (page + bbox) for every extraction — mandatory for the Verifier's source-check.
 
 **Evaluation metrics:**
+
 - Token-level extraction F1: ≥ 0.97 (precision and recall balanced)
 - Hallucinated extractions rate: < 0.001 (zero tolerance)
 - Bounding-box accuracy (IoU ≥ 0.8): ≥ 0.95
@@ -1618,6 +1671,7 @@ dataset:
 **Task:** Classify a transaction sub-graph as containing one of the known obfuscation patterns (peel chain, chain hop, token swap obfuscation, mixer entry/exit, CoinJoin, layered split-and-merge, etc.).
 
 **Training data:**
+
 - Labeled peel chains from public post-mortems and prior cases
 - Known mixer usage patterns (Tornado Cash deposit/withdrawal correlations — public data)
 - Synthetic adversarial examples generated with known ground truth
@@ -1628,6 +1682,7 @@ dataset:
 **Training format:** Sub-graph features → obfuscation_type + confidence + evidence_flags
 
 **Evaluation metrics:**
+
 - Per-pattern F1 ≥ 0.90
 - False positive rate per pattern ≤ published F41 targets (peel chain < 0.03, mixer < 0.005)
 - Novel obfuscation pattern robustness: tested against curated "unknown" examples
@@ -1641,6 +1696,7 @@ dataset:
 **Task:** Given multi-provider attribution responses for the same address, synthesize a unified attribution with calibrated confidence.
 
 **Training data:**
+
 - Multi-provider attribution ground truth: addresses where ground truth is known (exchange deposit confirmed by subpoena, hacker addresses from post-mortems, OFAC SDN addresses)
 - Provider response pairs: {Chainalysis: X, TRM: Y, ground_truth: Z} — train to predict Z and calibrated confidence
 - Disagreement resolution examples: cases where providers disagreed and human investigator resolved
@@ -1650,6 +1706,7 @@ dataset:
 **Key training signal:** Calibration — the model must output well-calibrated confidence scores, not just accurate labels. Train with proper scoring rules.
 
 **Evaluation metrics:**
+
 - Attribution accuracy ≥ 0.97
 - Confidence calibration (ECE ≤ 0.05)
 - Disagreement detection recall ≥ 0.95
@@ -1661,6 +1718,7 @@ dataset:
 **Task:** Check that every sentence in a draft output has valid citation tokens pointing to real BeliefAtoms or T0 sources. Flag sentences that lack grounding.
 
 **Training data:**
+
 - Synthetic: generate (draft, citation_tokens, verdict) triples
   - Positive examples: well-cited drafts
   - Negative examples: drafts with missing citations, hallucinated values, wrong citations
@@ -1671,6 +1729,7 @@ dataset:
 **Training format:** Per-sentence binary classification: "grounded" | "ungrounded" + failure reason
 
 **Evaluation metrics:**
+
 - Precision on "grounded" classification ≥ 0.99 (never pass an ungrounded sentence)
 - Recall on "ungrounded" detection ≥ 0.95 (rare false negatives acceptable; false positives block investigator unnecessarily)
 - Math-value check accuracy: detect when a number in text doesn't match Math Service output
@@ -1686,21 +1745,25 @@ dataset:
 **SaaS Blind v1:** pgvector runs inside **Supabase Postgres** — no separate vector store service is needed in Phase 0. The `rag` schema inside the Supabase project holds all four index tables.
 
 **Embedding model:**
+
 - SaaS Blind default: **Voyage AI** (`voyage-3` or equivalent, 1536-dimensional) via BYOK API key
 - On-Prem alternative: **BGE-M3 self-hosted** (768-dimensional); same chunking pipeline, different model endpoint
 
 **Client binding:**
+
 - In SaaS Blind, `pgvector_search()` in `retriever.py` wraps the **`supabase-py`** client (or the Fastify API layer uses the JS Supabase client) against the `rag.*` tables.
 - In On-Prem, `pgvector_search()` wraps a direct **`asyncpg`** connection with pgvector native operators.
 - The `pgvector_search()` signature is identical in both deployments — callers never know which backend is used.
 
 **Row-Level Security (RLS):** All `rag.*` tables enforce tenant isolation:
+
 ```sql
 -- RLS policy on all rag schema tables (SaaS Blind only)
 CREATE POLICY rag_agency_isolation ON rag.typology_index
   USING (agency_id = (auth.jwt()->>'agency_id')::uuid);
 -- Same policy applied to methodology_index, jurisdiction_rules_index, prior_cases_index
 ```
+
 This prevents cross-tenant retrieval bleed: an agent running in agency A's context cannot retrieve chunks indexed for agency B.
 
 **On-Prem:** Unchanged. pgvector runs as a Postgres extension in the customer's own Postgres instance (no Supabase). MinIO or local filesystem handles any artifact storage. RLS is replaced by application-layer `WHERE agency_id = $1` filters.
@@ -1717,18 +1780,18 @@ ChainSight's RAG layer is not general-purpose semantic search. It provides domai
 // packages/agents/src/rag/indexes.ts
 
 // Index 1: Typology Index
-// Content: Blockchain crime typologies from FATF, Egmont Group, FinCEN, 
+// Content: Blockchain crime typologies from FATF, Egmont Group, FinCEN,
 //          Europol IOCTA, public case studies
 // Chunking: 300-token semantic chunks; one chunk = one typology pattern
 // Use: Narrative Agent cites established typologies; Suggestion Agent recommends
 interface TypologyIndex {
   chunk_id: string;
-  typology_name: string;     // "peel_chain", "structuring", "layering_via_defi"
-  source: string;            // "FATF_2023_crypto_red_flags", "FinCEN_SAR_guidance"
+  typology_name: string; // "peel_chain", "structuring", "layering_via_defi"
+  source: string; // "FATF_2023_crypto_red_flags", "FinCEN_SAR_guidance"
   description: string;
   indicators: string[];
-  embedding: number[];       // vector(1536) in Supabase pgvector (Voyage AI); vector(768) for BGE on On-Prem
-  agency_id: string;         // tenant isolation column; RLS policy scoped to this
+  embedding: number[]; // vector(1536) in Supabase pgvector (Voyage AI); vector(768) for BGE on On-Prem
+  agency_id: string; // tenant isolation column; RLS policy scoped to this
   metadata: ChunkMetadata;
 }
 
@@ -1740,24 +1803,24 @@ interface MethodologyIndex {
   chunk_id: string;
   methodology: AccountingMethodology;
   jurisdiction: string;
-  source: string;             // "D'Aloia_2024", "US_DOJ_forensic_manual"
+  source: string; // "D'Aloia_2024", "US_DOJ_forensic_manual"
   description: string;
-  court_citations: string[];  // cases where this methodology was accepted
-  embedding: number[];        // vector(1536) Voyage AI / vector(768) BGE
+  court_citations: string[]; // cases where this methodology was accepted
+  embedding: number[]; // vector(1536) Voyage AI / vector(768) BGE
   agency_id: string;
 }
 
 // Index 3: Jurisdiction Rules Index
-// Content: Jurisdiction-specific rules for crypto investigations, 
+// Content: Jurisdiction-specific rules for crypto investigations,
 //          legal standards, reporting requirements
 // Chunking: 300-token chunks, organized by jurisdiction + topic
 interface JurisdictionRulesIndex {
   chunk_id: string;
   jurisdiction: string;
-  rule_type: string;         // "evidence_standard", "chain_custody", "daubert"
+  rule_type: string; // "evidence_standard", "chain_custody", "daubert"
   source: string;
   content: string;
-  embedding: number[];       // vector(1536) Voyage AI / vector(768) BGE
+  embedding: number[]; // vector(1536) Voyage AI / vector(768) BGE
   agency_id: string;
 }
 
@@ -1768,11 +1831,11 @@ interface JurisdictionRulesIndex {
 interface PriorCasesIndex {
   chunk_id: string;
   case_name: string;
-  case_type: string;         // "exchange_hack", "ransomware", "pig_butchering"
+  case_type: string; // "exchange_hack", "ransomware", "pig_butchering"
   year: number;
   findings: string;
   ground_truth_outcome: string;
-  embedding: number[];       // vector(1536) Voyage AI / vector(768) BGE
+  embedding: number[]; // vector(1536) Voyage AI / vector(768) BGE
   agency_id: string;
 }
 ```
@@ -1785,7 +1848,7 @@ interface PriorCasesIndex {
 class ForensicsDocumentChunker:
     """
     Domain-aware chunking. Not naive fixed-window.
-    
+
     Rules:
     1. Never split within a procedural step (numbered items stay together)
     2. Typology patterns: one chunk = one complete pattern description
@@ -1793,18 +1856,18 @@ class ForensicsDocumentChunker:
     4. Overlap: 50-token sliding overlap between adjacent chunks
     5. Maximum chunk size: 512 tokens (fits in Voyage AI context)
     """
-    
+
     def chunk_typology_document(self, doc: Document) -> list[Chunk]:
         # Detect pattern boundaries (numbered sections, headers)
         # Keep each pattern intact
         # Attach metadata: source, typology_name, date
         ...
-    
+
     def chunk_case_document(self, doc: Document) -> list[Chunk]:
         # Keep cause → method → evidence → outcome chains intact
         # Never split an evidence chain across chunks
         ...
-    
+
     def chunk_methodology_document(self, doc: Document) -> list[Chunk]:
         # Keep calculation examples intact
         # Keep court citations with their context
@@ -1829,11 +1892,11 @@ def retrieve_for_agent(
     Two-stage retrieval:
     1. Embedding similarity search (fast, broad)
     2. Cross-encoder rerank (accurate, on top-k*3)
-    
+
     For forensics: precision matters more than recall.
     The grounding-check loop (below) catches any irrelevant chunks.
     """
-    
+
     # Stage 1: Vector similarity
     query_embedding = embed(query, model=EMBEDDING_MODEL)
     candidates = []
@@ -1844,16 +1907,16 @@ def retrieve_for_agent(
             k=k * 3,  # over-retrieve for reranking
         )
         candidates.extend(results)
-    
+
     if not rerank:
         return candidates[:k]
-    
+
     # Stage 2: Cross-encoder rerank
     scored = []
     for chunk in candidates:
         score = cross_encoder_score(query, chunk.content)
         scored.append((score, chunk))
-    
+
     scored.sort(reverse=True)
     return [chunk for _, chunk in scored[:k]]
 ```
@@ -1876,28 +1939,28 @@ def grounding_check(
     2. Verify the cited chunk exists and contains the claimed information
     3. For typology claims: ensure the typology name matches the chunk
     4. For methodology claims: ensure the method description is accurate
-    
+
     If any claim fails grounding: fail the check, flag for Verifier.
     """
     claims = claim_extractor.extract(agent_output)
-    
+
     results = []
     for claim in claims:
         if not claim.has_citation_token:
             results.append(GroundingFailure(claim=claim, reason="missing_citation"))
             continue
-        
+
         cited_chunk = find_chunk(retrieved_chunks, claim.citation_token)
         if cited_chunk is None:
             results.append(GroundingFailure(claim=claim, reason="chunk_not_retrieved"))
             continue
-        
+
         if not supports_claim(cited_chunk, claim):
             results.append(GroundingFailure(claim=claim, reason="chunk_does_not_support_claim"))
             continue
-        
+
         results.append(GroundingSuccess(claim=claim, chunk=cited_chunk))
-    
+
     return GroundingCheckResult(
         passed=all(isinstance(r, GroundingSuccess) for r in results),
         results=results,
@@ -1937,7 +2000,7 @@ def validate_agent_output(output: AgentOutput) -> ValidationResult:
     Called before every AgentOutput is written to BeliefState or returned
     to the orchestrator.
     """
-    
+
     # Check 1: Any generative text must have citation tokens
     if output.has_generative_text():
         citation_check = verify_citation_tokens(output.generative_text)
@@ -1947,16 +2010,16 @@ def validate_agent_output(output: AgentOutput) -> ValidationResult:
                 error_code="missing_citation_tokens",
                 details=citation_check.failures,
             )
-    
+
     # Check 2: Every BeliefAtom emission must have provenance
     for atom in output.belief_atoms_emitted:
         if not atom.provenance:
             return ValidationResult(valid=False, error_code="atom_missing_provenance")
-    
+
     # Check 3: Confidence must be within [0, 1]
     if not 0.0 <= output.output_confidence <= 1.0:
         return ValidationResult(valid=False, error_code="invalid_confidence")
-    
+
     return ValidationResult(valid=True)
 ```
 
@@ -1965,6 +2028,7 @@ def validate_agent_output(output: AgentOutput) -> ValidationResult:
 **Implementation:** Every agent's system prompt contains the hard rule: "Never compute numeric values yourself." Any numeric value in an agent output that is not tagged with a `[MATH:math_call_id]` citation token is flagged by the Verifier as an ungrounded number.
 
 The Math Service exposes a gRPC interface (per v1.0 Part 3) and is the single source of truth for:
+
 - Taint calculations (all methodologies)
 - Fee computations
 - Fiat conversions (using pinned price snapshots)
@@ -1977,19 +2041,19 @@ The Math Service exposes a gRPC interface (per v1.0 Part 3) and is the single so
 
 class MathService:
     """Python FastAPI service. Uses decimal.Decimal throughout — never float."""
-    
+
     def compute_taint(self, request: TaintRequest) -> TaintResult:
         """All taint math. Returns exact Decimal values."""
         ...
-    
+
     def compound_confidence(self, request: ConfidenceRequest) -> ConfidenceResult:
         """Compound confidence across hops. Returns Decimal."""
         ...
-    
+
     def convert_fiat(self, request: FiatConversionRequest) -> FiatResult:
         """Uses pinned price snapshot. Returns Decimal with snapshot_id."""
         ...
-    
+
     def compute_hop_confidence_decay(self, request: HopConfidenceRequest) -> ConfidenceResult:
         """Per-hop confidence decay formula. See Part 10."""
         ...
@@ -2042,16 +2106,16 @@ async def consistency_check(
     results = await asyncio.gather(*[
         agent.run(task, seed=i) for i in range(n_samples)
     ])
-    
+
     agreement_score = compute_semantic_agreement(results)
-    
+
     if agreement_score < agreement_threshold:
         return ConsistencyCheckResult(
             consistent=False,
             disagreement_details=extract_disagreements(results),
             recommended_action="escalate_to_tier_c",
         )
-    
+
     return ConsistencyCheckResult(
         consistent=True,
         consensus_output=majority_vote(results),
@@ -2080,10 +2144,10 @@ def verify_atomic_claims(
     Verify each independently against BeliefState + Math Service.
     Return any failed claims for Verifier to flag.
     """
-    
+
     # Decompose into atomic claims (one fact per claim)
     claims = decompose_into_atomic_claims(draft)
-    
+
     results = []
     for claim in claims:
         if claim.is_numeric:
@@ -2098,7 +2162,7 @@ def verify_atomic_claims(
             # Factual claim: must cite a BeliefAtom
             atom_check = verify_against_belief_state(claim, belief_context)
             results.append(atom_check)
-    
+
     return AtomicClaimVerificationResult(
         all_verified=all(r.verified for r in results),
         failed_claims=[r for r in results if not r.verified],
@@ -2129,7 +2193,7 @@ In the orchestrator loop, the Critic is fired asynchronously on every batch of e
 # packages/agents/src/critic.py
 
 CRITIC_SYSTEM_PROMPT = """
-You are the ChainSight Adversarial Critic. Your job is to challenge every 
+You are the ChainSight Adversarial Critic. Your job is to challenge every
 conclusion the investigation has reached, looking for:
 1. Alternative explanations the tracer didn't consider
 2. Low-quality provenance (single-source attribution, heuristic-only conclusions)
@@ -2139,8 +2203,8 @@ conclusion the investigation has reached, looking for:
 6. Internal inconsistencies across multiple BeliefAtoms
 7. Adversarial robustness: what would a defense attorney attack?
 
-Your output is a list of Challenges. A Challenge is NOT a rejection — it is 
-a specific, falsifiable objection that requires a response before the atom 
+Your output is a list of Challenges. A Challenge is NOT a rejection — it is
+a specific, falsifiable objection that requires a response before the atom
 can reach court_grade status.
 
 For each atom you review:
@@ -2150,12 +2214,12 @@ For each atom you review:
 
 HARD-BLOCK CONDITIONS (emit HardChallenge):
 - Numeric claim without Math Service citation
-- Attribution without pinned snapshot reference  
+- Attribution without pinned snapshot reference
 - T3 atom being relied upon as sole basis for court_grade promotion
 - Confidence > 0.95 on a heuristic-only (T1/T3) derivation chain
 
-You use temperature 0.9 (higher than other agents) to maximize adversarial 
-creativity. Your model defaults to Tier C because you must catch what lower-tier 
+You use temperature 0.9 (higher than other agents) to maximize adversarial
+creativity. Your model defaults to Tier C because you must catch what lower-tier
 models miss.
 """
 
@@ -2177,13 +2241,13 @@ async def run_critic(
     Runs in parallel with the orchestrator loop.
     Called immediately after each batch of BeliefAtoms is emitted.
     """
-    
+
     client = anthropic.Anthropic()
     model = config.model_router.resolve_for_role("critic", config)
-    
+
     # Build the critic's context: the atoms to review + case context
     context = build_critic_context(atoms, case_id, belief_client)
-    
+
     response = client.messages.create(
         model=model.id,
         max_tokens=2000,
@@ -2203,7 +2267,7 @@ Prior open challenges (do not duplicate):
 {format_challenges(context.open_challenges)}
 
 For each atom, provide:
-1. Axis scores (provenance_quality, alternative_explanation, base_rate_plausibility, 
+1. Axis scores (provenance_quality, alternative_explanation, base_rate_plausibility,
    internal_consistency, adversarial_robustness)
 2. Any Challenges (if axis score < 0.7)
 3. Any HardChallenges (if hard-block conditions met)
@@ -2213,13 +2277,13 @@ Output as JSON matching the CriticResult schema.
 """
         }],
     )
-    
+
     critic_result = parse_critic_response(response.content[0].text)
-    
+
     # Write challenges to the Belief State
     for challenge in critic_result.challenges:
         belief_client.write_challenge(case_id, challenge)
-    
+
     return critic_result
 ```
 
@@ -2229,44 +2293,45 @@ Output as JSON matching the CriticResult schema.
 // packages/belief-state/src/challenge.ts
 
 interface Challenge {
-  id: string;                    // UUID
+  id: string; // UUID
   case_id: string;
-  target_atom_id: string;        // the atom being challenged
-  challenge_type: "soft" | "hard";
-  
+  target_atom_id: string; // the atom being challenged
+  challenge_type: 'soft' | 'hard';
+
   // Scoring
-  axis_scores: Record<string, number>;   // five axes
-  overall_score: number;                 // mean of axes
-  
+  axis_scores: Record<string, number>; // five axes
+  overall_score: number; // mean of axes
+
   // The challenge content
-  objection: string;             // specific, falsifiable objection
-  alternative_explanation: string | null;   // alternative the critic sees
-  recommended_resolution: string;   // what would resolve this challenge
-  
+  objection: string; // specific, falsifiable objection
+  alternative_explanation: string | null; // alternative the critic sees
+  recommended_resolution: string; // what would resolve this challenge
+
   // Adversarial patterns checked
-  patterns_checked: string[];    // e.g. "coinjoin_false_positive", "bridge_front_running"
+  patterns_checked: string[]; // e.g. "coinjoin_false_positive", "bridge_front_running"
   known_fp_pattern_hit: boolean;
-  
+
   // Lifecycle
-  status: "open" | "resolved" | "dismissed" | "escalated";
+  status: 'open' | 'resolved' | 'dismissed' | 'escalated';
   resolution: ChallengeResolution | null;
   created_at: string;
-  created_by: "critic_agent";
+  created_by: 'critic_agent';
   resolved_at: string | null;
   resolved_by: string | null;
 }
 
 interface ChallengeResolution {
-  method: "additional_evidence" | "methodology_change" | "retraction" | "dismissed_with_rationale";
+  method: 'additional_evidence' | 'methodology_change' | 'retraction' | 'dismissed_with_rationale';
   rationale: string;
   supporting_evidence: string[];
-  resolved_by: string;  // investigator or orchestrator
+  resolved_by: string; // investigator or orchestrator
 }
 ```
 
 ### 7.4 Challenge flow into Belief State
 
 A hard challenge blocks the atom from being promoted to `court_grade`. A soft challenge appears in the Inspector's Section 7 and in the case's Challenge sidebar without blocking. The investigator can:
+
 - **Resolve with evidence:** provide additional evidence that addresses the challenge
 - **Dismiss with rationale:** document why the challenge doesn't apply
 - **Escalate:** send to the Orchestrator + Tier C for deeper analysis
@@ -2281,19 +2346,19 @@ The Critic is initialized with a library of known false-positive patterns that i
 CRITIC_ADVERSARIAL_PATTERNS = {
     "coinjoin_false_positive": {
         "description": "CIH applied to a CoinJoin transaction incorrectly merges unrelated clusters",
-        "check": lambda atom: atom.tier == "T1" and atom.derivation_method == "cih" and 
+        "check": lambda atom: atom.tier == "T1" and atom.derivation_method == "cih" and
                               is_likely_coinjoin(atom.evidence_tx),
         "severity": "hard",
     },
     "bridge_amount_collision": {
         "description": "Multiple bridge deposits of same amount in same time window; correlation may be wrong",
-        "check": lambda atom: atom.predicate == "bridge_correlated" and 
+        "check": lambda atom: atom.predicate == "bridge_correlated" and
                               atom.match_method == "timing_heuristic",
         "severity": "soft",
     },
     "peel_chain_false_positive": {
         "description": "Detected peel chain pattern may be legitimate payment batching",
-        "check": lambda atom: atom.predicate == "obfuscation_detected" and 
+        "check": lambda atom: atom.predicate == "obfuscation_detected" and
                               atom.finding_type == "peel_chain",
         "severity": "soft",
     },
@@ -2304,7 +2369,7 @@ CRITIC_ADVERSARIAL_PATTERNS = {
     },
     "exchange_omnibus_commingling": {
         "description": "Taint through an exchange omnibus address may reflect commingling with innocent users",
-        "check": lambda atom: atom.predicate == "received_taint_from" and 
+        "check": lambda atom: atom.predicate == "received_taint_from" and
                               is_likely_exchange_omnibus(atom.subject_ref),
         "severity": "hard",
     },
@@ -2327,28 +2392,28 @@ The Verifier does not rewrite. It only flags. The investigator sees flagged sent
 # packages/agents/src/verifier.py
 
 VERIFIER_SYSTEM_PROMPT = """
-You are the ChainSight Verifier. Your only job is to check that every 
+You are the ChainSight Verifier. Your only job is to check that every
 factual sentence in the provided draft cites a valid source.
 
 GROUNDING RULES:
-1. Every sentence containing a fact (name, address, amount, date, 
+1. Every sentence containing a fact (name, address, amount, date,
    classification) MUST contain at least one citation token.
 2. Citation token formats:
    [CITE:atom:{id}]        — BeliefAtom
    [CITE:tx:{hash}:{field}] — transaction field
    [CITE:doc:{id}:{page}]  — document
-   [CITE:rag:{chunk_id}]   — RAG chunk  
+   [CITE:rag:{chunk_id}]   — RAG chunk
    [CITE:math:{call_id}]   — Math Service result
    [ATTR:{snapshot}:{label}] — attribution snapshot
-3. A sentence like "The funds moved to Binance" is UNGROUNDED unless it has 
+3. A sentence like "The funds moved to Binance" is UNGROUNDED unless it has
    [ATTR:...] for "Binance" AND [CITE:atom:...] for the fund movement.
 4. A sentence like "0.5 ETH" is UNGROUNDED unless it has [CITE:math:...].
 5. Introductory phrases ("This investigation examined...") are GROUNDED by default.
-6. Citation tokens must reference resources in the provided context. 
+6. Citation tokens must reference resources in the provided context.
    You cannot verify external resources.
 
 For each sentence: return { sentence_index, grounded: bool, reason: str }.
-If a sentence is grounded, reason = "ok". 
+If a sentence is grounded, reason = "ok".
 If ungrounded, reason = specific failure type.
 """
 
@@ -2363,27 +2428,27 @@ def run_verifier(
     Sentence-level verification.
     Returns passed sentences and flagged sentences.
     """
-    
+
     sentences = split_into_sentences(draft)
-    
+
     # Resolve all citation tokens in the draft against available context
     available_resources = {
         "atoms": {a.id: a for a in belief_context.atoms},
         "math_calls": {m.id: m for m in math_calls},
         "docs": {d.id: d for d in doc_context},
     }
-    
+
     # Run the Verifier SLM
     client = get_slm_client(config.verifier_model)
-    
+
     response = client.generate(
         prompt=build_verifier_prompt(sentences, available_resources),
         max_tokens=500,
         temperature=0.0,   # Verifier must be deterministic
     )
-    
+
     verdicts = parse_verifier_response(response)
-    
+
     return VerifierResult(
         passed_sentences=[s for s, v in zip(sentences, verdicts) if v.grounded],
         flagged_sentences=[
@@ -2418,7 +2483,7 @@ For complex sentences, the Verifier first decomposes before checking:
 ```python
 def decompose_complex_sentence(sentence: str) -> list[AtomicClaim]:
     """
-    "On August 12, address 0xabc transferred 1.5 ETH to the Binance hot wallet" 
+    "On August 12, address 0xabc transferred 1.5 ETH to the Binance hot wallet"
     → three atomic claims:
       1. date assertion: August 12
       2. transfer assertion: 0xabc → 1.5 ETH
@@ -2470,6 +2535,7 @@ tools/eval/
 ### 9.2 Public hacks as canonical test cases
 
 Each public hack is a canonical test case with:
+
 - **Seed IOCs:** the known attacker/victim addresses
 - **Expected trace path:** the documented fund flow
 - **Expected attributions:** known exchange deposits confirmed by the incident
@@ -2509,32 +2575,32 @@ The regression CI runs on **GitHub Actions** using a **self-hosted runner** (sen
 name: Nightly Regression
 on:
   schedule:
-    - cron: '0 3 * * *'   # 3 AM UTC
-  workflow_dispatch:        # manual trigger
+    - cron: '0 3 * * *' # 3 AM UTC
+  workflow_dispatch: # manual trigger
 
 jobs:
   regression:
-    runs-on: self-hosted    # self-hosted GitHub Actions runner (sensitive workload)
+    runs-on: self-hosted # self-hosted GitHub Actions runner (sensitive workload)
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run full ground-truth harness
         run: |
           python tools/eval/harness/regression_runner.py \
             --ground-truth-dir tools/eval/ground_truth \
             --config tools/eval/harness/config.yaml \
             --output tools/eval/results/$(date +%Y%m%d).json
-      
+
       - name: Check against metric targets
         run: |
           python tools/eval/harness/check_regression.py \
             --results tools/eval/results/$(date +%Y%m%d).json \
             --baseline tools/eval/results/baseline.json \
             --fail-on-regression 0.005  # 0.5% regression threshold
-      
+
       - name: Persist results to Supabase
         if: always()
         run: |
@@ -2543,7 +2609,7 @@ jobs:
           # Inserts into eval_run_results table in Supabase Postgres
           # Schema: eval_run_results(run_id, run_date, metrics jsonb,
           #          regression_detected bool, baseline_delta jsonb)
-      
+
       - name: Post results to Slack
         if: always()
         run: python tools/eval/harness/notify.py
@@ -2553,12 +2619,12 @@ The model swap validation workflow (`model_swap_validation.yml`) also runs on Gi
 
 **Supabase Postgres tables for the AI/eval layer (SaaS Blind v1):**
 
-| Table | Content | Written by |
-|---|---|---|
-| `agent_calls` | Every `AgentCall` record (Part 12 cost telemetry) | API layer / BullMQ workers |
-| `model_cards` | `ModelCard` records per agent call (Reproducibility Pack) | Agent protocol layer |
-| `eval_run_results` | Nightly regression + model swap results | GitHub Actions CI |
-| `model_registry` | Fine-tuned adapter records (Part 4) | `registry_push.py` |
+| Table              | Content                                                   | Written by                 |
+| ------------------ | --------------------------------------------------------- | -------------------------- |
+| `agent_calls`      | Every `AgentCall` record (Part 12 cost telemetry)         | API layer / BullMQ workers |
+| `model_cards`      | `ModelCard` records per agent call (Reproducibility Pack) | Agent protocol layer       |
+| `eval_run_results` | Nightly regression + model swap results                   | GitHub Actions CI          |
+| `model_registry`   | Fine-tuned adapter records (Part 4)                       | `registry_push.py`         |
 
 **Fly.io / self-hosted inference note (SaaS Blind):**
 For SaaS Blind **Phase 0**, no vLLM or Ollama instance is deployed on Fly.io. Phase 0 uses BYOK frontier APIs exclusively (Claude Opus 4.6 via Anthropic API, DeepSeek V4 Pro via API). Fly.io hosting of vLLM/Ollama inference is a **Phase 2+ option** for SaaS Blind, when self-hosted Tier A specialists become cost-justified by case volume. On-Prem is unchanged: customer runs vLLM or Ollama on their own GPU hardware from day one.
@@ -2638,10 +2704,10 @@ def validate_model_swap(
     Report: does the new model regress on any headline metric?
     Block deploy if regression > threshold.
     """
-    
+
     prior_results = run_cases(prior_model, test_cases, role=role)
     new_results = run_cases(new_model, test_cases, role=role)
-    
+
     regressions = []
     for metric_name, metric in HEADLINE_METRICS.items():
         if metric.threshold is None:
@@ -2655,7 +2721,7 @@ def validate_model_swap(
                 delta=delta,
                 threshold=metric.threshold,
             ))
-    
+
     return ModelSwapValidation(
         approved=len(regressions) == 0,
         regressions=regressions,
@@ -2701,22 +2767,22 @@ class PathConfidence:
 def compound_hop_confidence(hops: list[HopConfidence]) -> PathConfidence:
     """
     Compound confidence across hops, method-aware.
-    
-    The naive product (p1 * p2 * ... * pN) understates confidence 
-    when hops use independent evidence and overstates when they share 
+
+    The naive product (p1 * p2 * ... * pN) understates confidence
+    when hops use independent evidence and overstates when they share
     the same weak evidence base.
-    
+
     Method-aware combination rules:
-    - T0 (UTXO direct / Transfer log): multiplicative independence — 
+    - T0 (UTXO direct / Transfer log): multiplicative independence —
       p_compound = product(p_i)
-    - T1 (CIH / known rule): multiplicative with clustering penalty — 
+    - T1 (CIH / known rule): multiplicative with clustering penalty —
       p_compound = product(p_i) * clustering_confidence_factor
-    - T2 (attribution): gated by source agreement — 
+    - T2 (attribution): gated by source agreement —
       p_compound reduced by (1 - attribution_agreement_score)
-    - T3 (ML/LLM inference): Bayesian update from prior — 
+    - T3 (ML/LLM inference): Bayesian update from prior —
       treated as evidence-of-quality rather than direct probability
     """
-    
+
     if not hops:
         return PathConfidence(
             cumulative_p=Decimal("1.0"),
@@ -2726,19 +2792,19 @@ def compound_hop_confidence(hops: list[HopConfidence]) -> PathConfidence:
             weakest_hop_p=Decimal("1.0"),
             below_floor=False,
         )
-    
+
     # Compound by method
     compound_p = Decimal("1.0")
     for hop in hops:
         if hop.evidence_class == "T0":
             # Direct on-chain proof: multiplicative
             compound_p *= hop.p_correct
-            
+
         elif hop.evidence_class == "T1":
             # Heuristic rule: multiplicative with small penalty for rule uncertainty
             rule_uncertainty = Decimal("0.02")  # 2% for rule version risk
             compound_p *= (hop.p_correct - rule_uncertainty)
-            
+
         elif hop.evidence_class == "T2":
             # Attribution: depends on source agreement
             source_agreement = compute_source_agreement(hop)
@@ -2751,24 +2817,24 @@ def compound_hop_confidence(hops: list[HopConfidence]) -> PathConfidence:
             else:
                 # Single source: apply agreement penalty
                 compound_p *= hop.p_correct * source_agreement
-                
+
         elif hop.evidence_class == "T3":
             # ML/LLM inference: more conservative decay
             t3_penalty = Decimal("0.85")  # 15% penalty for AI uncertainty
             compound_p *= hop.p_correct * t3_penalty
-    
+
     # Compute uncertainty bounds using Wilson interval approximation
     n_effective = compute_effective_samples(hops)
     margin = compute_confidence_margin(compound_p, n_effective)
     lower = max(Decimal("0.0"), compound_p - margin)
     upper = min(Decimal("1.0"), compound_p + margin)
-    
+
     # Find weakest hop
     weakest_idx = min(range(len(hops)), key=lambda i: hops[i].p_correct)
-    
+
     # Apply hard floor
     below_floor = compound_p < CONFIDENCE_FLOOR
-    
+
     return PathConfidence(
         cumulative_p=compound_p.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP),
         lower_bound=lower.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP),
@@ -2788,7 +2854,7 @@ def per_hop_confidence(
 ) -> HopConfidence:
     """
     Compute confidence for a single hop.
-    
+
     Base confidence by evidence class and method:
     - T0, Transfer log (EVM): 0.99
     - T0, UTXO direct spend: 0.999
@@ -2801,7 +2867,7 @@ def per_hop_confidence(
     - T2, Single-source attribution: 0.80
     - T3, ML obfuscation detection: 0.75
     - T3, LLM inference: 0.65
-    
+
     Callers provide base_p from the above table; this function applies
     additional adjustments (e.g., number of independent sources).
     """
@@ -2834,7 +2900,7 @@ def can_promote_to_court_grade(atom: BeliefAtom) -> PromotionCheck:
     The hard confidence floor is enforced here.
     """
     checks = []
-    
+
     # Hard floor: cumulative confidence ≥ 0.60
     if atom.confidence < float(CONFIDENCE_FLOOR):
         checks.append(PromotionBlock(
@@ -2842,7 +2908,7 @@ def can_promote_to_court_grade(atom: BeliefAtom) -> PromotionCheck:
             detail=f"Confidence {atom.confidence:.3f} < {CONFIDENCE_FLOOR} floor",
             blocking=True,
         ))
-    
+
     # T3 cannot be sole basis
     if atom.tier == "T3" and not has_corroborating_T0_T1_T2(atom):
         checks.append(PromotionBlock(
@@ -2850,7 +2916,7 @@ def can_promote_to_court_grade(atom: BeliefAtom) -> PromotionCheck:
             detail="T3 atom requires corroboration from T0/T1/T2",
             blocking=True,
         ))
-    
+
     # Must have investigator signoff_id (D1 lock)
     if atom.predicate in ATTRIBUTION_PREDICATES and not atom.signoff_id:
         checks.append(PromotionBlock(
@@ -2858,7 +2924,7 @@ def can_promote_to_court_grade(atom: BeliefAtom) -> PromotionCheck:
             detail="Court-grade attributions require investigator signoff (D1 lock)",
             blocking=True,
         ))
-    
+
     # No open hard challenges
     if has_open_hard_challenges(atom):
         checks.append(PromotionBlock(
@@ -2866,7 +2932,7 @@ def can_promote_to_court_grade(atom: BeliefAtom) -> PromotionCheck:
             detail="Resolve all open hard challenges before court-grade promotion",
             blocking=True,
         ))
-    
+
     return PromotionCheck(
         approved=not any(c.blocking for c in checks),
         blocks=checks,
@@ -2885,10 +2951,10 @@ Per v0.9 Part 4: AI can be disabled at four granularities. This is enforced at t
 // packages/capability-router/src/ai_toggle.ts
 
 interface AIToggleState {
-  agency_global: boolean;         // Level 1: the master switch
-  role_toggles: Record<string, boolean>;  // Level 2: per-agent-role
-  case_override: boolean | null;  // Level 3: per-case override (null = use agency default)
-  require_action_confirmation: Record<string, boolean>;  // Level 4: per high-impact action
+  agency_global: boolean; // Level 1: the master switch
+  role_toggles: Record<string, boolean>; // Level 2: per-agent-role
+  case_override: boolean | null; // Level 3: per-case override (null = use agency default)
+  require_action_confirmation: Record<string, boolean>; // Level 4: per high-impact action
 }
 
 // The toggle state is resolved at each agent invocation
@@ -2898,34 +2964,33 @@ function resolveToggleForCall(
   actionType: string,
   toggleState: AIToggleState,
 ): ToggleResolution {
-  
   // Level 1: Agency global
   if (!toggleState.agency_global) {
-    return { enabled: false, reason: "agency_ai_disabled" };
+    return { enabled: false, reason: 'agency_ai_disabled' };
   }
-  
+
   // Level 3: Case override (takes precedence over role toggles)
   if (toggleState.case_override !== null) {
     if (!toggleState.case_override) {
-      return { enabled: false, reason: "case_ai_disabled" };
+      return { enabled: false, reason: 'case_ai_disabled' };
     }
   }
-  
+
   // Level 2: Role toggle
   const roleEnabled = toggleState.role_toggles[agentRole] ?? true;
   if (!roleEnabled) {
     return { enabled: false, reason: `role_${agentRole}_disabled` };
   }
-  
+
   // Level 4: Action confirmation required
   if (toggleState.require_action_confirmation[actionType]) {
-    return { 
-      enabled: true, 
+    return {
+      enabled: true,
       requires_confirmation: true,
       confirmation_prompt: buildConfirmationPrompt(agentRole, actionType),
     };
   }
-  
+
   return { enabled: true };
 }
 ```
@@ -2939,53 +3004,53 @@ When AI is off (at any level), the platform must still function. Per v0.9 Part 4
 
 // Maps each agent role to its non-AI fallback behavior
 const NON_AI_FALLBACKS: Record<string, FallbackBehavior> = {
-  "orchestrator": {
-    behavior: "manual_investigation_mode",
-    description: "Investigators trace manually hop-by-hop; no autonomous tracing",
-    ui_message: "AI assistance disabled. Use the manual trace controls.",
-    available_features: ["manual_hop_expand", "belief_state_read", "math_service"],
+  orchestrator: {
+    behavior: 'manual_investigation_mode',
+    description: 'Investigators trace manually hop-by-hop; no autonomous tracing',
+    ui_message: 'AI assistance disabled. Use the manual trace controls.',
+    available_features: ['manual_hop_expand', 'belief_state_read', 'math_service'],
   },
-  "narrative": {
-    behavior: "structured_template",
-    description: "Structured fill-in template with placeholder sections",
-    ui_message: "AI drafting disabled. Complete the structured report template.",
-    available_features: ["template_fill", "belief_state_citations"],
+  narrative: {
+    behavior: 'structured_template',
+    description: 'Structured fill-in template with placeholder sections',
+    ui_message: 'AI drafting disabled. Complete the structured report template.',
+    available_features: ['template_fill', 'belief_state_citations'],
   },
-  "suggestion": {
-    behavior: "hidden",
-    description: "Suggestion sidebar is hidden; no empty placeholder shown",
-    ui_message: null,  // no message; just hide the sidebar
+  suggestion: {
+    behavior: 'hidden',
+    description: 'Suggestion sidebar is hidden; no empty placeholder shown',
+    ui_message: null, // no message; just hide the sidebar
     available_features: [],
   },
-  "critic": {
-    behavior: "human_review_prompt",
-    description: "Challenges are surfaced as raw signals for human review",
-    ui_message: "AI Critic disabled. Manual review of all conclusions recommended.",
-    available_features: ["manual_challenge_entry"],
+  critic: {
+    behavior: 'human_review_prompt',
+    description: 'Challenges are surfaced as raw signals for human review',
+    ui_message: 'AI Critic disabled. Manual review of all conclusions recommended.',
+    available_features: ['manual_challenge_entry'],
   },
-  "attribution": {
-    behavior: "provider_only",
-    description: "Show raw provider attribution without synthesis",
-    ui_message: "AI attribution synthesis disabled. Showing raw provider responses.",
-    available_features: ["provider_attribution_display", "personal_attribution"],
+  attribution: {
+    behavior: 'provider_only',
+    description: 'Show raw provider attribution without synthesis',
+    ui_message: 'AI attribution synthesis disabled. Showing raw provider responses.',
+    available_features: ['provider_attribution_display', 'personal_attribution'],
   },
-  "verifier": {
-    behavior: "skip_with_warning",
-    description: "Drafts are unverified; shown with prominent warning",
-    ui_message: "⚠ Verifier disabled. This draft has not been citation-checked.",
+  verifier: {
+    behavior: 'skip_with_warning',
+    description: 'Drafts are unverified; shown with prominent warning',
+    ui_message: '⚠ Verifier disabled. This draft has not been citation-checked.',
     available_features: [],
   },
-  "inspector_summary": {
-    behavior: "sections_1_2_only",
-    description: "Inspector shows structured facts only; no plain-language summary",
-    ui_message: "AI summary unavailable (disabled); see structured facts below.",
-    available_features: ["structured_facts", "decoded_action_deterministic"],
+  inspector_summary: {
+    behavior: 'sections_1_2_only',
+    description: 'Inspector shows structured facts only; no plain-language summary',
+    ui_message: 'AI summary unavailable (disabled); see structured facts below.',
+    available_features: ['structured_facts', 'decoded_action_deterministic'],
   },
-  "extraction": {
-    behavior: "manual_review_queue",
-    description: "Documents uploaded to manual review queue without AI extraction",
-    ui_message: "AI extraction disabled. Review extracted fields manually.",
-    available_features: ["document_viewer", "manual_entity_entry"],
+  extraction: {
+    behavior: 'manual_review_queue',
+    description: 'Documents uploaded to manual review queue without AI extraction',
+    ui_message: 'AI extraction disabled. Review extracted fields manually.',
+    available_features: ['document_viewer', 'manual_entity_entry'],
   },
 };
 ```
@@ -3030,43 +3095,43 @@ interface AgentCall {
   agent_name: string;
   model_card_id: string;
   provider_id: string;
-  
+
   // Token counts
   input_tokens: number;
   output_tokens: number;
-  
+
   // Cost
-  cost_usd: number;        // 0 for self-hosted models
-  cost_local_electricity_kwh: number | null;  // for self-hosted, estimate
-  
+  cost_usd: number; // 0 for self-hosted models
+  cost_local_electricity_kwh: number | null; // for self-hosted, estimate
+
   // Attribution
   orchestrator_run_id: string;
   task_type: string;
-  
+
   // Timing
-  ts: string;              // ISO 8601
+  ts: string; // ISO 8601
   duration_ms: number;
-  
+
   // Success
-  status: "success" | "failed" | "skipped_ai_off";
+  status: 'success' | 'failed' | 'skipped_ai_off';
 }
 
 // Cost rollups (computed nightly, stored for dashboard)
 interface CostRollup {
-  period: "day" | "week" | "month";
+  period: 'day' | 'week' | 'month';
   period_start: string;
   agency_id: string;
-  
-  by_role: Record<string, number>;      // cost per agent role
-  by_case: Record<string, number>;      // cost per case
-  by_provider: Record<string, number>;  // cost per LLM provider
-  by_tier: Record<"A" | "B" | "C", number>;  // cost per tier
-  
+
+  by_role: Record<string, number>; // cost per agent role
+  by_case: Record<string, number>; // cost per case
+  by_provider: Record<string, number>; // cost per LLM provider
+  by_tier: Record<'A' | 'B' | 'C', number>; // cost per tier
+
   total_external_cost_usd: number;
-  total_local_electricity_cost_usd: number;  // estimate
-  
+  total_local_electricity_cost_usd: number; // estimate
+
   // Comparison
-  what_all_frontier_would_have_cost: number;  // hypothetical
+  what_all_frontier_would_have_cost: number; // hypothetical
   savings_from_tier_strategy: number;
 }
 ```
@@ -3092,39 +3157,39 @@ def estimate_operation_cost(
     - The "Draft report" action
     - The Scope Agent (cost estimation is its primary output)
     """
-    
+
     # Enumerate expected agent calls for this operation
     expected_calls = enumerate_expected_calls(operation, inputs)
-    
+
     total_cost = Decimal("0.00")
     breakdown = []
-    
+
     for call in expected_calls:
         model = model_config.resolve_model(call.agent_role)
-        
+
         # Skip if AI is toggled off for this role
         if not model_config.ai_toggle.is_enabled_for_role(call.agent_role):
             continue
-        
+
         est_input_tokens = estimate_input_tokens(call)
         est_output_tokens = estimate_output_tokens(call)
-        
+
         # Adjust for cache hits (cached calls don't re-run LLMs)
         cache_hit_probability = cache_state.estimate_hit_rate(call)
         effective_probability = Decimal(str(1.0 - cache_hit_probability))
-        
+
         call_cost = (
             (Decimal(str(est_input_tokens)) / Decimal("1000000")) * model.input_cost_per_million
             + (Decimal(str(est_output_tokens)) / Decimal("1000000")) * model.output_cost_per_million
         ) * effective_probability
-        
+
         total_cost += call_cost
         breakdown.append(CallCostEstimate(
             agent_role=call.agent_role,
             model_id=model.id,
             estimated_cost_usd=float(call_cost),
         ))
-    
+
     return CostEstimate(
         total_usd=float(total_cost),
         breakdown=breakdown,
@@ -3178,8 +3243,8 @@ import re
 from pathlib import Path
 
 ANTI_FEATURE_PATTERNS = [
-    
-    # 1. No predictive policing: no code that evaluates suspicion without 
+
+    # 1. No predictive policing: no code that evaluates suspicion without
     #    a documented investigative predicate
     AntiFeaturePattern(
         name="predictive_policing",
@@ -3191,7 +3256,7 @@ ANTI_FEATURE_PATTERNS = [
         ],
         exempt_files=["tests/", "docs/"],
     ),
-    
+
     # 2. No demographic correlation
     AntiFeaturePattern(
         name="demographic_correlation",
@@ -3205,7 +3270,7 @@ ANTI_FEATURE_PATTERNS = [
         ],
         exempt_files=["tests/", "docs/"],
     ),
-    
+
     # 3. No mass surveillance modes: watchers require case_id
     AntiFeaturePattern(
         name="mass_surveillance",
@@ -3217,7 +3282,7 @@ ANTI_FEATURE_PATTERNS = [
         ],
         exempt_files=["tests/"],
     ),
-    
+
     # 4. No untargeted dragnet
     AntiFeaturePattern(
         name="dragnet_features",
@@ -3229,14 +3294,14 @@ ANTI_FEATURE_PATTERNS = [
         ],
         exempt_files=["tests/"],
     ),
-    
+
     # 5. No AI-only court-grade promotion (D1 lock enforcement)
     AntiFeaturePattern(
         name="ai_court_grade_promotion",
         description="BeliefAtom promoted to court_grade without signoff_id",
         check_function=check_no_unsigned_court_grade_promotion,
     ),
-    
+
     # 6. No numbers from LLM (Math Service ownership)
     AntiFeaturePattern(
         name="llm_arithmetic",
@@ -3251,7 +3316,7 @@ def run_anti_feature_checks(repo_root: Path) -> AntiFeatureCheckResult:
     for pattern in ANTI_FEATURE_PATTERNS:
         result = run_pattern_check(pattern, repo_root)
         results.append(result)
-    
+
     return AntiFeatureCheckResult(
         passed=all(r.passed for r in results),
         results=results,
@@ -3284,24 +3349,24 @@ Per v0.8 F41, every report must include the methodology disclaimer. This is enfo
 # packages/agents/src/narrative.py
 
 METHODOLOGY_DISCLAIMER = """
-The analysis in this report was produced using the ChainSight platform's 
-heuristic and machine-learning techniques as documented in the Methodology 
-Disclosure section. These techniques are probabilistic and subject to known 
-false-positive rates as publicly reported. The conclusions in this report 
-are technical findings, not legal conclusions. The decision to act on these 
-findings — including freeze requests, seizure recommendations, or charging 
-decisions — is the responsibility of the human investigators, prosecutors, 
+The analysis in this report was produced using the ChainSight platform's
+heuristic and machine-learning techniques as documented in the Methodology
+Disclosure section. These techniques are probabilistic and subject to known
+false-positive rates as publicly reported. The conclusions in this report
+are technical findings, not legal conclusions. The decision to act on these
+findings — including freeze requests, seizure recommendations, or charging
+decisions — is the responsibility of the human investigators, prosecutors,
 and adjudicators involved, not the platform.
 """
 
 def build_report(path: TracePath, config: ReportConfig) -> Report:
     """Every report builder injects the methodology disclaimer."""
-    
+
     # Validate that the disclaimer is present
     # (anti-feature check also verifies this at code level)
     assert METHODOLOGY_DISCLAIMER in config.required_sections, \
         "Methodology disclaimer is mandatory in all reports (F41)"
-    
+
     ...
 ```
 
@@ -3322,7 +3387,7 @@ CLRB_REVIEW_REQUIRED_FOR = [
 def check_clrb_required(feature_manifest: FeatureManifest) -> bool:
     """Returns True if this feature requires CLRB review before release."""
     return any(
-        tag in feature_manifest.capability_tags 
+        tag in feature_manifest.capability_tags
         for tag in CLRB_REVIEW_REQUIRED_FOR
     )
 ```
@@ -3394,7 +3459,7 @@ This matches the v1.0 engineering doc Part 4 build sequence, adding the AI/ML-sp
 - Set up `tools/eval/` scaffold: ground-truth directory structure + one canonical test case (Ronin Bridge 2022)
 - Implement the regression runner stub: `regression_runner.py` runs the Ronin case end-to-end
 
-**Phase 0 AI/ML deliverable:** 
+**Phase 0 AI/ML deliverable:**
 End-to-end: paste a tx hash → Inspector populates → AI summary (Verifier-gated) → Orchestrator traces one hop → BeliefAtoms emitted → Reproducibility Pack captures model card → replay produces identical output → AI can be toggled off cleanly.
 
 ---
@@ -3492,26 +3557,26 @@ These are specific items that need founder/architect decisions before the corres
 
 interface ModelCard {
   id: string;
-  model_id: string;           // e.g. "claude-opus-4-6"
+  model_id: string; // e.g. "claude-opus-4-6"
   provider_id: string;
   model_version: string;
-  prompt_template_hash: string;   // SHA-256 of the exact system prompt used
+  prompt_template_hash: string; // SHA-256 of the exact system prompt used
   sampling_params: SamplingParams;
-  
+
   // Provenance anchor
   deployed_at: string;
-  frozen_at: string | null;       // set when used in a court_grade BeliefAtom
-  
+  frozen_at: string | null; // set when used in a court_grade BeliefAtom
+
   // For reproducibility
-  api_version: string;            // Anthropic API version
-  sdk_version: string;            // anthropic npm version
+  api_version: string; // Anthropic API version
+  sdk_version: string; // anthropic npm version
 }
 
 interface SamplingParams {
   temperature: number;
   top_p: number | null;
   max_tokens: number;
-  seed: number | null;            // set for deterministic replay where possible
+  seed: number | null; // set for deterministic replay where possible
   stop_sequences: string[];
 }
 ```
@@ -3542,7 +3607,7 @@ For reference alongside v1.0 Part 9 platform principles:
 
 ---
 
-*End of ChainSight v1.0 AI/ML Engineering Design*
+_End of ChainSight v1.0 AI/ML Engineering Design_
 
-*Document produced: June 2026. Discipline: AI/ML Engineering (Discipline Agent #2).*
-*Cross-references: v0.9 AI/LLM Strategy, v0.2 Accuracy Spine (B1-B8), v1.0 Engineering (canonical), v0.5 F8 Transaction Inspector, v0.8 F41 Anti-Feature Commitments.*
+_Document produced: June 2026. Discipline: AI/ML Engineering (Discipline Agent #2)._
+_Cross-references: v0.9 AI/LLM Strategy, v0.2 Accuracy Spine (B1-B8), v1.0 Engineering (canonical), v0.5 F8 Transaction Inspector, v0.8 F41 Anti-Feature Commitments._

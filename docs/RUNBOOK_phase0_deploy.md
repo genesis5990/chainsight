@@ -4,17 +4,17 @@ Manual one-time setup steps to get CI/CD wired between GitHub → Fly.io → Sup
 
 ## Status
 
-| Item | Status |
-|---|---|
-| GitHub repo created | ✅ `genesis5990/chainsight` |
-| Supabase project provisioned | ✅ `chainsight-dev` (`uyiabyyovwhciitlzkal`) |
-| Supabase migrations applied | ✅ 3 migrations, zero security advisories |
-| Fly apps created | ✅ chainsight-{api,web,worker,math}-dev |
-| Fly secrets staged | ✅ Supabase URL + anon key set on api + web apps |
-| GitHub Actions deploy workflow | ✅ `.github/workflows/deploy.yml` |
-| **FLY_API_TOKEN GitHub secret** | ⏳ **You do this** (1 minute) |
-| **SUPABASE_ACCESS_TOKEN GitHub secret** | ⏳ **You do this** (1 minute) |
-| First deploy | Triggers automatically once secrets are set |
+| Item                                    | Status                                           |
+| --------------------------------------- | ------------------------------------------------ |
+| GitHub repo created                     | ✅ `genesis5990/chainsight`                      |
+| Supabase project provisioned            | ✅ `chainsight-dev` (`uyiabyyovwhciitlzkal`)     |
+| Supabase migrations applied             | ✅ 3 migrations, zero security advisories        |
+| Fly apps created                        | ✅ chainsight-{api,web,worker,math}-dev          |
+| Fly secrets staged                      | ✅ Supabase URL + anon key set on api + web apps |
+| GitHub Actions deploy workflow          | ✅ `.github/workflows/deploy.yml`                |
+| **FLY_API_TOKEN GitHub secret**         | ⏳ **You do this** (1 minute)                    |
+| **SUPABASE_ACCESS_TOKEN GitHub secret** | ⏳ **You do this** (1 minute)                    |
+| First deploy                            | Triggers automatically once secrets are set      |
 
 ## Step 1 — Generate Fly deploy token (1 minute)
 
@@ -27,6 +27,7 @@ Why: GitHub Actions needs a token to deploy to Fly. The token created during you
 5. Click **Create**
 6. Copy the token (starts with `FlyV1 `)
 7. Add as GitHub secret:
+
    ```bash
    gh secret set FLY_API_TOKEN -R genesis5990/chainsight
    # Paste the token when prompted
@@ -71,12 +72,12 @@ git push
 
 Expected URLs (will be live after the first successful deploy):
 
-| Service | URL | Health check |
-|---|---|---|
-| API | https://chainsight-api-dev.fly.dev | `/v1/health/live` |
-| Web | https://chainsight-web-dev.fly.dev | `/` (the landing page) |
-| Math | https://chainsight-math-dev.fly.dev | `/health` |
-| Worker | (no public URL) | check logs: `flyctl logs -a chainsight-worker-dev` |
+| Service | URL                                 | Health check                                       |
+| ------- | ----------------------------------- | -------------------------------------------------- |
+| API     | https://chainsight-api-dev.fly.dev  | `/v1/health/live`                                  |
+| Web     | https://chainsight-web-dev.fly.dev  | `/` (the landing page)                             |
+| Math    | https://chainsight-math-dev.fly.dev | `/health`                                          |
+| Worker  | (no public URL)                     | check logs: `flyctl logs -a chainsight-worker-dev` |
 
 Smoke test from anywhere:
 
@@ -89,16 +90,19 @@ open https://chainsight-web-dev.fly.dev
 ## Step 5 — When deploys fail (troubleshooting)
 
 **Build failures:**
+
 - Check `Dockerfile` paths are correct
 - Confirm `pnpm-lock.yaml` exists in repo root (run `pnpm install` locally and commit)
 - Check Fly remote builder logs in the Actions job
 
 **Runtime failures:**
+
 - `flyctl logs -a chainsight-{service}-dev` to see app logs
 - `flyctl status -a chainsight-{service}-dev` to see machine state
 - `flyctl secrets list -a chainsight-{service}-dev` to confirm secrets are set
 
 **Auth failures from the deploy:**
+
 - Confirm `FLY_API_TOKEN` is set and not expired
 - Confirm the token has access to the personal org
 
@@ -106,14 +110,14 @@ open https://chainsight-web-dev.fly.dev
 
 Both Fly and Supabase will charge for resources used. Expected Phase 0 baseline:
 
-| Resource | Cost |
-|---|---|
-| Supabase chainsight-dev project | $10/month (Pro org, second project) |
-| Fly chainsight-api-dev (scale-to-zero) | $0–5/month |
-| Fly chainsight-web-dev (scale-to-zero) | $0–5/month |
-| Fly chainsight-worker-dev (1 machine always-on) | ~$3/month |
-| Fly chainsight-math-dev (scale-to-zero) | $0–5/month |
-| **Total Phase 0** | **~$13–28/month** |
+| Resource                                        | Cost                                |
+| ----------------------------------------------- | ----------------------------------- |
+| Supabase chainsight-dev project                 | $10/month (Pro org, second project) |
+| Fly chainsight-api-dev (scale-to-zero)          | $0–5/month                          |
+| Fly chainsight-web-dev (scale-to-zero)          | $0–5/month                          |
+| Fly chainsight-worker-dev (1 machine always-on) | ~$3/month                           |
+| Fly chainsight-math-dev (scale-to-zero)         | $0–5/month                          |
+| **Total Phase 0**                               | **~$13–28/month**                   |
 
 Scale-to-zero means the API/web/math apps only consume resources when there's traffic. The worker stays running because it polls the BullMQ queue.
 

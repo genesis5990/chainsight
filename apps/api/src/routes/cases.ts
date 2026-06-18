@@ -11,7 +11,9 @@ import { z } from 'zod';
 
 const createCaseSchema = z.object({
   codename: z.string().min(1).max(200),
-  classification: z.enum(['unclassified', 'LES', 'confidential', 'classified']).default('unclassified'),
+  classification: z
+    .enum(['unclassified', 'LES', 'confidential', 'classified'])
+    .default('unclassified'),
   summary_md: z.string().optional(),
 });
 

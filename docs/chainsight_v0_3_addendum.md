@@ -7,12 +7,15 @@
 ## Part 1 — Decisions locked
 
 ### D1. Autonomy line (G1 resolved)
-**Human-in-the-loop is mandatory for any court-grade attribution.** The Attribution Agent may *propose* and *enrich* — it may never *publish* a court-grade entity label without an investigator's explicit sign-off. This is enforced in the Belief State Service: any atom with `status: court_grade` and `predicate: is_controlled_by | is_entity` requires a `signoff_id` field populated by an authenticated investigator. The DB constraint rejects the insert otherwise.
+
+**Human-in-the-loop is mandatory for any court-grade attribution.** The Attribution Agent may _propose_ and _enrich_ — it may never _publish_ a court-grade entity label without an investigator's explicit sign-off. This is enforced in the Belief State Service: any atom with `status: court_grade` and `predicate: is_controlled_by | is_entity` requires a `signoff_id` field populated by an authenticated investigator. The DB constraint rejects the insert otherwise.
 
 ### D2. Freeze decision UI (G4 resolved)
+
 Ship the one-pager design from Part G4 of v0.2 as the v1 freeze interface. (Trace summary, confidence with intervals, open Critic challenges, methodology used, VASP info, SLA clock, three buttons: Freeze / Don't Freeze / Escalate. Every click logged.)
 
 ### D3. New feature: **Path Selection → Report (PSR)**
+
 See Part 2 below. Promoted to a first-class module that touches Visualization, Belief State, Math, Critic, Reporting, and Evidence.
 
 ---
@@ -29,6 +32,7 @@ On the visual trace canvas, the investigator can:
 4. **Ask in natural language** ("show me every path the BTC took from the victim wallet to a centralized exchange") and have the AI propose path candidates that the investigator accepts/rejects.
 
 The selection becomes a first-class object — a **TracePath** — that can be:
+
 - Named, tagged, and annotated by the investigator
 - Saved to the case as evidence
 - Rendered as a standalone written report (single path)
@@ -106,6 +110,7 @@ The `content_hash` is the critical field. Two investigators selecting "the same 
 ### 2.3 Selection mechanics on the canvas
 
 **Click-to-select (precise)**
+
 - Investigator clicks a starting node
 - The canvas highlights every downstream edge with a faint glow
 - Each click extends the path; the path is shown as a bright overlay
@@ -113,24 +118,28 @@ The `content_hash` is the critical field. Two investigators selecting "the same 
 - Right-click → "Snap to confidence ≥ 0.9 path only" / "Snap to court-grade only" filters
 
 **Lasso-select (regional)**
+
 - Investigator draws a freeform shape on the canvas
 - All nodes inside become candidate path members
 - A modal asks: "Treat as a single path, or detect sub-paths?"
 - If sub-paths, the Tracer Agent runs a constrained pathfinder inside the lasso region
 
 **Auto-pathfind (origin → destination)**
+
 - Investigator picks a start node and end node
 - The Tracer Agent enumerates all paths up to a depth/branching cap
 - Returns ranked candidates (by value-flow weight, confidence, or shortest)
 - Investigator picks one, many, or "include all"
 
 **Natural-language select (AI-assisted)**
+
 - Investigator types: "Show me every path where stablecoins were bridged to Tron before being deposited at a VASP"
 - The Tracer Agent parses → constructs a graph query → returns candidate paths
 - Each candidate is shown as a hoverable preview overlay before being accepted into the case
 - **Critic Agent reviews every AI-proposed path** before it can be promoted to `under_review`
 
 **Multi-path mode**
+
 - The investigator can have N paths active simultaneously, each in a distinct color
 - Paths can share nodes; the UI shows overlap explicitly
 - Comparison panel docks at the bottom showing methodology results side-by-side
@@ -199,6 +208,7 @@ For each `TracePath` (or set of paths), the **Narrative Agent** generates a stru
 ```
 
 The investigator can:
+
 - **Edit any section freely** (changes tracked, original AI draft preserved in history)
 - **Lock sections** to mark them human-authored (verifier still checks citations on locked sections)
 - **Regenerate sections** after editing the underlying path
@@ -244,20 +254,20 @@ The "shared infrastructure" section is the prosecutor's gold — if three indepe
 
 ### 2.6 Integration with the rest of the platform
 
-| System | Interaction |
-|---|---|
-| **Belief State (B1)** | Every node/edge in a `TracePath` is a reference to a `BeliefAtomId`. The path itself becomes a `BeliefAtom` with predicate `"is_evidentiary_path"`. |
-| **Tiered Determinism (B2)** | The path inherits the lowest tier of any atom in it. A path with one T3 atom is a T3 path overall. The report flags this prominently. |
-| **Reproducibility (B3)** | The path produces its own sub-pack — a path-scoped slice of the case's reproducibility pack. Useful for exhibits in court. |
-| **Confidence Calculus (B4)** | The path's cumulative confidence is computed by the Math Service using the proper per-hop composition. Rendered with intervals, not point estimates. |
-| **Critic Agent (B5)** | The Critic reviews every path on save. Open challenges block promotion to `finalized`. The Critic also runs adversarial "alternative path" generation: "here are three other paths the same funds could plausibly have taken — does your conclusion change?" |
-| **Hallucination Gates (B6)** | Every sentence the Narrative Agent emits in the report must reference a BeliefAtom or T0 source. The Verifier blocks unfounded sentences. The Math Service owns every number. |
-| **Ground Truth Flywheel (B7)** | When a case closes, the investigator's accepted paths become training labels for "what a good path looks like" — improves the natural-language path selector over time. |
-| **Privacy (B8)** | Path reports respect case-scoped encryption. Cross-agency sharing of a path uses redaction templates. |
-| **Methodology engine (Domain 13)** | Every path runs through all enabled methodologies in parallel. Investigator picks the lens(es) shown in the final report. |
-| **Visualization (Domain 5)** | Selected paths render as colored overlays on the canvas; multi-path mode uses distinct colors with overlap indicators. |
-| **Observer mode** | A finalized path can be played back step-by-step in courtroom view with optional narration. |
-| **Collaboration (Domain 10)** | Paths can be shared, commented on, branched (CRDT-backed). Multiple investigators on the same case can author different paths. |
+| System                             | Interaction                                                                                                                                                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Belief State (B1)**              | Every node/edge in a `TracePath` is a reference to a `BeliefAtomId`. The path itself becomes a `BeliefAtom` with predicate `"is_evidentiary_path"`.                                                                                                          |
+| **Tiered Determinism (B2)**        | The path inherits the lowest tier of any atom in it. A path with one T3 atom is a T3 path overall. The report flags this prominently.                                                                                                                        |
+| **Reproducibility (B3)**           | The path produces its own sub-pack — a path-scoped slice of the case's reproducibility pack. Useful for exhibits in court.                                                                                                                                   |
+| **Confidence Calculus (B4)**       | The path's cumulative confidence is computed by the Math Service using the proper per-hop composition. Rendered with intervals, not point estimates.                                                                                                         |
+| **Critic Agent (B5)**              | The Critic reviews every path on save. Open challenges block promotion to `finalized`. The Critic also runs adversarial "alternative path" generation: "here are three other paths the same funds could plausibly have taken — does your conclusion change?" |
+| **Hallucination Gates (B6)**       | Every sentence the Narrative Agent emits in the report must reference a BeliefAtom or T0 source. The Verifier blocks unfounded sentences. The Math Service owns every number.                                                                                |
+| **Ground Truth Flywheel (B7)**     | When a case closes, the investigator's accepted paths become training labels for "what a good path looks like" — improves the natural-language path selector over time.                                                                                      |
+| **Privacy (B8)**                   | Path reports respect case-scoped encryption. Cross-agency sharing of a path uses redaction templates.                                                                                                                                                        |
+| **Methodology engine (Domain 13)** | Every path runs through all enabled methodologies in parallel. Investigator picks the lens(es) shown in the final report.                                                                                                                                    |
+| **Visualization (Domain 5)**       | Selected paths render as colored overlays on the canvas; multi-path mode uses distinct colors with overlap indicators.                                                                                                                                       |
+| **Observer mode**                  | A finalized path can be played back step-by-step in courtroom view with optional narration.                                                                                                                                                                  |
+| **Collaboration (Domain 10)**      | Paths can be shared, commented on, branched (CRDT-backed). Multiple investigators on the same case can author different paths.                                                                                                                               |
 
 ---
 
@@ -291,15 +301,15 @@ The "shared infrastructure" section is the prosecutor's gold — if three indepe
 
 ### 2.9 What's new in the tech stack to support this
 
-| Component | Addition |
-|---|---|
-| **Frontend canvas** | Path selection state machine (click / lasso / auto / NL modes), multi-path color manager, overlap renderer |
-| **Pathfinder service** | New Python service: constrained k-shortest-paths on the case subgraph, with branching-factor and confidence bounds |
-| **NL-to-graph-query** | Smaller fine-tuned model for "convert investigator language to constrained graph traversal spec" — sits in front of the pathfinder |
-| **Path report generator** | New Narrative Agent skill, with the path-report template baked in as procedural memory |
-| **Path comparison engine** | Math service extension: shared-infrastructure detection, divergence analysis, multi-path methodology cross-tabulation |
-| **Observer-mode playback** | New frontend module — step-through with optional TTS narration |
-| **Path-scoped reproducibility builder** | Sub-pack builder; same primitives as the case-level pack but scoped to a path's atoms |
+| Component                               | Addition                                                                                                                           |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend canvas**                     | Path selection state machine (click / lasso / auto / NL modes), multi-path color manager, overlap renderer                         |
+| **Pathfinder service**                  | New Python service: constrained k-shortest-paths on the case subgraph, with branching-factor and confidence bounds                 |
+| **NL-to-graph-query**                   | Smaller fine-tuned model for "convert investigator language to constrained graph traversal spec" — sits in front of the pathfinder |
+| **Path report generator**               | New Narrative Agent skill, with the path-report template baked in as procedural memory                                             |
+| **Path comparison engine**              | Math service extension: shared-infrastructure detection, divergence analysis, multi-path methodology cross-tabulation              |
+| **Observer-mode playback**              | New frontend module — step-through with optional TTS narration                                                                     |
+| **Path-scoped reproducibility builder** | Sub-pack builder; same primitives as the case-level pack but scoped to a path's atoms                                              |
 
 ---
 
@@ -330,19 +340,19 @@ PSR slots into Phase 2, not Phase 3, because it's the feature that makes the res
 
 ## Part 4 — Summary of v0.3 changes vs v0.2
 
-| Change | Status |
-|---|---|
-| D1: Court-grade attributions require investigator signoff_id | Locked |
-| D2: Freeze decision UI design from G4 | Locked |
-| D3: Path Selection → Report (PSR) as first-class module | Added |
-| TracePath data model | Defined |
-| Selection mechanics (click / lasso / auto / NL / multi-path) | Defined |
-| Single-path report template | Defined |
-| Multi-path comparison report template | Defined |
-| Integration with B1–B8 + Domains 5/10/11/13 | Mapped |
-| Edge cases (mixers, bridges, swaps, branches, privacy chains, cross-case) | Spec'd |
-| Tech stack additions (pathfinder service, NL-to-graph, observer-mode playback) | Listed |
-| New open questions G5/G6/G7 | Surfaced |
-| Build phasing updated | PSR pulled forward to Phase 2 |
+| Change                                                                         | Status                        |
+| ------------------------------------------------------------------------------ | ----------------------------- |
+| D1: Court-grade attributions require investigator signoff_id                   | Locked                        |
+| D2: Freeze decision UI design from G4                                          | Locked                        |
+| D3: Path Selection → Report (PSR) as first-class module                        | Added                         |
+| TracePath data model                                                           | Defined                       |
+| Selection mechanics (click / lasso / auto / NL / multi-path)                   | Defined                       |
+| Single-path report template                                                    | Defined                       |
+| Multi-path comparison report template                                          | Defined                       |
+| Integration with B1–B8 + Domains 5/10/11/13                                    | Mapped                        |
+| Edge cases (mixers, bridges, swaps, branches, privacy chains, cross-case)      | Spec'd                        |
+| Tech stack additions (pathfinder service, NL-to-graph, observer-mode playback) | Listed                        |
+| New open questions G5/G6/G7                                                    | Surfaced                      |
+| Build phasing updated                                                          | PSR pulled forward to Phase 2 |
 
 The mind map and original schema (v0.1) remain valid. The accuracy spine (v0.2) remains valid. This addendum extends, doesn't replace.

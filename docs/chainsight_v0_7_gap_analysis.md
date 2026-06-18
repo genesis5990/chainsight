@@ -13,7 +13,8 @@ I'll organize this into three buckets and then make recommendations on which gap
 These are real workflows investigators run in 2026 that the design doesn't yet support.
 
 ### 1.1 The expert witness / Daubert lifecycle
-**Gap:** The platform produces court-defensible reports but treats the *expert witness* as a passive consumer of those reports rather than a first-class user.
+
+**Gap:** The platform produces court-defensible reports but treats the _expert witness_ as a passive consumer of those reports rather than a first-class user.
 
 Real-world reality: in the US, blockchain forensic evidence enters court through expert testimony under [Daubert / FRE 702](https://blockeden.xyz/blog/2026/04/11/blockchain-evidence-courtroom-trm-labs-on-chain-analytics-legal/). The expert is a specific human with a CV, a publication record, and prior testimony that defense counsel will attack. The platform should help them:
 
@@ -26,6 +27,7 @@ Real-world reality: in the US, blockchain forensic evidence enters court through
 **Recommendation:** Add an "Expert Witness Profile" module. Low complexity, high credibility impact for the LE and private-investigator markets.
 
 ### 1.2 The supervisor / case review workflow
+
 **Gap:** The design assumes individual investigators work cases. In reality, every case has a chain of command — line investigator → squad supervisor → ASAC → SAC, or in private sector, analyst → senior analyst → manager → director.
 
 Supervisors need:
@@ -39,6 +41,7 @@ Supervisors need:
 **Recommendation:** Add a "Supervisor Mode" workflow layer in Phase 1. This is the difference between a tool individual investigators love and a tool agencies actually buy at scale.
 
 ### 1.3 The handoff / case transfer workflow
+
 **Gap:** Investigators leave agencies. Cases get reassigned. Joint task forces hand cases between agencies. None of this is currently modeled.
 
 What's needed:
@@ -51,7 +54,8 @@ What's needed:
 **Recommendation:** Phase 2. Not critical for v1 (a case can be reassigned manually) but a frequent ask once the platform gets used by real teams.
 
 ### 1.4 The chain-of-custody for digital evidence
-**Gap:** The design captures evidence storage and the Reproducibility Pack, but the *chain of custody* — who handled what, when, with what authority — is implicit rather than explicit.
+
+**Gap:** The design captures evidence storage and the Reproducibility Pack, but the _chain of custody_ — who handled what, when, with what authority — is implicit rather than explicit.
 
 What's needed:
 
@@ -64,6 +68,7 @@ What's needed:
 **Recommendation:** Bump from implicit-in-audit-trail to first-class in Phase 0. The cost of adding it later is high; the cost now is small.
 
 ### 1.5 The mobile / field workflow
+
 **Gap:** Investigators sometimes need to see case data from the field — at a search warrant execution, at an exchange office, in a courtroom waiting room. The design assumes desktop.
 
 What's needed (in priority order):
@@ -76,6 +81,7 @@ What's needed (in priority order):
 **Recommendation:** Mobile read-only in Phase 1; field capture in Phase 2; full mobile authoring never (too risky for a court-defensible workflow).
 
 ### 1.6 The training / sandbox environment
+
 **Gap:** Investigators need to learn the platform. Agencies need to onboard new hires. Neither is addressed.
 
 What's needed:
@@ -88,6 +94,7 @@ What's needed:
 **Recommendation:** Phase 1 essential. This is also how the platform amplifies its reach — agencies will use ChainSight for their internal training even when they're using other tools for casework, which gets ChainSight into the seat.
 
 ### 1.7 The "I made a mistake" workflow
+
 **Gap:** Investigators sometimes get things wrong — promote an attribution that turns out to be wrong, mark the wrong tx as important, build a path that turns out to be a dead end. The platform's immutability principles (G5) are correct but need a graceful retraction story.
 
 What's needed:
@@ -106,6 +113,7 @@ What's needed:
 These are areas of the crypto ecosystem the design has implicitly ignored.
 
 ### 2.1 The privacy-coin boundary
+
 **Gap:** The design mentions Monero, Zcash, Aleo, and Iron Fish exist and treats them as "hard boundaries." It doesn't address what investigators actually do at those boundaries.
 
 Real 2026 reality: privacy coins are [resurging](https://blockeden.xyz/blog/2026/01/28/privacy-coin-revival-zcash-monero-surge-regulatory-pressure/), Monero's FCMP++ upgrade makes it [statistically untraceable at scale](https://www.cryptotimes.io/2026/06/05/zcash-vs-monero-the-2026-privacy-coin-war-just-got-decided-in-one-week/), and Zcash's selective disclosure (viewing keys) creates a new investigative primitive: **a court order can compel a Zcash user to surrender viewing keys**, and the platform should know how to use them.
@@ -121,6 +129,7 @@ What's needed:
 **Recommendation:** Phase 2. This is a credibility feature — being honest about what's possible at the privacy boundary differentiates the platform from competitors who oversell.
 
 ### 2.2 The L2 / ZK rollup landscape
+
 **Gap:** The design lists "Base, Arbitrum, Optimism, Polygon, zkSync" but doesn't address what makes L2 forensics structurally different.
 
 Real reality: by 2026, [ZK rollups exceed $70B TVL](https://degen0x.com/learn/zk-rollups-guide-2026/) with zkSync leading at $6.5B. L2s have:
@@ -142,6 +151,7 @@ What's needed:
 **Recommendation:** Phase 1 for the basics (treating L2s as first-class chains, not afterthoughts); Phase 2 for the deeper L2-specific tooling.
 
 ### 2.3 Stablecoin freeze + reissue workflows
+
 **Gap:** [Stablecoin freezes are now routine](https://hodder.law/what-to-do-if-the-dea-seizes-your-usdt-or-usdc/) — USDT freezes [exceeded $25-30M in single-month destroyed-token spikes in 2025](https://blog.amlbot.com/stablecoin-freezes-2023-2025-a-data-backed-analysis-of-usdt-vs-usdc-by-amlbot/). The design mentions freezes but doesn't address the full freeze → burn → reissue → restitution lifecycle.
 
 What's needed:
@@ -156,6 +166,7 @@ What's needed:
 **Recommendation:** Phase 1 — this is one of the highest-frequency investigator workflows in 2026 and shipping without it is unacceptable.
 
 ### 2.4 NFTs, ordinals, runes, and non-fungible assets
+
 **Gap:** The design treats every asset as a fungible token. NFTs (ERC-721, ERC-1155), Bitcoin Ordinals, Runes, and Solana non-fungibles are all evidentially important and have different tracing properties.
 
 What matters:
@@ -169,7 +180,8 @@ What matters:
 **Recommendation:** Phase 2 for basic NFT support; Phase 3 for marketplace-specific decoders. Lower priority than stablecoins, but real and growing.
 
 ### 2.5 DeFi-specific exploits and incident response
-**Gap:** The design supports tracing through DEX swaps and bridges. It doesn't specifically address DeFi *exploits* (flash loan attacks, oracle manipulation, governance attacks, smart-contract vulnerabilities) — which are now a major share of crypto crime investigations.
+
+**Gap:** The design supports tracing through DEX swaps and bridges. It doesn't specifically address DeFi _exploits_ (flash loan attacks, oracle manipulation, governance attacks, smart-contract vulnerabilities) — which are now a major share of crypto crime investigations.
 
 What's needed:
 
@@ -177,12 +189,13 @@ What's needed:
 - Oracle manipulation detection — patterns where an attacker manipulates a price oracle to extract value
 - Governance attack detection (proposal-execution patterns that drain treasuries)
 - Smart-contract vulnerability classification — when funds were extracted via a CVE-class vulnerability, the case has a different evidentiary structure than a wallet-compromise case
-- MEV-extraction forensics — sandwich attacks, JIT liquidity, frontrunning — these are sometimes the *crime* (when targeting victims) and sometimes the *symptom* (showing the attacker's funds path)
+- MEV-extraction forensics — sandwich attacks, JIT liquidity, frontrunning — these are sometimes the _crime_ (when targeting victims) and sometimes the _symptom_ (showing the attacker's funds path)
 - Auditor / post-mortem report ingestion — major exploits have public post-mortems from auditors (Trail of Bits, Spearbit, OpenZeppelin); the platform should ingest and link them
 
 **Recommendation:** Phase 2 for the basics (flash-loan reconstruction, exploit classification); Phase 3 for the advanced detectors. Critical for the financial-crime-investigator and compliance-team market segments.
 
 ### 2.6 Lightning Network and off-chain layers
+
 **Gap:** Lightning Network handles a non-trivial volume of Bitcoin payments. It's off-chain by design. The platform's tracing primitives stop at the channel-open and channel-close transactions on-chain, missing everything in between.
 
 What's needed:
@@ -195,6 +208,7 @@ What's needed:
 **Recommendation:** Phase 3. Not high-volume for casework yet but growing.
 
 ### 2.7 Newer asset classes that will matter
+
 **Gap:** The design doesn't address asset classes that are emerging but will be significant by the platform's Phase 3 timeframe:
 
 - **Real-world asset tokenization (RWA)** — tokenized treasuries, real estate, equities — these create complex bridges between on-chain forensics and traditional financial-crime forensics
@@ -211,6 +225,7 @@ What's needed:
 These are gaps that affect long-term viability, not just functionality.
 
 ### 3.1 The pricing and packaging model
+
 **Gap:** v0.7 introduced the dual deployment model (On-Prem Sovereign + SaaS Blind) but the pricing model itself isn't spec'd.
 
 Open questions:
@@ -225,6 +240,7 @@ Open questions:
 **Recommendation:** This is a Go-to-Market document, not a design document. Defer until that artifact is built (Option C in the v0.6 closing).
 
 ### 3.2 The vendor sustainability story
+
 **Gap:** A sovereign on-prem product that the vendor cannot read raises a real question: how does the vendor know what features customers want, what's breaking, what to improve?
 
 Without telemetry, the vendor flies blind on:
@@ -244,6 +260,7 @@ This is fixable but requires deliberate design:
 **Recommendation:** Address explicitly in the v0.7 governance documentation. This is a credibility issue with technical buyers who have seen too many vendors hide behind privacy claims to avoid accountability.
 
 ### 3.3 The data-broker and reseller boundary
+
 **Gap:** Agencies will sometimes ask the vendor to act as a data broker (e.g., "we don't have a TRM contract but we need TRM data for this case — can you get it for us?"). The vendor's posture on this needs to be explicit.
 
 The trade-off:
@@ -254,6 +271,7 @@ The trade-off:
 **Recommendation:** Pure BYOK in v1 (consistent with the sovereignty principle). Vendor-as-broker possible in v2 if customer demand is strong, with strict separation between brokered data and platform operations.
 
 ### 3.4 The certification and accreditation roadmap
+
 **Gap:** Federal agencies require specific certifications. The current pack mentions FedRAMP and CJIS in passing but doesn't lay out the realistic timeline.
 
 What's needed:
@@ -272,6 +290,7 @@ These cost money and time. The order matters: SOC 2 → FedRAMP Moderate → Fed
 **Recommendation:** Explicit certification roadmap in the v0.7 deployment doc, with milestones tied to phases. SOC 2 Type 1 by end of Phase 2; SOC 2 Type 2 by end of Phase 3; FedRAMP Moderate sponsor identified by end of Phase 3.
 
 ### 3.5 The insurance and liability posture
+
 **Gap:** A platform whose output is used to support seizures, freezes, and prosecutions carries real liability. The design doesn't address it.
 
 What's needed:
@@ -284,6 +303,7 @@ What's needed:
 **Recommendation:** Engage outside counsel before Phase 0 ships. The legal architecture matters as much as the technical architecture.
 
 ### 3.6 The dependency-risk story
+
 **Gap:** Every BYOK provider is a potential single point of failure for an agency's casework. What happens when Chainalysis raises prices 3x? When TRM is acquired by a foreign company? When Etherscan deprecates a critical API? When the LLM provider rate-limits the agency mid-case?
 
 What's needed:
@@ -297,6 +317,7 @@ What's needed:
 **Recommendation:** Phase 1 — this is core to the BYOK trust story. Without it, BYOK becomes vendor lock-in by another name.
 
 ### 3.7 The end-of-life and data portability story
+
 **Gap:** Agencies need to know that if ChainSight goes out of business or they choose to leave, their data is portable.
 
 What's needed:
@@ -309,6 +330,7 @@ What's needed:
 **Recommendation:** Phase 0 documented; Phase 2 source-code-escrow option for enterprise tiers.
 
 ### 3.8 The bias, fairness, and civil-rights audit story
+
 **Gap:** A platform that helps the government decide whose funds to seize and whose property to forfeit raises serious civil-liberties questions. The design has not addressed how it ensures the platform isn't producing biased outcomes.
 
 What's needed:
@@ -322,6 +344,7 @@ What's needed:
 **Recommendation:** Phase 2. This is not optional for a platform serving government customers in 2026; it's the difference between being seen as a tool of justice and a tool of overreach.
 
 ### 3.9 The localization and internationalization story
+
 **Gap:** The platform is implicitly US-centric. Reports default to USD, methodologies default to US-friendly ones, attribution defaults to US providers, legal framing is US-centric.
 
 For international sales, what's needed:
@@ -337,6 +360,7 @@ For international sales, what's needed:
 **Recommendation:** Phase 3+. The US market alone can sustain v1 — v2 the international expansion.
 
 ### 3.10 The community / network effects story
+
 **Gap:** The most valuable forensics platforms become more valuable as more people use them. The design doesn't address how the platform compounds.
 
 What's needed:

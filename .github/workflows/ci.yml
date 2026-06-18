@@ -51,7 +51,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install uv
         run: pip install uv
@@ -64,11 +64,11 @@ jobs:
 
       - name: Mypy
         run: mypy src
-        continue-on-error: true  # strict mypy gating starts Week 4
+        continue-on-error: true # strict mypy gating starts Week 4
 
       - name: Pytest
         run: pytest
-        continue-on-error: true  # first tests land Week 2
+        continue-on-error: true # first tests land Week 2
 
   supabase-lint:
     name: Supabase migrations lint

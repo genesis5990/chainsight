@@ -10,16 +10,16 @@
 
 Every open question that has been raised across the design conversation, with its final disposition.
 
-| ID | Topic | Status | Decision |
-|---|---|---|---|
-| **G1** | Autonomy line for AI attributions | ✅ Locked | Human-in-the-loop required for any court-grade attribution. AI proposes; investigator publishes. Enforced at the database layer: `signoff_id` mandatory on any court-grade `is_controlled_by`/`is_entity` BeliefAtom. |
-| **G2** | Public anchoring of reproducibility hashes | ⏳ Open | Lean: anchor only at case-close, only the final manifest hash, only when the case is going to court. Default off; opt-in per case. |
-| **G3** | Cross-case learning with what consent model | ⏳ Open | Lean: differential-privacy aggregation on by default for the same agency tenant, opt-in (with signed agreement) for cross-agency. Air-gapped tenants: never. |
-| **G4** | Freeze decision UI | ✅ Locked | One-pager design: trace summary, confidence with intervals, open Critic challenges, methodology used, VASP info, SLA clock, three buttons (Freeze / Don't Freeze / Escalate). Every click logged to immutable audit. |
-| **G5** | Path immutability after sign-off | ✅ Locked | Finalized paths are immutable. New facts spawn a new path version with a `supersedes` link to the prior one. Evidentiary integrity. |
-| **G6** | Proactive AI path suggestions | ✅ Locked | AI proposes the three highest-value evidentiary paths in a "Suggested" sidebar. Canvas stays clean until investigator promotes a suggestion with a click. Critic Agent reviews every proposal before it can be promoted. |
-| **G7** | Cross-path math when paths share nodes | ✅ Locked | **Case-level math is canonical.** Per-path views are projections of the case-level math. Any discrepancy between "sum of per-path values" and "case total" is rendered prominently in multi-path reports so prosecutors never accidentally double-count. The Math Service computes both views and the variance. |
-| **G8** | Reseller/referral economics with providers | ⏳ Open | Lean: vendor-neutral in v1; optional, fully-disclosed revenue-share program in v2. Neutrality is part of the trust pitch. |
+| ID     | Topic                                       | Status    | Decision                                                                                                                                                                                                                                                                                                        |
+| ------ | ------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **G1** | Autonomy line for AI attributions           | ✅ Locked | Human-in-the-loop required for any court-grade attribution. AI proposes; investigator publishes. Enforced at the database layer: `signoff_id` mandatory on any court-grade `is_controlled_by`/`is_entity` BeliefAtom.                                                                                           |
+| **G2** | Public anchoring of reproducibility hashes  | ⏳ Open   | Lean: anchor only at case-close, only the final manifest hash, only when the case is going to court. Default off; opt-in per case.                                                                                                                                                                              |
+| **G3** | Cross-case learning with what consent model | ⏳ Open   | Lean: differential-privacy aggregation on by default for the same agency tenant, opt-in (with signed agreement) for cross-agency. Air-gapped tenants: never.                                                                                                                                                    |
+| **G4** | Freeze decision UI                          | ✅ Locked | One-pager design: trace summary, confidence with intervals, open Critic challenges, methodology used, VASP info, SLA clock, three buttons (Freeze / Don't Freeze / Escalate). Every click logged to immutable audit.                                                                                            |
+| **G5** | Path immutability after sign-off            | ✅ Locked | Finalized paths are immutable. New facts spawn a new path version with a `supersedes` link to the prior one. Evidentiary integrity.                                                                                                                                                                             |
+| **G6** | Proactive AI path suggestions               | ✅ Locked | AI proposes the three highest-value evidentiary paths in a "Suggested" sidebar. Canvas stays clean until investigator promotes a suggestion with a click. Critic Agent reviews every proposal before it can be promoted.                                                                                        |
+| **G7** | Cross-path math when paths share nodes      | ✅ Locked | **Case-level math is canonical.** Per-path views are projections of the case-level math. Any discrepancy between "sum of per-path values" and "case total" is rendered prominently in multi-path reports so prosecutors never accidentally double-count. The Math Service computes both views and the variance. |
+| **G8** | Reseller/referral economics with providers  | ⏳ Open   | Lean: vendor-neutral in v1; optional, fully-disclosed revenue-share program in v2. Neutrality is part of the trust pitch.                                                                                                                                                                                       |
 
 ---
 
@@ -28,12 +28,15 @@ Every open question that has been raised across the design conversation, with it
 After all iterations, the platform stands on three architectural pillars. Everything else hangs off these.
 
 ### Pillar 1 — The Belief State Service (accuracy)
+
 Every claim the AI makes is a first-class object with provenance, derivation, confidence, tier (T0–T3), source provider, and challenge history. No agent has private knowledge; every agent reads from and writes to the shared belief state. This is what makes a 50-hop autonomous trace defensible.
 
 ### Pillar 2 — The Reproducibility Pack (court-defensibility)
+
 Every report ships with a frozen snapshot — chain data, rule versions, attribution snapshots, tool log, model card, SBS history, and a `replay.sh` that reconstructs the entire trace. Opposing counsel re-runs it on their hardware; same inputs produce same outputs forever. This is what survives the [D'Aloia mathematical audit](https://capturacyber.com/cryptocurrency-tracing-methodology-scrutinised-daloia-v-persons-unknown/).
 
 ### Pillar 3 — The BYOK Provider Marketplace (commercial leverage)
+
 Every external data source — explorers, attribution feeds, market data, OSINT, AI models — is interchangeable through a capability-based router. Agencies bring their own commercial licenses (Chainalysis, TRM, Elliptic, Etherscan, Allium, etc.); ChainSight ships the integration surface and the engine. This defuses procurement objections and turns "ChainSight + your stack" into the cheapest path to court-grade output.
 
 These three are the answer to "why does this platform exist when Chainalysis/TRM/Elliptic already do.” Each addresses a real gap none of the incumbents solve well.
@@ -105,7 +108,7 @@ This is the most subtle of the three and deserves more detail.
 
 **The problem**: if $1M flows into a shared intermediate wallet from a victim and then splits across three exit paths (A: $400k to Binance, B: $350k to a peel chain, C: $250k to a mixer), each methodology attributes the original $1M differently to the three exits. FIFO and LIFO will disagree; LIBR and pari passu will give yet other answers. If we run the math independently per path, the three per-path numbers will not sum to $1M — they could sum to $1.2M or $0.8M depending on how each methodology handles the commingled intermediate.
 
-**The decision**: **the Math Service computes everything at the case level first**, producing a canonical attribution of the input value across all reachable exits under each methodology. Per-path views are *projections* of the canonical math onto the subset of edges in that path.
+**The decision**: **the Math Service computes everything at the case level first**, producing a canonical attribution of the input value across all reachable exits under each methodology. Per-path views are _projections_ of the canonical math onto the subset of edges in that path.
 
 ```typescript
 CaseAttributionResult {
@@ -180,13 +183,13 @@ Implementation:
 
 ## Updated build phasing (v0.4 final)
 
-| Phase | Months | Deliverables |
-|---|---|---|
-| **Phase 0** | 1 | Case model, intake, evidence vault, single-chain Ethereum trace, FIFO accounting, basic OSINT, **Provider Marketplace stub + Capability Router**, **Belief State Service stub** |
-| **Phase 1** | 2–3 | Bitcoin (UTXO engine), BSC/Base/Arb/Polygon/Tron, CCTP + LayerZero + Wormhole, visual canvas v1, LIFO + LIBR, **full Math Service**, **Reproducibility Pack v1** |
-| **Phase 2** | 4–6 | AI agent layer (orchestrator + tracer + bridge + swap + attribution + narrative + **critic in parallel**), memory stack (Redis + pgvector + Zep), **PSR click-select + auto-pathfind + single-path reports**, **Suggestion Agent**, skill library |
-| **Phase 3** | 7–9 | Court-readiness, **PSR multi-path + observer-mode playback + NL-select**, **G7 case-level math + variance disclosure**, pari passu + rolling charge, SOC2 work begins, **G5 path immutability enforced at DB layer** |
-| **Phase 4** | 10–12 | Watcher Agent + rule DSL, real-time CRDT canvas, **collaboration on paths**, cross-agency sharing, compliance handoff, FedRAMP path opens, **expanded Provider catalog (Phase-3+ integrations)** |
+| Phase       | Months | Deliverables                                                                                                                                                                                                                                      |
+| ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0** | 1      | Case model, intake, evidence vault, single-chain Ethereum trace, FIFO accounting, basic OSINT, **Provider Marketplace stub + Capability Router**, **Belief State Service stub**                                                                   |
+| **Phase 1** | 2–3    | Bitcoin (UTXO engine), BSC/Base/Arb/Polygon/Tron, CCTP + LayerZero + Wormhole, visual canvas v1, LIFO + LIBR, **full Math Service**, **Reproducibility Pack v1**                                                                                  |
+| **Phase 2** | 4–6    | AI agent layer (orchestrator + tracer + bridge + swap + attribution + narrative + **critic in parallel**), memory stack (Redis + pgvector + Zep), **PSR click-select + auto-pathfind + single-path reports**, **Suggestion Agent**, skill library |
+| **Phase 3** | 7–9    | Court-readiness, **PSR multi-path + observer-mode playback + NL-select**, **G7 case-level math + variance disclosure**, pari passu + rolling charge, SOC2 work begins, **G5 path immutability enforced at DB layer**                              |
+| **Phase 4** | 10–12  | Watcher Agent + rule DSL, real-time CRDT canvas, **collaboration on paths**, cross-agency sharing, compliance handoff, FedRAMP path opens, **expanded Provider catalog (Phase-3+ integrations)**                                                  |
 
 ---
 
@@ -199,7 +202,7 @@ All in `/home/user/workspace/`, all shared:
 3. **`chainsight_merged_v0_2.md`** — The accuracy spine (B1–B8) merged with the domain vision
 4. **`chainsight_v0_3_addendum.md`** — PSR module (Path Selection → Report) + locked D1/D2
 5. **`chainsight_v0_3_byok_addendum.md`** — BYOK Provider Marketplace as a first-class pillar
-6. **`chainsight_v0_4_consolidated.md`** *(this file)* — All locked decisions + G5/G6/G7 implementation detail + final phasing
+6. **`chainsight_v0_4_consolidated.md`** _(this file)_ — All locked decisions + G5/G6/G7 implementation detail + final phasing
 
 ---
 

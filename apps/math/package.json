@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "uv run uvicorn chainsight_math.main:app --reload --host 0.0.0.0 --port 8081",
     "build": "echo 'No build step for Python; Docker handles it'",
-    "test": "uv run pytest",
-    "lint": "uv run ruff check src",
-    "typecheck": "uv run mypy src",
+    "test": "uv run --with pytest --with pytest-asyncio --with httpx pytest",
+    "lint": "uv run --with ruff ruff check src",
+    "typecheck": "uv run --with mypy mypy src",
     "clean": "rm -rf .ruff_cache .mypy_cache .pytest_cache __pycache__"
   }
 }

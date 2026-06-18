@@ -108,18 +108,21 @@ ReviewCheckpoint {
 What supervisors see:
 
 **Supervisor Dashboard**
+
 - All active cases in span of control with risk-tier indicators (sanctions exposure, freeze opportunities open, SLA clocks, dormant >N days)
 - Caseload balancing — who's overloaded, who has capacity
 - Pending reviews — checkpoints waiting for the supervisor's approval
 - Cross-case patterns — addresses appearing in multiple subordinates' cases (deconfliction prompts at the supervisor level)
 
 **Review sidebar (non-destructive)**
+
 - Supervisor can comment on any belief atom, mark, path, or report draft without polluting the working case
 - Comments visible to the line investigator with thread structure
 - Supervisor can issue "send back" decisions with required-rework notes
 - "Approve" decisions promote checkpoints; "Escalate" routes to the next level
 
 **Sign-off workflows for high-impact actions**
+
 - Freeze request (already a one-pager in v0.3 G4) gains an optional "supervisor approval required" gate — agency configures which actions need which level of approval
 - Seizure recommendation always requires supervisor approval
 - Expert declaration requires supervisor approval before the report is finalized for court
@@ -227,18 +230,21 @@ What this changes:
 Three distinct mobile surfaces, prioritized:
 
 **F30a — Mobile read-only case viewer (Phase 1)**
+
 - Responsive design (web-based, no separate app required for v1)
 - Read-only access to case data, marks, memos, paths, reports
 - Push notifications for watchers and deconfliction alerts
 - Lock-screen-friendly: investigators glance, don't type
 
 **F30b — Mobile Court Mode driver (Phase 1)**
+
 - The investigator's tablet drives the courtroom display
 - All hot keys mapped to touch gestures
 - Optimized for one-handed operation while standing at counsel table
 - Frozen Reproducibility Pack means no network calls required (consistent with v0.5 F3)
 
 **F30c — Field IOC capture (Phase 2)**
+
 - At a search warrant execution, investigator photographs a written wallet address on a sticky note or whiteboard
 - App OCR extracts the address, validates checksums, normalizes
 - One-tap "add to case as IOC"
@@ -428,16 +434,16 @@ The full lifecycle the platform supports:
 
 Issuer integrations as BYOK capabilities:
 
-| Issuer | Capability |
-|---|---|
-| Tether | Blacklist API; freeze + destroy + reissue via Tether ops |
-| Circle | Blacklist API; freeze + burn + reissue workflow |
-| Paxos (USDP, USDG) | Freeze + burn workflow |
-| First Digital (FDUSD) | Freeze + burn workflow |
-| PayPal (PYUSD) | Freeze workflow |
-| TrueUSD | Freeze workflow |
-| MakerDAO (DAI) | Limited — only sanctions-list-based blocks via Circle USDC backing |
-| GENIUS Act-conforming issuers | Statutory freeze workflow |
+| Issuer                        | Capability                                                         |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Tether                        | Blacklist API; freeze + destroy + reissue via Tether ops           |
+| Circle                        | Blacklist API; freeze + burn + reissue workflow                    |
+| Paxos (USDP, USDG)            | Freeze + burn workflow                                             |
+| First Digital (FDUSD)         | Freeze + burn workflow                                             |
+| PayPal (PYUSD)                | Freeze workflow                                                    |
+| TrueUSD                       | Freeze workflow                                                    |
+| MakerDAO (DAI)                | Limited — only sanctions-list-based blocks via Circle USDC backing |
+| GENIUS Act-conforming issuers | Statutory freeze workflow                                          |
 
 **Build phase: Phase 1** — this is one of the highest-frequency investigator workflows in 2026.
 
@@ -530,6 +536,7 @@ ZcashViewingKeyResolution {
 What it does:
 
 **For Zcash specifically** — viewing keys are an investigative primitive in 2026. When an investigator obtains a viewing key (via warrant, subpoena, or voluntary disclosure), the platform can:
+
 - Ingest the viewing key in-memory only (same handling as private-key derivation in F21 G13)
 - Resolve all transactions visible to that viewing key
 - Render the resolved shielded transactions on the canvas
@@ -537,6 +544,7 @@ What it does:
 - Log the use of the key to the CoC record without persisting the key material
 
 **For Monero** — the platform cannot crack Monero. What it can do:
+
 - **Timing correlation** when investigators have both entry and exit points (typically exchange deposit on one side and withdrawal on the other) — the platform proposes likely linkages with explicit confidence bounds and the honest acknowledgment that they're statistical, not deterministic
 - **Amount correlation** with FCMP++ awareness — post-FCMP++, amount correlation is increasingly weak; the platform reflects this in confidence
 - **Exchange-endpoint analysis** — even without on-chain trace through Monero, the exchanges' off-ramp records (via subpoena) often close the loop
@@ -693,20 +701,20 @@ ProviderRiskDashboard {
 
 What ships in the in-house tier at Phase 1:
 
-| Capability | In-house implementation |
-|---|---|
-| Chain data | Self-hostable archive nodes (Erigon, Reth, Geth, Bitcoin Core, Solana validators, etc.); platform ships configuration recipes |
-| Address clustering (UTXO) | Native CIH + change detection ensemble (F24) — always available, no provider required |
-| Address attribution | Baseline ingestion of public sources (OFAC SDN, OpenSanctions, OFSI, Etherscan public tags, known-entity lists) — platform-native attribution that works with zero commercial providers |
-| Token metadata | Bundled token list from CoinGecko/TrustWallet (open licenses); on-chain symbol/decimals fallback |
-| Price data | Time-weighted-average from Uniswap V3 pools; CoinGecko free tier; Chainlink price feed history |
-| Contract decoding | Sourcify + 4byte.directory + OpenChain function-selector database (all free / open) |
-| LLM (orchestrator) | Self-hostable Llama 3.x / Qwen 2.5 / Mistral / DeepSeek — fine-tuned for forensics workflows |
-| Embeddings | BGE / E5 self-hostable models |
-| Document intelligence | Tesseract OCR + open-source layout models for low-classification work; bumps up to commercial Document AI for high-quality needs |
-| Document storage | MinIO / Ceph / NFS / local filesystem |
-| Vector store | pgvector (Postgres-native) |
-| Graph store | Memgraph (open-core) as a TigerGraph alternative |
+| Capability                | In-house implementation                                                                                                                                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chain data                | Self-hostable archive nodes (Erigon, Reth, Geth, Bitcoin Core, Solana validators, etc.); platform ships configuration recipes                                                           |
+| Address clustering (UTXO) | Native CIH + change detection ensemble (F24) — always available, no provider required                                                                                                   |
+| Address attribution       | Baseline ingestion of public sources (OFAC SDN, OpenSanctions, OFSI, Etherscan public tags, known-entity lists) — platform-native attribution that works with zero commercial providers |
+| Token metadata            | Bundled token list from CoinGecko/TrustWallet (open licenses); on-chain symbol/decimals fallback                                                                                        |
+| Price data                | Time-weighted-average from Uniswap V3 pools; CoinGecko free tier; Chainlink price feed history                                                                                          |
+| Contract decoding         | Sourcify + 4byte.directory + OpenChain function-selector database (all free / open)                                                                                                     |
+| LLM (orchestrator)        | Self-hostable Llama 3.x / Qwen 2.5 / Mistral / DeepSeek — fine-tuned for forensics workflows                                                                                            |
+| Embeddings                | BGE / E5 self-hostable models                                                                                                                                                           |
+| Document intelligence     | Tesseract OCR + open-source layout models for low-classification work; bumps up to commercial Document AI for high-quality needs                                                        |
+| Document storage          | MinIO / Ceph / NFS / local filesystem                                                                                                                                                   |
+| Vector store              | pgvector (Postgres-native)                                                                                                                                                              |
+| Graph store               | Memgraph (open-core) as a TigerGraph alternative                                                                                                                                        |
 
 This means:
 
@@ -735,15 +743,15 @@ The platform's posture on civil liberties, in writing, in code.
 
 **Published false-positive rate targets**
 
-| Detector / Heuristic | Public FPR target |
-|---|---|
-| CIH clustering (UTXO) | < 1% (industry baseline) |
-| Change-output detection | < 5% |
-| Mixer attribution | < 0.5% |
-| Sanctions-list matching | < 0.1% (exact match required) |
-| Peel-chain detection | < 3% |
-| ML-based attribution | < 2% |
-| AI-generated path suggestions | < 5% (gated by Critic) |
+| Detector / Heuristic          | Public FPR target             |
+| ----------------------------- | ----------------------------- |
+| CIH clustering (UTXO)         | < 1% (industry baseline)      |
+| Change-output detection       | < 5%                          |
+| Mixer attribution             | < 0.5%                        |
+| Sanctions-list matching       | < 0.1% (exact match required) |
+| Peel-chain detection          | < 3%                          |
+| ML-based attribution          | < 2%                          |
+| AI-generated path suggestions | < 5% (gated by Critic)        |
 
 These are commitments. Quarterly reports show actual measured FPR vs. target; misses trigger remediation.
 
@@ -774,7 +782,7 @@ These are commitments. Quarterly reports show actual measured FPR vs. target; mi
 
 Every report produced by the platform includes a methodology disclaimer section that includes, as a standard paragraph:
 
-> *The analysis in this report was produced using the ChainSight platform's heuristic and machine-learning techniques as documented in the Methodology Disclosure section. These techniques are probabilistic and subject to known false-positive rates as publicly reported. The conclusions in this report are technical findings, not legal conclusions. The decision to act on these findings — including freeze requests, seizure recommendations, or charging decisions — is the responsibility of the human investigators, prosecutors, and adjudicators involved, not the platform.*
+> _The analysis in this report was produced using the ChainSight platform's heuristic and machine-learning techniques as documented in the Methodology Disclosure section. These techniques are probabilistic and subject to known false-positive rates as publicly reported. The conclusions in this report are technical findings, not legal conclusions. The decision to act on these findings — including freeze requests, seizure recommendations, or charging decisions — is the responsibility of the human investigators, prosecutors, and adjudicators involved, not the platform._
 
 This is the "Proportionality" requirement from the [TRM published guidance](https://blockeden.xyz/blog/2026/04/11/blockchain-evidence-courtroom-trm-labs-on-chain-analytics-legal/) — separating technical conclusions (these addresses exchanged funds) from legal conclusions (therefore this person committed a crime).
 
@@ -794,21 +802,21 @@ The platform will not ship:
 
 Explicit milestones, not aspirational language.
 
-| Certification | Target | What it requires |
-|---|---|---|
-| **SOC 2 Type 1** | End of Phase 2 | Policy and control design audit |
-| **SOC 2 Type 2** | End of Phase 3 | 6-12 month operating effectiveness audit |
-| **ISO 27001** | End of Phase 3 | Information security management system |
-| **CJIS conformance** (US state/local LE) | Phase 3 | Documented conformance, not a formal cert |
-| **FedRAMP Moderate** | Phase 4 (sponsor identified in Phase 3) | 12-18 month process |
-| **FedRAMP High** | Post-Phase 4 | Additional 6-12 months on top of Moderate |
-| **CMMC Level 2** | Phase 4 | If DoD contractor work pursued |
-| **CMMC Level 3** | Post-Phase 4 | If sensitive DoD work pursued |
-| **IL5 / IL6** | Post-Phase 4 | GovCloud or equivalent infrastructure |
-| **Common Criteria EAL4+** | Post-Phase 4 | If intelligence community pursued |
-| **UK Cyber Essentials Plus** | Phase 4 (with UK expansion) | Required for UK gov work |
-| **EU GDPR Article 27 representation** | Phase 4 | If EU customers pursued |
-| **Australia IRAP** | Post-Phase 4 | If Australian gov pursued |
+| Certification                            | Target                                  | What it requires                          |
+| ---------------------------------------- | --------------------------------------- | ----------------------------------------- |
+| **SOC 2 Type 1**                         | End of Phase 2                          | Policy and control design audit           |
+| **SOC 2 Type 2**                         | End of Phase 3                          | 6-12 month operating effectiveness audit  |
+| **ISO 27001**                            | End of Phase 3                          | Information security management system    |
+| **CJIS conformance** (US state/local LE) | Phase 3                                 | Documented conformance, not a formal cert |
+| **FedRAMP Moderate**                     | Phase 4 (sponsor identified in Phase 3) | 12-18 month process                       |
+| **FedRAMP High**                         | Post-Phase 4                            | Additional 6-12 months on top of Moderate |
+| **CMMC Level 2**                         | Phase 4                                 | If DoD contractor work pursued            |
+| **CMMC Level 3**                         | Post-Phase 4                            | If sensitive DoD work pursued             |
+| **IL5 / IL6**                            | Post-Phase 4                            | GovCloud or equivalent infrastructure     |
+| **Common Criteria EAL4+**                | Post-Phase 4                            | If intelligence community pursued         |
+| **UK Cyber Essentials Plus**             | Phase 4 (with UK expansion)             | Required for UK gov work                  |
+| **EU GDPR Article 27 representation**    | Phase 4                                 | If EU customers pursued                   |
+| **Australia IRAP**                       | Post-Phase 4                            | If Australian gov pursued                 |
 
 Investment, not aspiration. These cost real money and engineering capacity:
 
@@ -960,13 +968,13 @@ Detailed pricing is deferred to the Go-to-Market document. The packaging framewo
 
 **Deployment tiers**
 
-| Tier | Target | Deployment | Pricing model |
-|---|---|---|---|
-| **Investigator** | Solo private PI, forensic accountant | SaaS Blind only | Per-seat monthly |
-| **Team** | Small firm, small task force (up to 25 seats) | SaaS Blind or On-Prem | Per-seat monthly + setup |
-| **Department** | State/local LE department, mid-size compliance team | SaaS Blind or On-Prem | Annual contract + seats |
-| **Agency** | Federal LE field office, large bank compliance, large investigation firm | On-Prem preferred; SaaS Blind available | Annual contract + seats + support |
-| **Classified** | Federal agency HQ, intelligence community, national-level financial-crime units | On-Prem Sovereign only; air-gapped variant | Annual contract; site license; deep support |
+| Tier             | Target                                                                          | Deployment                                 | Pricing model                               |
+| ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------- |
+| **Investigator** | Solo private PI, forensic accountant                                            | SaaS Blind only                            | Per-seat monthly                            |
+| **Team**         | Small firm, small task force (up to 25 seats)                                   | SaaS Blind or On-Prem                      | Per-seat monthly + setup                    |
+| **Department**   | State/local LE department, mid-size compliance team                             | SaaS Blind or On-Prem                      | Annual contract + seats                     |
+| **Agency**       | Federal LE field office, large bank compliance, large investigation firm        | On-Prem preferred; SaaS Blind available    | Annual contract + seats + support           |
+| **Classified**   | Federal agency HQ, intelligence community, national-level financial-crime units | On-Prem Sovereign only; air-gapped variant | Annual contract; site license; deep support |
 
 **Feature gating**
 
@@ -1036,16 +1044,16 @@ Architecture readiness now; full international expansion in Phase 4+.
 
 From the v0.7 gap analysis, the eight items I committed to closing before code is written. Status:
 
-| # | Item | Spec'd as | Status |
-|---|---|---|---|
-| 1 | Stablecoin freeze + reissue workflow | F33 | ✅ Spec'd, Phase 1 build |
-| 2 | Chain-of-custody as a first-class system | F29 | ✅ Spec'd, Phase 0 build |
-| 3 | L2-specific tooling foundations | F34 | ✅ Spec'd, Phase 0 architecture / Phase 1 first L2s |
-| 4 | Dependency-risk and in-house heuristics tier | F40 | ✅ Spec'd, Phase 1 build |
-| 5 | Supervisor mode | F27 | ✅ Spec'd, Phase 1 build |
-| 6 | Expert witness profile | F26 | ✅ Spec'd, Phase 0 build |
-| 7 | Bias and fairness commitment in writing | F41 | ✅ Spec'd, Phase 0 documented / Phase 2 CLRB |
-| 8 | Certification roadmap | F42 | ✅ Spec'd, Phase 0 commitments / phased delivery |
+| #   | Item                                         | Spec'd as | Status                                              |
+| --- | -------------------------------------------- | --------- | --------------------------------------------------- |
+| 1   | Stablecoin freeze + reissue workflow         | F33       | ✅ Spec'd, Phase 1 build                            |
+| 2   | Chain-of-custody as a first-class system     | F29       | ✅ Spec'd, Phase 0 build                            |
+| 3   | L2-specific tooling foundations              | F34       | ✅ Spec'd, Phase 0 architecture / Phase 1 first L2s |
+| 4   | Dependency-risk and in-house heuristics tier | F40       | ✅ Spec'd, Phase 1 build                            |
+| 5   | Supervisor mode                              | F27       | ✅ Spec'd, Phase 1 build                            |
+| 6   | Expert witness profile                       | F26       | ✅ Spec'd, Phase 0 build                            |
+| 7   | Bias and fairness commitment in writing      | F41       | ✅ Spec'd, Phase 0 documented / Phase 2 CLRB        |
+| 8   | Certification roadmap                        | F42       | ✅ Spec'd, Phase 0 commitments / phased delivery    |
 
 All eight closed.
 
@@ -1072,27 +1080,27 @@ These commitments are in the MSA, in marketing collateral, in the founding compa
 
 ## Part 6 — Updated build phasing (consolidated through v0.8)
 
-| Phase | Months | What ships |
-|---|---|---|
-| **Phase 0** | 1-2 | Case model, intake, evidence vault; **Capability Router + Provider Marketplace stub**; **Belief State Service stub**; **Transaction-centric graph data layer (G10)**; **Cache layer foundation**; **Personal Attribution data model + basic apply**; basic single-chain Ethereum trace; FIFO accounting; API key entry (all three modes); **both deployment modes (On-Prem + SaaS Blind)**; **offline license validation, signed releases, Sigstore-backed transparency log**; minimal-by-default telemetry; **Chain of Custody as first-class system (F29)**; **Expert Witness Profile (F26)**; **L2 architecture foundations (F34)**; **anti-feature commitments and bias/fairness documentation (F41 commitments)**; **certification roadmap published (F42)**; **MSA and insurance in place (F43)**; **EOL and source-code-escrow framework documented (F44)**; **localization foundations (F47 architecture readiness)**; **packaging framework documented (F46)** |
-| **Phase 1** | 3-4 | Bitcoin UTXO engine; **first L2s (Base, Arbitrum, Optimism, Polygon, zkSync Era, Starknet, Scroll, Linea)**; CCTP + LayerZero + Wormhole bridges; visual canvas v1; LIFO + LIBR; **full Math Service**; **Reproducibility Pack v1**; **Path styling (F19)**; **Wallet data model + manual CRUD**; **UTXOCluster v1 (F24 CIH + optimal-change)**; **Full cache tier system + refresh button + last-refresh badge**; deconfliction tab data model; CaseDocument data model + platform-managed storage; investigator markup system; **air-gapped hardening (signed packages, no outbound paths required)**; **audited support access workflow**; **reproducible builds verified externally**; **Stablecoin Freeze + Burn + Reissue workflow (F33)**; **Supervisor Mode (F27)**; **In-House Heuristics Tier (F40)**; **Mobile read-only and Court Mode driver (F30a, F30b)**; **Training & Sandbox Environment (F31)** |
-| **Phase 2** | 5-7 | AI agent layer; memory stack; **PSR + Suggestion Agent**; skill library; **Transaction Inspector**; **Wallet History Analyzer**; **full UTXO clustering ensemble + CoinJoin exclusion**; **Refresh cost estimator**; **Document Extraction Agent**; on-prem storage; manual deconfliction tab UI; **Obfuscation Detection v1**; **Personal Attribution sharing (specific users + team + org) + library view**; **"Where did the money go?" overlay**; **Confidential computing pilot (Nitro Enclaves first)**; **per-tenant pinned versions in SaaS**; **verifiable-build verification tooling**; **Case Transfer / Handoff Workflow (F28)**; **Retraction Workflow (F32)**; **Field IOC capture mobile (F30c)**; **Privacy-Coin Boundary Handlers (F35)**; **DeFi Exploit Forensics (F36)**; **NFT/Ordinals/Runes basic tracing (F37 basics)**; **Civil-Liberties Review Board convened**; **SOC 2 Type 1**; **Customer Advisory Board convened**; **Open Detector Library v1 (F45)** |
-| **Phase 3** | 8-10 | Court-readiness; **PSR multi-path + observer-mode + NL-select**; **G7 case-level math + variance disclosure**; pari passu + rolling charge; **G5 path immutability at DB layer**; **Present in Court Mode (all four views + accounting-follows-the-frame panel)**; **Court Export Bundle (portable viewer)**; **Obfuscation Detection v2**; document types expansion; **auto-detected deconfliction within tenant**; **Inspector obfuscation + Critic sections; compare-two-transactions; saved-analysis persistence**; **seed-phrase derivation (warrant attestation)**; **incremental wallet delta re-analysis**; **cross-wallet clustering**; **ML-augmented change detection (T3)**; **counter-attribution flow**; **provider webhook cache invalidation**; **chain-reorg listeners**; **sanctions-list invalidation**; **Obfuscation Detection v3 (ML-based with Critic gating)**; **Confidential computing across SaaS Blind hot path**; **SOC 2 Type 2**; **ISO 27001**; **CJIS conformance**; **FedRAMP Moderate work begun (sponsor identified)**; **First annual methodology audit and transparency report (F41)**; **Lightning Network awareness (F38)**; **NFT marketplace decoders (F37 marketplace)**; **Source-code escrow program for enterprise tier (F44)** |
-| **Phase 4** | 11-14 | Watcher Agent + rule DSL; real-time CRDT canvas; collaboration on paths; **cross-agency deconfliction federation**; **cross-agency Personal Attribution federation**; audio transcription; compliance handoff workflow; **FedRAMP Moderate authorization**; **FedRAMP High work begins**; expanded Provider catalog; **admin-level cache governance**; advanced cluster analytics; long-running wallet watch mode; Inspector personalization; voice-assistant Court Mode; **CMMC Level 2**; **UK Cyber Essentials Plus**; **Multi-language UI (English, Spanish, French, German, Portuguese, Japanese, Mandarin)**; **Jurisdiction-specific methodology defaults and document templates (F47 full)**; **Annual ChainSight user community conference**; **Academic research data access program**; **Government contracting vehicles (GSA Schedule, SEWP)** |
-| **Post-Phase-4** | 15+ | **FedRAMP High authorization**; **CMMC Level 3**; **IL5/IL6 path**; **Common Criteria EAL4+**; **Australia IRAP**; **EU expansion (GDPR Article 27 representation)**; **Emerging asset support (RWA, CBDC, account abstraction, ZK-DeFi privacy)** per F39 |
+| Phase            | Months | What ships                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0**      | 1-2    | Case model, intake, evidence vault; **Capability Router + Provider Marketplace stub**; **Belief State Service stub**; **Transaction-centric graph data layer (G10)**; **Cache layer foundation**; **Personal Attribution data model + basic apply**; basic single-chain Ethereum trace; FIFO accounting; API key entry (all three modes); **both deployment modes (On-Prem + SaaS Blind)**; **offline license validation, signed releases, Sigstore-backed transparency log**; minimal-by-default telemetry; **Chain of Custody as first-class system (F29)**; **Expert Witness Profile (F26)**; **L2 architecture foundations (F34)**; **anti-feature commitments and bias/fairness documentation (F41 commitments)**; **certification roadmap published (F42)**; **MSA and insurance in place (F43)**; **EOL and source-code-escrow framework documented (F44)**; **localization foundations (F47 architecture readiness)**; **packaging framework documented (F46)**                                                                                                                                                                                                                                                                                                       |
+| **Phase 1**      | 3-4    | Bitcoin UTXO engine; **first L2s (Base, Arbitrum, Optimism, Polygon, zkSync Era, Starknet, Scroll, Linea)**; CCTP + LayerZero + Wormhole bridges; visual canvas v1; LIFO + LIBR; **full Math Service**; **Reproducibility Pack v1**; **Path styling (F19)**; **Wallet data model + manual CRUD**; **UTXOCluster v1 (F24 CIH + optimal-change)**; **Full cache tier system + refresh button + last-refresh badge**; deconfliction tab data model; CaseDocument data model + platform-managed storage; investigator markup system; **air-gapped hardening (signed packages, no outbound paths required)**; **audited support access workflow**; **reproducible builds verified externally**; **Stablecoin Freeze + Burn + Reissue workflow (F33)**; **Supervisor Mode (F27)**; **In-House Heuristics Tier (F40)**; **Mobile read-only and Court Mode driver (F30a, F30b)**; **Training & Sandbox Environment (F31)**                                                                                                                                                                                                                                                                                                                                                            |
+| **Phase 2**      | 5-7    | AI agent layer; memory stack; **PSR + Suggestion Agent**; skill library; **Transaction Inspector**; **Wallet History Analyzer**; **full UTXO clustering ensemble + CoinJoin exclusion**; **Refresh cost estimator**; **Document Extraction Agent**; on-prem storage; manual deconfliction tab UI; **Obfuscation Detection v1**; **Personal Attribution sharing (specific users + team + org) + library view**; **"Where did the money go?" overlay**; **Confidential computing pilot (Nitro Enclaves first)**; **per-tenant pinned versions in SaaS**; **verifiable-build verification tooling**; **Case Transfer / Handoff Workflow (F28)**; **Retraction Workflow (F32)**; **Field IOC capture mobile (F30c)**; **Privacy-Coin Boundary Handlers (F35)**; **DeFi Exploit Forensics (F36)**; **NFT/Ordinals/Runes basic tracing (F37 basics)**; **Civil-Liberties Review Board convened**; **SOC 2 Type 1**; **Customer Advisory Board convened**; **Open Detector Library v1 (F45)**                                                                                                                                                                                                                                                                                        |
+| **Phase 3**      | 8-10   | Court-readiness; **PSR multi-path + observer-mode + NL-select**; **G7 case-level math + variance disclosure**; pari passu + rolling charge; **G5 path immutability at DB layer**; **Present in Court Mode (all four views + accounting-follows-the-frame panel)**; **Court Export Bundle (portable viewer)**; **Obfuscation Detection v2**; document types expansion; **auto-detected deconfliction within tenant**; **Inspector obfuscation + Critic sections; compare-two-transactions; saved-analysis persistence**; **seed-phrase derivation (warrant attestation)**; **incremental wallet delta re-analysis**; **cross-wallet clustering**; **ML-augmented change detection (T3)**; **counter-attribution flow**; **provider webhook cache invalidation**; **chain-reorg listeners**; **sanctions-list invalidation**; **Obfuscation Detection v3 (ML-based with Critic gating)**; **Confidential computing across SaaS Blind hot path**; **SOC 2 Type 2**; **ISO 27001**; **CJIS conformance**; **FedRAMP Moderate work begun (sponsor identified)**; **First annual methodology audit and transparency report (F41)**; **Lightning Network awareness (F38)**; **NFT marketplace decoders (F37 marketplace)**; **Source-code escrow program for enterprise tier (F44)** |
+| **Phase 4**      | 11-14  | Watcher Agent + rule DSL; real-time CRDT canvas; collaboration on paths; **cross-agency deconfliction federation**; **cross-agency Personal Attribution federation**; audio transcription; compliance handoff workflow; **FedRAMP Moderate authorization**; **FedRAMP High work begins**; expanded Provider catalog; **admin-level cache governance**; advanced cluster analytics; long-running wallet watch mode; Inspector personalization; voice-assistant Court Mode; **CMMC Level 2**; **UK Cyber Essentials Plus**; **Multi-language UI (English, Spanish, French, German, Portuguese, Japanese, Mandarin)**; **Jurisdiction-specific methodology defaults and document templates (F47 full)**; **Annual ChainSight user community conference**; **Academic research data access program**; **Government contracting vehicles (GSA Schedule, SEWP)**                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Post-Phase-4** | 15+    | **FedRAMP High authorization**; **CMMC Level 3**; **IL5/IL6 path**; **Common Criteria EAL4+**; **Australia IRAP**; **EU expansion (GDPR Article 27 representation)**; **Emerging asset support (RWA, CBDC, account abstraction, ZK-DeFi privacy)** per F39                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
 ## Part 7 — Updated open questions
 
-| ID | Topic | Status |
-|---|---|---|
-| **G2** | Public anchoring of reproducibility hashes | ⏳ Open; default off, opt-in per case at case-close when going to court |
-| **G3** | Cross-agency learning consent model | ⏳ Open; DP-within-tenant default-on, opt-in cross-tenant |
-| **G8** | Reseller economics with providers | ⏳ Open; vendor-neutral in v1, optional v2 revenue share |
-| **G21** | Air-gapped update path | ⏳ Open; likely both physical media and one-way diode, confirm with first pilot |
-| **G22** | Confidential computing for SaaS Blind v1 | ⏳ Open; lean ship with envelope encryption + audited support as v1 floor, add confidential computing in Phase 3 |
-| **G23** | Verifiable build infrastructure | ⏳ Open; lean Sigstore from start |
+| ID      | Topic                                      | Status                                                                                                           |
+| ------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **G2**  | Public anchoring of reproducibility hashes | ⏳ Open; default off, opt-in per case at case-close when going to court                                          |
+| **G3**  | Cross-agency learning consent model        | ⏳ Open; DP-within-tenant default-on, opt-in cross-tenant                                                        |
+| **G8**  | Reseller economics with providers          | ⏳ Open; vendor-neutral in v1, optional v2 revenue share                                                         |
+| **G21** | Air-gapped update path                     | ⏳ Open; likely both physical media and one-way diode, confirm with first pilot                                  |
+| **G22** | Confidential computing for SaaS Blind v1   | ⏳ Open; lean ship with envelope encryption + audited support as v1 floor, add confidential computing in Phase 3 |
+| **G23** | Verifiable build infrastructure            | ⏳ Open; lean Sigstore from start                                                                                |
 
 No new opens introduced by v0.8.
 
@@ -1117,7 +1125,7 @@ Fifteen documents in `/home/user/workspace/`, all shared:
 13. `chainsight_v0_6_consolidated.md` (superseded by v0.8 consolidated)
 14. `chainsight_v0_7_deployment_model_addendum.md`
 15. `chainsight_v0_7_gap_analysis.md`
-16. `chainsight_v0_8_addendum.md` *(this file)*
+16. `chainsight_v0_8_addendum.md` _(this file)_
 
 The v0.8 consolidated reference follows separately.
 

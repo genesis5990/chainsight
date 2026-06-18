@@ -69,6 +69,7 @@ apps/web/app/
 ### 1.3 Server vs. client components
 
 **Server components own:**
+
 - Case list rendering (RSC fetches from Postgres via tRPC server action, streams to client)
 - Report rendering (markdown body, static data, citation tables)
 - Document viewer PDF embedding
@@ -76,6 +77,7 @@ apps/web/app/
 - User profile and settings forms
 
 **Client components own (always `"use client"`):**
+
 - The entire canvas container (`<CanvasRoot>`) — Sigma.js requires the DOM and WebGL
 - Transaction Inspector popup (real-time streaming state)
 - Path selection toolbar (local interaction state machine)
@@ -84,8 +86,6 @@ apps/web/app/
 - Keyboard shortcut handler (global `useEffect` on `keydown`)
 
 **The key rule:** A server component renders the case shell, the tab bar, the sidebar widgets, and static data. The canvas URL segment swaps in a client boundary that owns everything inside the graph viewport. This means the initial page load is fast (server-rendered chrome), and the canvas hydrates independently without blocking layout.
-
-
 
 ### 1.4 Authentication boundary (Supabase Auth)
 
@@ -110,12 +110,10 @@ export function createSupabaseServerClient() {
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll: (cookies) => {
-          cookies.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          );
+          cookies.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         },
       },
-    }
+    },
   );
 }
 
@@ -124,7 +122,7 @@ import { createBrowserClient } from '@supabase/ssr';
 
 export const supabase = createBrowserClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 ```
 
@@ -153,14 +151,17 @@ export async function middleware(request: NextRequest) {
           });
         },
       },
-    }
+    },
   );
 
   // Refresh session — this is what keeps auth tokens alive across RSC renders
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Protect (app) routes
-  const isAppRoute = request.nextUrl.pathname.startsWith('/cases') ||
+  const isAppRoute =
+    request.nextUrl.pathname.startsWith('/cases') ||
     request.nextUrl.pathname.startsWith('/marketplace') ||
     request.nextUrl.pathname.startsWith('/attributions') ||
     request.nextUrl.pathname.startsWith('/supervisor');
@@ -227,7 +228,7 @@ export default function LoginPage() {
   // MFA challenge fires automatically if the user has TOTP enrolled;
   // Supabase returns an MFA_REQUIRED factor challenge that we handle
   // in a second step (see §1.6 — MFA for high-impact actions).
-  
+
   return (
     <AuthForm onSubmit={handleSignIn}>
       <Input type="email" value={email} onChange={...} label="Email" />
@@ -282,7 +283,9 @@ The MFA challenge flow is a client-side modal that wraps any high-impact mutatio
 ```typescript
 // hooks/useMFAGate.ts
 export function useMFAGate() {
-  const [challengeState, setChallengeState] = useState<'idle' | 'needed' | 'verifying' | 'passed'>();
+  const [challengeState, setChallengeState] = useState<
+    'idle' | 'needed' | 'verifying' | 'passed'
+  >();
 
   async function requestMFA(): Promise<boolean> {
     const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -307,7 +310,10 @@ export function useMFAGate() {
       challengeId: challenge.id,
       code,
     });
-    if (error) { setError('Invalid code'); return; }
+    if (error) {
+      setError('Invalid code');
+      return;
+    }
     setChallengeState('passed');
     mfaResolveRef.current?.(true);
   }
@@ -405,28 +411,28 @@ interface CanvasUIStore {
   selectedEdgeIds: Set<string>;
   hoveredNodeId: string | null;
   selectionMode: 'default' | 'path-click' | 'path-lasso' | 'path-nl';
-  
+
   // Path building
   activePathId: string | null;
   pathBuildSteps: PathStep[];
-  
+
   // Inspector
-  openInspectors: InspectorState[];  // multiple can be open (compare mode)
-  
+  openInspectors: InspectorState[]; // multiple can be open (compare mode)
+
   // Overlay
   moneyFlowOverlayActive: boolean;
   activeMethodology: Methodology;
-  
+
   // LOD
   zoomLevel: number;
-  
+
   // Actions
   selectNode: (id: string, extend?: boolean) => void;
   openInspector: (txId: string) => void;
   setMethodology: (m: Methodology) => void;
 }
 
-// stores/ui.ts  
+// stores/ui.ts
 interface UIStore {
   importantSidebarOpen: boolean;
   activeTab: CaseTab;
@@ -454,17 +460,14 @@ React Query is the caching and invalidation layer over both the tRPC API and dir
 ```typescript
 // lib/query-keys.ts — canonical key factory
 export const queryKeys = {
-  case:          (id: string) => ['case', id] as const,
-  caseList:      (agencyId: string) => ['cases', agencyId] as const,
-  caseGraph:     (caseId: string, viewport?: Viewport) =>
-                   ['case', caseId, 'graph', viewport] as const,
-  caseInspector: (caseId: string, txId: string) =>
-                   ['case', caseId, 'inspector', txId] as const,
-  providers:     () => ['providers'] as const,
-  attributions:  (userId: string) => ['attributions', userId] as const,
+  case: (id: string) => ['case', id] as const,
+  caseList: (agencyId: string) => ['cases', agencyId] as const,
+  caseGraph: (caseId: string, viewport?: Viewport) => ['case', caseId, 'graph', viewport] as const,
+  caseInspector: (caseId: string, txId: string) => ['case', caseId, 'inspector', txId] as const,
+  providers: () => ['providers'] as const,
+  attributions: (userId: string) => ['attributions', userId] as const,
   refreshStatus: (caseId: string) => ['refresh-status', caseId] as const,
-  walletAnalysis:(caseId: string, walletId: string) =>
-                   ['wallet', caseId, walletId] as const,
+  walletAnalysis: (caseId: string, walletId: string) => ['wallet', caseId, walletId] as const,
 };
 ```
 
@@ -486,7 +489,7 @@ export function useCaseList() {
       if (error) throw error;
       return data;
     },
-    staleTime: 60 * 1000,    // 1 minute
+    staleTime: 60 * 1000, // 1 minute
   });
 }
 
@@ -517,15 +520,10 @@ Any write that touches case data must go through the API so the audit log entry 
 export function useCreateMark() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (mark: CreateMarkInput) =>
-      trpc.marks.create.mutate(mark),  // API writes mark + BeliefAtom + audit entry
+    mutationFn: (mark: CreateMarkInput) => trpc.marks.create.mutate(mark), // API writes mark + BeliefAtom + audit entry
     onMutate: async (mark) => {
       // Optimistic update: glow ring appears immediately on canvas
-      sigmaRef.current?.graph.setNodeAttribute(
-        mark.targetRef,
-        'isImportant',
-        true
-      );
+      sigmaRef.current?.graph.setNodeAttribute(mark.targetRef, 'isImportant', true);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -534,11 +532,7 @@ export function useCreateMark() {
     },
     onError: (_, variables) => {
       // Rollback optimistic update
-      sigmaRef.current?.graph.setNodeAttribute(
-        variables.targetRef,
-        'isImportant',
-        false
-      );
+      sigmaRef.current?.graph.setNodeAttribute(variables.targetRef, 'isImportant', false);
     },
   });
 }
@@ -555,7 +549,7 @@ export function useGraphViewport(caseId: string, viewport: Viewport) {
     queryKey: queryKeys.caseGraph(caseId, viewport),
     queryFn: () => trpc.case.getGraphViewport.query({ caseId, viewport }),
     staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData,  // no flash when panning
+    placeholderData: keepPreviousData, // no flash when panning
   });
 }
 ```
@@ -589,27 +583,32 @@ export function useDeconflictionAlerts(caseId: string) {
           });
           // Toast notification with action buttons
           toast.info(`Overlap detected with another case — review in Deconfliction tab`, {
-            action: { label: 'Review', onClick: () => router.push(`/cases/${caseId}/deconfliction`) },
+            action: {
+              label: 'Review',
+              onClick: () => router.push(`/cases/${caseId}/deconfliction`),
+            },
           });
-        }
+        },
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [caseId, queryClient]);
 }
 ```
 
 #### All Realtime subscriptions and their purposes
 
-| Channel pattern | Table/event | Purpose | React Query invalidation |
-|---|---|---|---|
-| `deconfliction:{caseId}` | `deconfliction_alerts` INSERT | New overlap alert | `['deconfliction-alerts', caseId]` |
-| `supervisor-queue:{supervisorId}` | `review_checkpoints` INSERT/UPDATE | New item in review queue | `['supervisor-queue', supervisorId]` |
-| `watcher:{caseId}` | `watcher_fires` INSERT | Watcher triggered | `['watcher-fires', caseId]`, toast |
-| `wallet-analysis:{walletId}` | `wallet_addresses` UPDATE | Per-address analysis complete | `['wallet', caseId, walletId]` |
-| `case-presence:{caseId}` | Broadcast (not Postgres Changes) | Presence indicators | Zustand `realtimeStore.casePresence` |
-| `inspector-complete:{analysisId}` | `transaction_analyses` UPDATE | Inspector streaming done | `['inspector', caseId, txId]` |
+| Channel pattern                   | Table/event                        | Purpose                       | React Query invalidation             |
+| --------------------------------- | ---------------------------------- | ----------------------------- | ------------------------------------ |
+| `deconfliction:{caseId}`          | `deconfliction_alerts` INSERT      | New overlap alert             | `['deconfliction-alerts', caseId]`   |
+| `supervisor-queue:{supervisorId}` | `review_checkpoints` INSERT/UPDATE | New item in review queue      | `['supervisor-queue', supervisorId]` |
+| `watcher:{caseId}`                | `watcher_fires` INSERT             | Watcher triggered             | `['watcher-fires', caseId]`, toast   |
+| `wallet-analysis:{walletId}`      | `wallet_addresses` UPDATE          | Per-address analysis complete | `['wallet', caseId, walletId]`       |
+| `case-presence:{caseId}`          | Broadcast (not Postgres Changes)   | Presence indicators           | Zustand `realtimeStore.casePresence` |
+| `inspector-complete:{analysisId}` | `transaction_analyses` UPDATE      | Inspector streaming done      | `['inspector', caseId, txId]`        |
 
 #### Presence indicators
 
@@ -642,7 +641,9 @@ export function useCasePresence(caseId: string) {
         }
       });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [caseId, user]);
 }
 ```
@@ -652,6 +653,7 @@ Presence renders in the top bar as avatar chips: `[J.D.] [S.P.] +2` — showing 
 #### Why Supabase Realtime is NOT used for canvas CRDT
 
 Supabase Realtime Broadcast is low-latency pub/sub, not OT/CRDT. For collaborative canvas editing (Phase 2+), the requirements are:
+
 - **Conflict-free merging** of concurrent node position changes from N investigators
 - **Offline support** (an investigator temporarily loses connection; their changes merge cleanly on reconnect)
 - **Causal ordering** (memo edits must preserve causal history)
@@ -666,19 +668,18 @@ Document uploads (case documents, memo attachments) go directly from the browser
 // hooks/useDocumentUpload.ts
 export function useDocumentUpload(caseId: string) {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ file, documentType }: UploadInput) => {
       // Step 1: Request a signed upload URL from the API
       // The API validates permissions, creates the CaseDocument record,
       // and returns the Supabase Storage path + signed URL
-      const { uploadUrl, storagePath, documentId } =
-        await trpc.documents.requestUploadUrl.mutate({
-          caseId,
-          filename: file.name,
-          mimeType: file.type,
-          documentType,
-        });
+      const { uploadUrl, storagePath, documentId } = await trpc.documents.requestUploadUrl.mutate({
+        caseId,
+        filename: file.name,
+        mimeType: file.type,
+        documentType,
+      });
 
       // Step 2: Upload directly to Supabase Storage (bypasses API; no binary in transit twice)
       const { error: uploadError } = await supabase.storage
@@ -709,7 +710,7 @@ case-documents/
   {agencyId}/
     {caseId}/
       {documentId}/{filename}       # encrypted at rest by Supabase Storage + KMS
-      
+
 memo-attachments/
   {agencyId}/
     {caseId}/
@@ -764,7 +765,7 @@ const wsProvider = new WebsocketProvider(
   {
     // Pass Supabase access token for auth on the WS server
     params: { token: session.access_token },
-  }
+  },
 );
 
 // Shared types within the case document
@@ -782,6 +783,7 @@ awareness.setLocalStateField('user', {
 ```
 
 **Phase 2 canvas sync model:**
+
 - Node positions sync via Yjs (`Y.Map`); Sigma reads positions from Yjs on update
 - Sigma's camera state is NOT synced — each investigator controls their own viewport
 - Path selections in progress sync via Yjs (`Y.Array`) — other investigators see the path being built in real-time as a faint preview overlay
@@ -839,17 +841,15 @@ export default async function CaseLayout({ params, children }) {
 
 **What is and isn't pre-fetched:**
 
-| Data | Pre-fetched RSC? | Rationale |
-|---|---|---|
-| Case metadata | Yes | Tiny; needed for every tab; fast Postgres query |
-| Path list | Yes | Needed for header stats; fast Postgres query |
-| Canvas graph | No | Large; requires Memgraph fan-out; skeleton on load |
-| Inspector analysis | No | Expensive; on-demand only |
-| Provider installs | Yes (marketplace only) | Pre-fetch on marketplace route |
-| Personal attributions | No | Client-side; user-scoped direct Supabase read |
-| Wallet analysis | No | Large async result; polling pattern |
-
-
+| Data                  | Pre-fetched RSC?       | Rationale                                          |
+| --------------------- | ---------------------- | -------------------------------------------------- |
+| Case metadata         | Yes                    | Tiny; needed for every tab; fast Postgres query    |
+| Path list             | Yes                    | Needed for header stats; fast Postgres query       |
+| Canvas graph          | No                     | Large; requires Memgraph fan-out; skeleton on load |
+| Inspector analysis    | No                     | Expensive; on-demand only                          |
+| Provider installs     | Yes (marketplace only) | Pre-fetch on marketplace route                     |
+| Personal attributions | No                     | Client-side; user-scoped direct Supabase read      |
+| Wallet analysis       | No                     | Large async result; polling pattern                |
 
 ## Section 3 — The Canvas Rendering Pipeline (Sigma.js v3)
 
@@ -894,11 +894,11 @@ Normal state:                Selected state:
     │ 🏦 │ ← entity icon          │ 🏦 │
     ╰───╯                        ╰───╯  ← glow ring (selection color)
    0xab..                       0xab..
-                               
-  Circle fill: semantic color   
-  Border: 2px, slightly darker  
+
+  Circle fill: semantic color
+  Border: 2px, slightly darker
   Badges: stacked (icon cluster)
-  
+
 Diameter: log-scale of value handled (min 12px, max 48px)
 ```
 
@@ -920,7 +920,7 @@ Normal state:        Path-colored state:
     ║  47 addresses║ ← count badge
     ║   (cluster)  ║ ← entity label if attributed
     ╚══════════════╝
-    
+
 Double-click → explodes into individual AddressNodes within cluster boundary
 ```
 
@@ -928,14 +928,14 @@ Double-click → explodes into individual AddressNodes within cluster boundary
 
 All edges are directional: address→tx or tx→address. Edge rendering rules:
 
-| Property | Encoding |
-|---|---|
-| Thickness | log10(absolute_value_native), clipped to [1px, 8px] |
-| Color | semantic palette by taint %; desaturates as taint drops |
-| Opacity | share_of_parent_tx (0.3 → 1.0) |
-| Arrow | always present, size proportional to thickness |
-| Label | `{percentage}% / {amount} {token}` — appears at medium zoom |
-| Fiat label | `~${fiat_at_tx}` — muted, appears at close zoom |
+| Property   | Encoding                                                    |
+| ---------- | ----------------------------------------------------------- |
+| Thickness  | log10(absolute_value_native), clipped to [1px, 8px]         |
+| Color      | semantic palette by taint %; desaturates as taint drops     |
+| Opacity    | share_of_parent_tx (0.3 → 1.0)                              |
+| Arrow      | always present, size proportional to thickness              |
+| Label      | `{percentage}% / {amount} {token}` — appears at medium zoom |
+| Fiat label | `~${fiat_at_tx}` — muted, appears at close zoom             |
 
 **Money-flow overlay mode:** When the `moneyFlowOverlayActive` flag is true in Zustand, every edge renders its `cumulative_share_from_source` under the active methodology. Edges with < 1% taint render gray at 30% opacity, creating a natural fade-out of dead ends. Switching methodology triggers a single Zustand action that causes the graph renderer to re-read the `EdgeValueAnnotation` cache and redraw — no re-fetch, because all six methodology values are pre-populated from the Math Service.
 
@@ -945,25 +945,25 @@ All edges are directional: address→tx or tx→address. Edge rendering rules:
 // packages/shared-types/src/colors.ts — the canonical palette
 export const SemanticColors = {
   // Taint families
-  taint_critical:   '#C0392B',  // red family — confirmed criminal / sanctioned
-  taint_high:       '#E67E22',  // orange — elevated risk, unconfirmed
-  taint_medium:     '#F39C12',  // yellow — caution, pending verification
-  taint_low:        '#27AE60',  // green — clean / attributed legitimate
-  
+  taint_critical: '#C0392B', // red family — confirmed criminal / sanctioned
+  taint_high: '#E67E22', // orange — elevated risk, unconfirmed
+  taint_medium: '#F39C12', // yellow — caution, pending verification
+  taint_low: '#27AE60', // green — clean / attributed legitimate
+
   // Investigation families
   investigator_mark: '#2980B9', // blue — marks, paths, notes
-  privacy_obfusc:   '#8E44AD', // purple — mixers, privacy chains, obfuscation
-  context_only:     '#7F8C8D',  // gray — reference, low confidence
-  
+  privacy_obfusc: '#8E44AD', // purple — mixers, privacy chains, obfuscation
+  context_only: '#7F8C8D', // gray — reference, low confidence
+
   // Path palette (curated, semantic-aware)
-  path_cool_1:      '#3498DB',  // blue — investigator-built primary
-  path_cool_2:      '#1ABC9C',  // teal — investigator-built secondary
-  path_cool_3:      '#9B59B6',  // purple — investigator-built tertiary
-  path_warm_1:      '#E74C3C',  // red — adversarial/AI-promoted
-  path_warm_2:      '#E67E22',  // orange — adversarial/AI-promoted secondary
-  path_accent_gold: '#F1C40F',  // gold — case primary evidentiary path (1 per case)
-  path_accent_lime: '#2ECC71',  // lime — reserved accent
-  path_neutral:     '#95A5A6',  // gray — archived/reference paths
+  path_cool_1: '#3498DB', // blue — investigator-built primary
+  path_cool_2: '#1ABC9C', // teal — investigator-built secondary
+  path_cool_3: '#9B59B6', // purple — investigator-built tertiary
+  path_warm_1: '#E74C3C', // red — adversarial/AI-promoted
+  path_warm_2: '#E67E22', // orange — adversarial/AI-promoted secondary
+  path_accent_gold: '#F1C40F', // gold — case primary evidentiary path (1 per case)
+  path_accent_lime: '#2ECC71', // lime — reserved accent
+  path_neutral: '#95A5A6', // gray — archived/reference paths
 } as const;
 ```
 
@@ -976,22 +976,22 @@ Zoom level   What renders                   Sigma camera range
 ──────────────────────────────────────────────────────────────
 Far out      Clusters only, critical marks   ratio < 0.3
              Edge direction arrows only
-             
+
 Medium out   Individual addresses visible   0.3 ≤ ratio < 1.0
              TX nodes visible
              Edge thickness visible
              Entity type icons
-             
+
 Medium in    Percentage labels on edges     1.0 ≤ ratio < 2.5
              Memo badges visible
              Attribution chips
              Fiat values visible
-             
+
 Close        All edge annotations           2.5 ≤ ratio < 6.0
              Full address text
              UTXO input/output chips
              Internal call sub-nodes
-             
+
 Microscope   Single TX expanded             ratio ≥ 6.0
              Full calldata decode preview
              Internal call tree
@@ -1020,12 +1020,12 @@ The LOD is implemented as a Sigma camera state change subscription. When `sigma.
                     │  Alt+click            → remove last hop             │
                     │  Enter                → confirm path                │
                     └─────────────────────────────────────────────────────┘
-                    
+
                     ┌─────────────────────────────────────────────────────┐
                LASSO │  Drag to draw region  → capture enclosed nodes     │
                     │  Release              → show "path or sub-paths?"  │
                     └─────────────────────────────────────────────────────┘
-                    
+
                     ┌─────────────────────────────────────────────────────┐
           NL_INPUT   │  Text input           → NL query modal             │
                     │  Submit               → backend proposes candidates │
@@ -1060,36 +1060,36 @@ Sigma.js v3 renders in WebGL, which handles 10k+ nodes without issue at the rend
   <InspectorPanel txId={id}           // one per open inspector
     position={draggablePosition}
     pinned={isPinned}>
-    
+
     <InspectorHeader>                  // tx hash, chain, timestamp, status chip
-    
+
     <InspectorBody>
       <StreamingSection               // fills as analysis streams in
         sectionId="summary"
         skeleton={<SummarySkeleton>}> // shown while section is loading
         <PlainLanguageSummary>
-      
+
       <StreamingSection sectionId="facts">
         <StructuredFactsTable>
-      
+
       <StreamingSection sectionId="decoded">
         <DecodedActionPanel>           // swap, UTXO, bridge, contract call variants
-      
+
       <StreamingSection sectionId="counterparties">
         <CounterpartyGrid>             // per-address attribution rows
-      
+
       <StreamingSection sectionId="context">
         <CaseContextList>              // path membership, taint %, related memos
-      
+
       <StreamingSection sectionId="obfuscation">
         <ObfuscationFindings>          // 🪤 findings or ✅ clean
-      
+
       <StreamingSection sectionId="critic">
         <CriticNotes>                  // 🧐 notes or ✅ no challenges
-      
+
       <StreamingSection sectionId="actions">
         <SuggestedActionsPanel>        // one-click next steps
-    
+
     <InspectorFooter>                  // save / export / collapse buttons
 ```
 
@@ -1101,7 +1101,7 @@ The analysis endpoint returns a Server-Sent Event (SSE) stream. Each event carri
 function StreamingSection({ sectionId, skeleton, children }) {
   const { sectionStates } = useInspectorStore();
   const state = sectionStates[sectionId]; // 'loading' | 'streaming' | 'complete'
-  
+
   if (state === 'loading') return skeleton;
   if (state === 'streaming') return (
     <div className="animate-pulse-subtle">{children}</div>
@@ -1124,14 +1124,14 @@ Dragging is handled by `@dnd-kit/core` (already a shadcn/ui dependency). The ins
 
 ### 4.4 Keyboard shortcuts
 
-| Key | Action |
-|---|---|
-| `Enter` | Open inspector for currently selected transaction |
-| `Esc` | Close active (most recently focused) inspector |
-| `Tab` | Navigate between inspector sections |
-| `Ctrl+S` | Save current inspection to case |
-| `Ctrl+E` | Export as PDF exhibit |
-| `Ctrl+P` | Add to active path from inspector |
+| Key      | Action                                            |
+| -------- | ------------------------------------------------- |
+| `Enter`  | Open inspector for currently selected transaction |
+| `Esc`    | Close active (most recently focused) inspector    |
+| `Tab`    | Navigate between inspector sections               |
+| `Ctrl+S` | Save current inspection to case                   |
+| `Ctrl+E` | Export as PDF exhibit                             |
+| `Ctrl+P` | Add to active path from inspector                 |
 
 ---
 
@@ -1276,20 +1276,39 @@ useEffect(() => {
   const handler = (e: KeyboardEvent) => {
     // Don't fire when typing in an input/textarea
     if (e.target instanceof HTMLInputElement) return;
-    
+
     const { selectedNodeIds, selectedEdgeIds } = canvasStore.getState();
     const targets = [...selectedNodeIds, ...selectedEdgeIds];
-    
-    switch(e.key.toUpperCase()) {
-      case 'I': openImportantModal(targets); break;
-      case 'M': openMemoModal(targets); break;
-      case 'T': openTagModal(targets); break;
-      case 'P': enterPathClickMode(); break;
-      case 'E': expandNeighborhood(targets); break;
-      case 'H': hideFromView(targets); break;
-      case 'F': focusCameraOnTargets(targets); break;
-      case ' ': toggleMoneyFlowOverlay(); e.preventDefault(); break;
-      case '?': openShortcutHelp(); break;
+
+    switch (e.key.toUpperCase()) {
+      case 'I':
+        openImportantModal(targets);
+        break;
+      case 'M':
+        openMemoModal(targets);
+        break;
+      case 'T':
+        openTagModal(targets);
+        break;
+      case 'P':
+        enterPathClickMode();
+        break;
+      case 'E':
+        expandNeighborhood(targets);
+        break;
+      case 'H':
+        hideFromView(targets);
+        break;
+      case 'F':
+        focusCameraOnTargets(targets);
+        break;
+      case ' ':
+        toggleMoneyFlowOverlay();
+        e.preventDefault();
+        break;
+      case '?':
+        openShortcutHelp();
+        break;
       case 'ENTER': {
         if (selectionContainsSingleTx(selectedNodeIds)) {
           openInspector(firstTx(selectedNodeIds));
@@ -1302,7 +1321,7 @@ useEffect(() => {
       }
     }
   };
-  
+
   window.addEventListener('keydown', handler);
   return () => window.removeEventListener('keydown', handler);
 }, []);
@@ -1426,6 +1445,7 @@ For UTXO input sides, the same annotation appears on the address-to-tx edge with
 ### 7.2 The "Where did the money go?" overlay
 
 Toggle mechanism:
+
 - `Space` key or the overlay toggle button in the top bar
 - Zustand: `moneyFlowOverlayActive` + `activeMethodology`
 
@@ -1433,11 +1453,11 @@ When active, the Sigma renderer swaps to `OverlayEdgeProgram` which reads `cumul
 
 ```typescript
 function taintToColor(share: number): string {
-  if (share >= 0.8) return SemanticColors.taint_critical;  // red
-  if (share >= 0.5) return SemanticColors.taint_high;      // orange  
-  if (share >= 0.2) return SemanticColors.taint_medium;    // yellow
-  if (share >= 0.01) return SemanticColors.taint_low;      // green
-  return SemanticColors.context_only;                       // gray (near-dead end)
+  if (share >= 0.8) return SemanticColors.taint_critical; // red
+  if (share >= 0.5) return SemanticColors.taint_high; // orange
+  if (share >= 0.2) return SemanticColors.taint_medium; // yellow
+  if (share >= 0.01) return SemanticColors.taint_low; // green
+  return SemanticColors.context_only; // gray (near-dead end)
 }
 ```
 
@@ -1450,6 +1470,7 @@ The methodology selector is in the top bar, always visible when the overlay is a
 ```
 
 Clicking a methodology fires:
+
 ```typescript
 setMethodology(method); // Zustand action — instant
 // Sigma re-reads EdgeValueAnnotation[method] for every visible edge
@@ -1515,11 +1536,11 @@ A fixed panel, typically the right 280px of the court display or a second monito
 
 ```typescript
 function AccountingPanel({ currentFrame }: { currentFrame: CourtFrame }) {
-  const accounting = useMemo(() => 
+  const accounting = useMemo(() =>
     computeFrameAccounting(currentFrame, caseBaseline),
     [currentFrame]
   );
-  
+
   return (
     <div className="court-accounting-panel">
       <AccountingBlock title="CURRENT FRAME" data={accounting.frame} />
@@ -1535,21 +1556,22 @@ function AccountingPanel({ currentFrame }: { currentFrame: CourtFrame }) {
 
 ### 8.4 Hot keys
 
-| Key | Action |
-|---|---|
-| `←` / `→` | Previous / next frame |
-| `Space` | Next frame (clicker-friendly) |
-| `A`, `B`, `C`, `D` | Switch view |
-| `M` | Cycle methodology |
-| `J {address}` | Jump to entity in View D |
-| `C` | Show Critic challenges for current frame |
-| `D` | Show linked source document |
-| `R` | Highlight "read aloud" next claim |
-| `Esc Esc` | Return to opening frame |
+| Key                | Action                                   |
+| ------------------ | ---------------------------------------- |
+| `←` / `→`          | Previous / next frame                    |
+| `Space`            | Next frame (clicker-friendly)            |
+| `A`, `B`, `C`, `D` | Switch view                              |
+| `M`                | Cycle methodology                        |
+| `J {address}`      | Jump to entity in View D                 |
+| `C`                | Show Critic challenges for current frame |
+| `D`                | Show linked source document              |
+| `R`                | Highlight "read aloud" next claim        |
+| `Esc Esc`          | Return to opening frame                  |
 
 ### 8.5 Court Export Bundle
 
 The export is triggered by "Export court bundle" button on the Court Mode page. It packages:
+
 1. A snapshot of the React app (static Next.js export of just the court-viewer route)
 2. The Reproducibility Pack at its current frozen state
 3. A `manifest.json` describing all frames in the presentation
@@ -1574,14 +1596,14 @@ function SingleKeyModal({ provider, onClose }) {
   const [key, setKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [validationState, setValidationState] = useState<'idle'|'validating'|'ok'|'error'>();
-  
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add provider — {provider.display_name}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <Label>{provider.display_name} API key</Label>
           <div className="relative">
@@ -1597,16 +1619,16 @@ function SingleKeyModal({ provider, onClose }) {
               {showKey ? <EyeOff /> : <Eye />}
             </Button>
           </div>
-          
+
           {provider.signup_url && (
             <Link href={provider.signup_url} target="_blank" className="text-sm text-muted">
               Don't have one yet? → Get an {provider.display_name} key
             </Link>
           )}
-          
+
           {validationState === 'error' && <ValidationError message={validationError} />}
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={() => validateAndSave(key)} disabled={!key}>
@@ -1627,8 +1649,8 @@ The bulk textarea uses a custom parser that fires as the user types (debounced 3
 function parseDotEnvBlock(text: string): ParsedKey[] {
   return text
     .split('\n')
-    .filter(line => line.trim() && !line.startsWith('#'))
-    .map(line => {
+    .filter((line) => line.trim() && !line.startsWith('#'))
+    .map((line) => {
       const [key, ...rest] = line.split('=');
       const value = rest.join('=').trim();
       const provider = resolveProvider(key.trim()); // fuzzy match against registry
@@ -1646,9 +1668,12 @@ A `<DropZone>` wraps the bulk-paste textarea. On file drop:
 
 ```typescript
 const onDrop = useCallback((files: File[]) => {
-  const envFile = files.find(f => f.name.endsWith('.env') || f.name === '.env');
-  if (!envFile) { showError('Please drop a .env file'); return; }
-  
+  const envFile = files.find((f) => f.name.endsWith('.env') || f.name === '.env');
+  if (!envFile) {
+    showError('Please drop a .env file');
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = (e) => {
     const text = e.target?.result as string;
@@ -1976,6 +2001,7 @@ The "Add external investigator" button opens a `Dialog` with the `ExternalInvest
 ### 14.2 Auto-detected alert actions
 
 Alert action buttons map to specific backend mutations:
+
 - **Acknowledge:** Sets `alert.status = 'acknowledged'`. No further action.
 - **Contact:** Opens a platform message composer (sends structured message to the other case's lead via the platform's internal messaging; the sender controls what data is shared).
 - **Escalate:** Sets `alert.status = 'escalated'`, routes to supervisor's review queue (F27).
@@ -2033,6 +2059,7 @@ The refresh control sits in the canvas top bar, right of the breadcrumb:
 ```
 
 The badge colors follow the v0.6 spec:
+
 - `bg-green-500` — under 1 hour
 - `bg-yellow-500` — 1–24 hours
 - `bg-orange-500` — 1–7 days
@@ -2052,32 +2079,32 @@ function RefreshDropdown() {
     tx_history: false,
     obfuscation: false,
   });
-  
+
   const { data: estimate } = useQuery({
     queryKey: ['refresh-estimate', scope, dataTypes],
     queryFn: () => trpc.cache.estimateRefreshCost.query({ scope, dataTypes }),
     // Estimate updates in real-time as the user toggles options
   });
-  
+
   return (
     <div className="refresh-dropdown w-72 p-4">
       <h3>What would you like to refresh?</h3>
-      
+
       <RadioGroup value={scope} onValueChange={setScope}>
         <RadioGroupItem value="selection">Selected entities only</RadioGroupItem>
         <RadioGroupItem value="viewport">Visible viewport</RadioGroupItem>
         <RadioGroupItem value="case">All entities in this case</RadioGroupItem>
       </RadioGroup>
-      
+
       <h3>What kind of data?</h3>
       <CheckboxGroup state={dataTypes} onChange={setDataTypes} />
-      
+
       {estimate && (
         <p className="text-sm text-muted mt-2">
           Estimated cost: ~${estimate.dollars.toFixed(2)} · ~{estimate.seconds}s
         </p>
       )}
-      
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={close}>Cancel</Button>
         <Button onClick={executeRefresh}>Refresh</Button>
@@ -2094,11 +2121,11 @@ After a refresh completes, changed entities pulse for 5 seconds via a CSS animat
 ```typescript
 // In the refresh mutation's onSuccess:
 const changedNodeIds = result.changed_nodes;
-changedNodeIds.forEach(id => {
+changedNodeIds.forEach((id) => {
   sigma.graph.setNodeAttribute(id, 'highlighted', true);
 });
 setTimeout(() => {
-  changedNodeIds.forEach(id => {
+  changedNodeIds.forEach((id) => {
     sigma.graph.setNodeAttribute(id, 'highlighted', false);
   });
 }, 5000);
@@ -2156,10 +2183,10 @@ The semantic color palette has a high-contrast variant defined as a CSS class (`
 
 ```css
 .high-contrast {
-  --color-taint-critical: #FF0000;   /* pure red */
-  --color-taint-high: #FF6600;       /* bright orange */
-  --color-taint-medium: #FFCC00;     /* bright yellow */
-  --color-investigator-mark: #0066FF; /* bright blue */
+  --color-taint-critical: #ff0000; /* pure red */
+  --color-taint-high: #ff6600; /* bright orange */
+  --color-taint-medium: #ffcc00; /* bright yellow */
+  --color-investigator-mark: #0066ff; /* bright blue */
   /* background pushed to near-black, text to near-white */
 }
 ```
@@ -2173,17 +2200,17 @@ After every modal closes, focus returns to the triggering element (stored in a `
 ```typescript
 function useModalFocus() {
   const triggerRef = useRef<HTMLElement | null>(null);
-  
+
   const openModal = useCallback((trigger: HTMLElement) => {
     triggerRef.current = trigger;
     setOpen(true);
   }, []);
-  
+
   const closeModal = useCallback(() => {
     setOpen(false);
     setTimeout(() => triggerRef.current?.focus(), 0);
   }, []);
-  
+
   return { openModal, closeModal };
 }
 ```
@@ -2195,6 +2222,7 @@ function useModalFocus() {
 ### 18.1 Phase 1: Read-only viewer
 
 The `(app)/layout.tsx` checks viewport width and conditionally renders `<MobileReadOnlyShell>` for screens under 768px. This shell:
+
 - Shows case metadata, path summaries, wallet summaries, and reports in read-only card views
 - Does not render the Sigma canvas (WebGL is unreliable on mobile browsers at investigation scale)
 - Shows push notification badges for watcher alerts and deconfliction alerts
@@ -2203,6 +2231,7 @@ The `(app)/layout.tsx` checks viewport width and conditionally renders `<MobileR
 ### 18.2 Phase 1: Court Mode driver (tablet)
 
 On 768–1024px screens (tablet), the Court Mode route renders a touch-optimized layout:
+
 - Swipe left/right → advance/retreat frames (handled by a `HammerJS` or native `touchstart`/`touchend` delta)
 - Large tap targets for view switcher (A/B/C/D)
 - The accounting panel collapses into a bottom sheet, swipe up to expand
@@ -2211,6 +2240,7 @@ On 768–1024px screens (tablet), the Court Mode route renders a touch-optimized
 ### 18.3 Phase 2: Field IOC capture
 
 A `<FieldCapture>` component renders on mobile for `/cases/[caseId]/ioc/capture`:
+
 - Camera integration via `getUserMedia()` and a Canvas-based OCR preview
 - Barcode/QR code scanning via a WASM-based decoder
 - Extracted addresses shown with checksum validation before submission
@@ -2231,22 +2261,22 @@ These restrictions are enforced via viewport detection that disables the write a
 
 ### 19.1 shadcn/ui primitives used directly
 
-| shadcn Component | Where used |
-|---|---|
-| `Dialog` | API key modal, mark-as-important, attribution apply, compare mode confirmation |
-| `Sheet` | Memo editor, important sidebar, review sidebar, refresh dropdown |
-| `Popover` | Refresh scope dropdown, badge hover tooltips, context menus |
-| `DropdownMenu` | Right-click canvas context menu, path style picker |
-| `Tabs` | Case tabs (canvas / evidence / paths / wallets / documents / deconfliction / reports) |
-| `Table` / `DataTable` | Inspector structured facts, coverage matrix, attribution library |
-| `Form` / `Input` / `Textarea` | All form surfaces |
-| `RadioGroup` / `Checkbox` | Selection groups in modals |
-| `Toast` | Optimistic update confirmations, shared attribution notifications |
-| `Progress` | Wallet analysis progress, document OCR progress |
-| `Badge` | Entity attribution chips, path color chips, severity indicators |
-| `Separator` | Inspector section dividers |
-| `ScrollArea` | Important sidebar, inspector body, document extraction list |
-| `Skeleton` | Inspector streaming placeholders |
+| shadcn Component              | Where used                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| `Dialog`                      | API key modal, mark-as-important, attribution apply, compare mode confirmation        |
+| `Sheet`                       | Memo editor, important sidebar, review sidebar, refresh dropdown                      |
+| `Popover`                     | Refresh scope dropdown, badge hover tooltips, context menus                           |
+| `DropdownMenu`                | Right-click canvas context menu, path style picker                                    |
+| `Tabs`                        | Case tabs (canvas / evidence / paths / wallets / documents / deconfliction / reports) |
+| `Table` / `DataTable`         | Inspector structured facts, coverage matrix, attribution library                      |
+| `Form` / `Input` / `Textarea` | All form surfaces                                                                     |
+| `RadioGroup` / `Checkbox`     | Selection groups in modals                                                            |
+| `Toast`                       | Optimistic update confirmations, shared attribution notifications                     |
+| `Progress`                    | Wallet analysis progress, document OCR progress                                       |
+| `Badge`                       | Entity attribution chips, path color chips, severity indicators                       |
+| `Separator`                   | Inspector section dividers                                                            |
+| `ScrollArea`                  | Important sidebar, inspector body, document extraction list                           |
+| `Skeleton`                    | Inspector streaming placeholders                                                      |
 
 ### 19.2 Extended shadcn components
 
@@ -2262,16 +2292,16 @@ Components built on shadcn primitives but extended:
 
 ### 19.3 Custom-built components (no shadcn base)
 
-| Component | Justification |
-|---|---|
-| `<CanvasRoot>` | Sigma.js integration; no UI library has a WebGL graph primitive |
-| `<DiamondNodeProgram>` | Custom Sigma WebGL program |
-| `<PathRingProgram>` | Custom Sigma WebGL program |
-| `<PercentageLabelProgram>` | Custom Sigma WebGL program |
-| `<DropZone>` | File drag-and-drop with canvas and document tab variants |
-| `<CourtAccountingPanel>` | Specialized display; no generic equivalent |
-| `<SankeyView>` | D3 Sankey — direct D3 imperative rendering inside a React `useEffect` |
-| `<TimelineView>` | Recharts area chart with a custom scrubber overlay |
+| Component                  | Justification                                                         |
+| -------------------------- | --------------------------------------------------------------------- |
+| `<CanvasRoot>`             | Sigma.js integration; no UI library has a WebGL graph primitive       |
+| `<DiamondNodeProgram>`     | Custom Sigma WebGL program                                            |
+| `<PathRingProgram>`        | Custom Sigma WebGL program                                            |
+| `<PercentageLabelProgram>` | Custom Sigma WebGL program                                            |
+| `<DropZone>`               | File drag-and-drop with canvas and document tab variants              |
+| `<CourtAccountingPanel>`   | Specialized display; no generic equivalent                            |
+| `<SankeyView>`             | D3 Sankey — direct D3 imperative rendering inside a React `useEffect` |
+| `<TimelineView>`           | Recharts area chart with a custom scrubber overlay                    |
 
 ### 19.4 Design tokens
 
@@ -2283,25 +2313,25 @@ Components built on shadcn primitives but extended:
   --spacing-sidebar-width: 280px;
   --spacing-inspector-width: 380px;
   --spacing-court-accounting-width: 280px;
-  
+
   /* Typography */
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;  /* tx hashes */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace; /* tx hashes */
   --font-body: 'Inter', sans-serif;
   --font-display: 'Inter', sans-serif;
-  
+
   /* Canvas-specific tokens */
-  --canvas-bg: hsl(222 47% 5%);          /* near-black */
-  --canvas-grid: hsl(222 47% 8%);        /* subtle grid */
-  --canvas-selection: hsl(212 100% 50%);  /* bright selection ring */
-  
+  --canvas-bg: hsl(222 47% 5%); /* near-black */
+  --canvas-grid: hsl(222 47% 8%); /* subtle grid */
+  --canvas-selection: hsl(212 100% 50%); /* bright selection ring */
+
   /* Semantic palette (mirrors SemanticColors in TypeScript) */
   --color-taint-critical: hsl(6 78% 57%);
-  --color-taint-high:     hsl(28 80% 52%);
-  --color-taint-medium:   hsl(45 100% 51%);
-  --color-taint-low:      hsl(145 63% 42%);
-  --color-mark-blue:      hsl(210 68% 47%);
+  --color-taint-high: hsl(28 80% 52%);
+  --color-taint-medium: hsl(45 100% 51%);
+  --color-taint-low: hsl(145 63% 42%);
+  --color-mark-blue: hsl(210 68% 47%);
   --color-privacy-purple: hsl(275 60% 43%);
-  --color-context-gray:   hsl(210 10% 50%);
+  --color-context-gray: hsl(210 10% 50%);
 }
 
 /* High contrast variant */
@@ -2330,6 +2360,7 @@ Components built on shadcn primitives but extended:
 **Week 1-2: Scaffold and auth**
 
 Frontend work in this phase:
+
 - Turborepo `apps/web` scaffold with Next.js 15 App Router, Tailwind, shadcn/ui `init`
 - Supabase Auth integration: `@supabase/ssr` client factories, `middleware.ts` session refresh, `(auth)/login`, `(app)/layout.tsx` with `createSupabaseServerClient()` check
 - Empty shell layout: sidebar, tab bar, top bar
@@ -2341,6 +2372,7 @@ Frontend work in this phase:
 **Week 3-4: Capability router + first chain**
 
 Frontend work:
+
 - Provider Marketplace stub: catalog page (static), single-key modal wired to backend
 - `.env` bulk add modal (Mode B from v0.4 addendum)
 - Sigma.js installed, canvas renders one hardcoded AddressNode + TransactionNode
@@ -2350,6 +2382,7 @@ Frontend work:
 **Week 5-6: Transaction-centric graph + Inspector skeleton**
 
 Frontend work:
+
 - Graph data React Query integration: `useQuery(queryKeys.caseGraph(caseId))` populates sigma.graph
 - `NodeImageProgram` for entity type icons (static set of 8 most common icons)
 - Transaction Inspector popup: non-modal, draggable, shows Sections 1-2 (facts + summary)
@@ -2359,6 +2392,7 @@ Frontend work:
 **Week 7-8: Reproducibility + canvas interactions**
 
 Frontend work:
+
 - Refresh button + last-refresh badge (stub: reads cache timestamp, no cost estimate yet)
 - Mark as Important modal (`I` key) with optimistic update to canvas glow ring
 - Memo drawer (`M` key) with Tiptap editor and save
@@ -2369,6 +2403,7 @@ Frontend work:
 ### 20.2 Phase 1 frontend priorities (months 2-3)
 
 After Phase 0 ships, the frontend work queue in rough priority order:
+
 1. Path selection toolbar + click-select mode + path styling modal
 2. Important sidebar with drag-to-reorder
 3. LOD zoom transitions (far/medium/close thresholds)
@@ -2485,7 +2520,6 @@ The following are specific decisions to clarify with the founder before or durin
 
 **Recommendation:** Use `BroadcastChannel` API to coordinate across tabs — whichever tab is the "leader" (using a leader election algorithm via `navigator.locks`) owns the Realtime subscriptions. Other tabs receive invalidation signals via BroadcastChannel. This is a Phase 2 concern; Phase 0 can accept duplicate toasts as a known limitation.
 
-
 ---
 
 ## Section 22 — Supabase Integration Reference
@@ -2506,11 +2540,11 @@ pnpm supabase gen types typescript --linked > apps/web/types/supabase-generated.
 
 ### 22.2 Client factory reference
 
-| Factory | File | Used in | Cookies |
-|---|---|---|---|
-| `createSupabaseServerClient()` | `lib/supabase/server.ts` | Server Components, Route Handlers, Server Actions | Reads + writes via `cookies()` from `next/headers` |
-| `supabase` (singleton) | `lib/supabase/client.ts` | Client Components, hooks | Browser cookie jar |
-| Middleware client | `middleware.ts` | Every request (session refresh) | Reads from `request.cookies`, writes to `response.cookies` |
+| Factory                        | File                     | Used in                                           | Cookies                                                    |
+| ------------------------------ | ------------------------ | ------------------------------------------------- | ---------------------------------------------------------- |
+| `createSupabaseServerClient()` | `lib/supabase/server.ts` | Server Components, Route Handlers, Server Actions | Reads + writes via `cookies()` from `next/headers`         |
+| `supabase` (singleton)         | `lib/supabase/client.ts` | Client Components, hooks                          | Browser cookie jar                                         |
+| Middleware client              | `middleware.ts`          | Every request (session refresh)                   | Reads from `request.cookies`, writes to `response.cookies` |
 
 **Golden rule:** Never import `lib/supabase/server.ts` in a Client Component. Never call `cookies()` outside a Server Component or Route Handler. The TypeScript `"use server"` / `"use client"` boundary prevents this if you follow the module split above.
 
@@ -2540,6 +2574,7 @@ This matrix answers the question: "Where do I fetch this data?"
 ```
 
 **Non-sensitive direct reads (current list):**
+
 - `cases` table: list view columns only (`id, codename, status, classification, created_by, updated_at`)
 - `personal_attributions` table: own attributions only (`attributor_id = auth.uid()`)
 - `agencies` table: own agency record
@@ -2550,16 +2585,16 @@ This matrix answers the question: "Where do I fetch this data?"
 
 ### 22.4 React Query stale-time cheat sheet
 
-| Query key | staleTime | Rationale |
-|---|---|---|
-| `caseList` | 60s | Changes infrequently; Realtime invalidates on INSERT |
-| `case(id)` | 5 min | Pre-fetched; Realtime invalidates on UPDATE |
-| `caseGraph(id)` | 5 min | Expensive to fetch; Refresh button forces invalidation |
-| `attributions(userId)` | 5 min | Infrequent writes |
-| `providers()` | 10 min | Near-static catalog |
-| `refreshStatus(id)` | 30s | Updates frequently; Realtime invalidates on change |
-| `walletAnalysis(id)` | 0 (polling) | Long-running async; polling until complete then 5 min |
-| `inspectorAnalysis(txId)` | 30 min | Expensive; persists for session unless manually invalidated |
+| Query key                 | staleTime   | Rationale                                                   |
+| ------------------------- | ----------- | ----------------------------------------------------------- |
+| `caseList`                | 60s         | Changes infrequently; Realtime invalidates on INSERT        |
+| `case(id)`                | 5 min       | Pre-fetched; Realtime invalidates on UPDATE                 |
+| `caseGraph(id)`           | 5 min       | Expensive to fetch; Refresh button forces invalidation      |
+| `attributions(userId)`    | 5 min       | Infrequent writes                                           |
+| `providers()`             | 10 min      | Near-static catalog                                         |
+| `refreshStatus(id)`       | 30s         | Updates frequently; Realtime invalidates on change          |
+| `walletAnalysis(id)`      | 0 (polling) | Long-running async; polling until complete then 5 min       |
+| `inspectorAnalysis(txId)` | 30 min      | Expensive; persists for session unless manually invalidated |
 
 ### 22.5 Realtime channel lifecycle
 
@@ -2574,7 +2609,8 @@ All Realtime subscriptions follow the same lifecycle:
 ```typescript
 // Pattern: one subscription per context, always cleaned up
 useEffect(() => {
-  const ch = supabase.channel(channelName)
+  const ch = supabase
+    .channel(channelName)
     .on('postgres_changes', { event, schema, table, filter }, handler)
     .subscribe();
   return () => supabase.removeChannel(ch);
@@ -2585,14 +2621,14 @@ useEffect(() => {
 
 The following actions require MFA re-verification before execution:
 
-| Action | tRPC procedure | MFA type |
-|---|---|---|
-| Finalize path for report | `paths.finalize` | TOTP or WebAuthn |
-| Generate court-grade report | `reports.generateCourt` | TOTP or WebAuthn |
-| Approve freeze request | `supervisor.approveFreezeRequest` | TOTP or WebAuthn |
-| Approve supervisor checkpoint | `supervisor.approveCheckpoint` | TOTP |
-| Export Reproducibility Pack | `reports.exportPack` | TOTP |
-| Delete case | `cases.delete` | TOTP or WebAuthn |
+| Action                        | tRPC procedure                    | MFA type         |
+| ----------------------------- | --------------------------------- | ---------------- |
+| Finalize path for report      | `paths.finalize`                  | TOTP or WebAuthn |
+| Generate court-grade report   | `reports.generateCourt`           | TOTP or WebAuthn |
+| Approve freeze request        | `supervisor.approveFreezeRequest` | TOTP or WebAuthn |
+| Approve supervisor checkpoint | `supervisor.approveCheckpoint`    | TOTP             |
+| Export Reproducibility Pack   | `reports.exportPack`              | TOTP             |
+| Delete case                   | `cases.delete`                    | TOTP or WebAuthn |
 
 All use `useMFAGate()` from `hooks/useMFAGate.ts`. In Phase 0, MFA enrollment is optional (advisory prompt only). In Phase 2, agency-tier users are required to enroll before any court-grade export.
 
@@ -2603,16 +2639,16 @@ Supabase JWT payload that the frontend relies on:
 ```typescript
 // What supabase.auth.getUser() returns (decoded from JWT)
 interface ChainSightUser {
-  id: string;                    // Supabase user UUID
+  id: string; // Supabase user UUID
   email: string;
   app_metadata: {
-    agency_id: string;           // Set at registration by our API
+    agency_id: string; // Set at registration by our API
     role: 'investigator' | 'supervisor' | 'admin'; // Set at registration
     license_tier: 'free' | 'professional' | 'agency'; // Controls feature flags
   };
   user_metadata: {
-    display_name: string;        // "J. Smith"
-    avatar_url?: string;         // Optional; used in presence chips
+    display_name: string; // "J. Smith"
+    avatar_url?: string; // Optional; used in presence chips
     expert_witness_credentials?: string; // Filled in Settings → Profile
   };
 }
@@ -2653,6 +2689,7 @@ SUPABASE_SERVICE_ROLE_KEY=<service-key>      # NEVER exposed to browser — API 
 ```
 
 **ANON key vs. SERVICE_ROLE key:**
+
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — used by both server and browser Supabase clients. Respects RLS. Safe to embed in browser bundles.
 - `SUPABASE_SERVICE_ROLE_KEY` — bypasses RLS entirely. Used only in tRPC API route handlers for operations that legitimately need to cross tenant boundaries (agency admin operations, background jobs). Must never be imported in any Client Component.
 
@@ -2665,7 +2702,6 @@ When a new Supabase-dependent feature is added, verify it works with On-Prem Sov
 - [ ] Realtime: Does it use the configurable WS URL or assume Supabase.co Realtime?
 - [ ] Types: Are generated types from `supabase gen types` or hand-rolled? (Both work on-prem)
 - [ ] JWT claims: Are `app_metadata` claims set by our API? (Yes — On-Prem uses same registration flow)
-
 
 ---
 
@@ -2748,10 +2784,9 @@ On complete: TransactionAnalysis saved to React Query cache
 
 ---
 
-*Document version: v1.0 · Generated as Frontend UX Architecture discipline output*  
-*References: chainsight_v0_4_canvas_ux_addendum.md, chainsight_v0_5_addendum_2.md, chainsight_v0_5_addendum_3.md, chainsight_v0_5_addendum.md, chainsight_v0_4_api_key_entry_addendum.md, chainsight_v0_6_addendum.md, chainsight_v0_3_addendum.md, chainsight_v1_0_engineering.md, chainsight_v0_8_addendum.md*
-
+_Document version: v1.0 · Generated as Frontend UX Architecture discipline output_  
+_References: chainsight_v0_4_canvas_ux_addendum.md, chainsight_v0_5_addendum_2.md, chainsight_v0_5_addendum_3.md, chainsight_v0_5_addendum.md, chainsight_v0_4_api_key_entry_addendum.md, chainsight_v0_6_addendum.md, chainsight_v0_3_addendum.md, chainsight_v1_0_engineering.md, chainsight_v0_8_addendum.md_
 
 ---
 
-*Document version: v1.1 · Stack update: Supabase (Auth + Postgres + Storage + Realtime) replaces Clerk*  
+_Document version: v1.1 · Stack update: Supabase (Auth + Postgres + Storage + Realtime) replaces Clerk_

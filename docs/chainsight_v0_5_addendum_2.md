@@ -25,7 +25,7 @@ When a path is named and colored:
 - **A floating path label** travels with the canvas, anchored to the path's center of mass, showing the name and a small chip with the path's stats (hops, value at terminus, methodology)
 - **In the Important sidebar / Paths panel**, the path appears with its color swatch and name, draggable to reorder, clickable to recenter the canvas on it
 
-When multiple paths share an entity, the entity displays a **layered ring** — concentric colored rings, one per path it participates in. The investigator sees instantly that "this node is in Path A *and* Path C" — and the layered ring is the visual signal of evidentiary convergence (the "shared infrastructure" insight from the PSR multi-path report).
+When multiple paths share an entity, the entity displays a **layered ring** — concentric colored rings, one per path it participates in. The investigator sees instantly that "this node is in Path A _and_ Path C" — and the layered ring is the visual signal of evidentiary convergence (the "shared infrastructure" insight from the PSR multi-path report).
 
 ### 5.3 The path palette
 
@@ -63,13 +63,13 @@ Path name, color, and highlight settings are persisted to the case file and **in
 
 ### 5.6 Integration with locked features
 
-| Feature | Touchpoint |
-|---|---|
-| **PSR** | Naming + coloring is part of the path's "draft → under_review → finalized" lifecycle; name and color can be edited while draft, locked when finalized (G5) |
-| **Court Mode** | Paths render in their assigned colors during presentation; the View C (By Trace Path) selector shows path swatches |
-| **Canvas UX** | Path color does not override semantic color discipline; rather, path ring sits *outside* the entity's semantic-colored interior |
-| **PSR multi-path reports** | The "shared infrastructure" detection uses path color overlap to render layered rings; the comparison table includes color swatches per row |
-| **Belief State** | Color and name changes are versioned events on the path; replay reconstructs them in order |
+| Feature                    | Touchpoint                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PSR**                    | Naming + coloring is part of the path's "draft → under_review → finalized" lifecycle; name and color can be edited while draft, locked when finalized (G5) |
+| **Court Mode**             | Paths render in their assigned colors during presentation; the View C (By Trace Path) selector shows path swatches                                         |
+| **Canvas UX**              | Path color does not override semantic color discipline; rather, path ring sits _outside_ the entity's semantic-colored interior                            |
+| **PSR multi-path reports** | The "shared infrastructure" detection uses path color overlap to render layered rings; the comparison table includes color swatches per row                |
+| **Belief State**           | Color and name changes are versioned events on the path; replay reconstructs them in order                                                                 |
 
 ---
 
@@ -183,14 +183,14 @@ Both forms render the same way on the canvas — circles for addresses, diamonds
 
 ### 6.8 Where this updates the locked design
 
-| Document | Update |
-|---|---|
-| **v0.1 schema, Domain 12 (UTXO vs account-model)** | The two models are now unified under the address-tx-address structure; the schema's "tracing primitive" column becomes a per-chain handler within the same node-edge framework |
-| **v0.2 accuracy spine, B1 BeliefAtoms** | Atoms can reference TransactionNode IDs directly; this is more precise than referencing edges |
-| **v0.3 PSR module** | TracePath.ordered_edges → TracePath.ordered_steps with the PathStep model above |
-| **v0.4 canvas UX** | The "Where did the money go?" overlay colors edges between addresses and txs; the value-split percentages render on the address-to-tx and tx-to-address edges (matching how UTXO outputs visibly split) |
-| **v0.5 Court Mode** | The View C playback advances one PathStep at a time, alternating address and tx — every hop is two clicks of the arrow key, which actually makes for cleaner courtroom narration |
-| **v0.5 obfuscation detection** | Detectors operate on the unified graph; peel chain detection looks at sequences of TransactionNodes with the geometric value-decay signature on their output AddressNodes |
+| Document                                           | Update                                                                                                                                                                                                  |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v0.1 schema, Domain 12 (UTXO vs account-model)** | The two models are now unified under the address-tx-address structure; the schema's "tracing primitive" column becomes a per-chain handler within the same node-edge framework                          |
+| **v0.2 accuracy spine, B1 BeliefAtoms**            | Atoms can reference TransactionNode IDs directly; this is more precise than referencing edges                                                                                                           |
+| **v0.3 PSR module**                                | TracePath.ordered_edges → TracePath.ordered_steps with the PathStep model above                                                                                                                         |
+| **v0.4 canvas UX**                                 | The "Where did the money go?" overlay colors edges between addresses and txs; the value-split percentages render on the address-to-tx and tx-to-address edges (matching how UTXO outputs visibly split) |
+| **v0.5 Court Mode**                                | The View C playback advances one PathStep at a time, alternating address and tx — every hop is two clicks of the arrow key, which actually makes for cleaner courtroom narration                        |
+| **v0.5 obfuscation detection**                     | Detectors operate on the unified graph; peel chain detection looks at sequences of TransactionNodes with the geometric value-decay signature on their output AddressNodes                               |
 
 This is the kind of correction that's painful to apply later and trivial to apply now. Locking it before Phase 1 builds the canonical case graph.
 
@@ -361,18 +361,18 @@ This is the moment the platform crosses from "passive on-chain analysis" into "a
 
 ### 7.9 Integration with locked features
 
-| Feature | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Every Wallet, WalletAddress, hop trace result, and analysis finding emits BeliefAtoms |
-| **Reproducibility (Pillar 2)** | The entire analysis is reproducible — config, providers, rule versions, results all in the Pack |
-| **BYOK Marketplace (Pillar 3)** | Analysis uses installed chain-data and attribution providers; agencies with broader provider coverage get deeper analysis |
-| **PSR** | The Suggestion Agent ingests wallet analysis findings to propose high-value evidentiary paths |
-| **Canvas UX** | Wallet sub-graph rendered with wallet-assigned color (Feature 5 palette); flagged addresses get the 🚩 icon |
-| **Obfuscation Detection (v0.5 F4)** | Findings from wallet analysis populate the same findings table as case-wide detection |
-| **Court Mode (v0.5 F3)** | View D (By Entity) is the natural courtroom view for a wallet — "let me show you everything we found in the defendant's seized wallet" |
-| **Document Ingest (v0.5 F2)** | Source documents (warrants, exchange dumps) link directly to the Wallet object |
-| **Deconfliction (v0.5 F1)** | A wallet's addresses are checked against other cases for deconfliction overlap at analysis time |
-| **Transaction-centric graph (Feature 6 above)** | Wallet analysis renders address-tx-address structure throughout |
+| Feature                                         | Touchpoint                                                                                                                             |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**                     | Every Wallet, WalletAddress, hop trace result, and analysis finding emits BeliefAtoms                                                  |
+| **Reproducibility (Pillar 2)**                  | The entire analysis is reproducible — config, providers, rule versions, results all in the Pack                                        |
+| **BYOK Marketplace (Pillar 3)**                 | Analysis uses installed chain-data and attribution providers; agencies with broader provider coverage get deeper analysis              |
+| **PSR**                                         | The Suggestion Agent ingests wallet analysis findings to propose high-value evidentiary paths                                          |
+| **Canvas UX**                                   | Wallet sub-graph rendered with wallet-assigned color (Feature 5 palette); flagged addresses get the 🚩 icon                            |
+| **Obfuscation Detection (v0.5 F4)**             | Findings from wallet analysis populate the same findings table as case-wide detection                                                  |
+| **Court Mode (v0.5 F3)**                        | View D (By Entity) is the natural courtroom view for a wallet — "let me show you everything we found in the defendant's seized wallet" |
+| **Document Ingest (v0.5 F2)**                   | Source documents (warrants, exchange dumps) link directly to the Wallet object                                                         |
+| **Deconfliction (v0.5 F1)**                     | A wallet's addresses are checked against other cases for deconfliction overlap at analysis time                                        |
+| **Transaction-centric graph (Feature 6 above)** | Wallet analysis renders address-tx-address structure throughout                                                                        |
 
 ### 7.10 Performance and scale notes
 
@@ -396,13 +396,13 @@ This is the moment the platform crosses from "passive on-chain analysis" into "a
 
 ## Build phasing (updated)
 
-| Phase | Additions from this addendum |
-|---|---|
-| **Phase 0** | Transaction-centric graph model locked in the data layer; AddressNode and TransactionNode as first-class entities; rendering rule "transaction in the middle" enforced in the canvas spec |
-| **Phase 1** | Path styling (name + color + highlight) with curated palette; Wallet data model and basic CRUD; manual wallet creation (paste addresses, name, attach to case) |
+| Phase       | Additions from this addendum                                                                                                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0** | Transaction-centric graph model locked in the data layer; AddressNode and TransactionNode as first-class entities; rendering rule "transaction in the middle" enforced in the canvas spec           |
+| **Phase 1** | Path styling (name + color + highlight) with curated palette; Wallet data model and basic CRUD; manual wallet creation (paste addresses, name, attach to case)                                      |
 | **Phase 2** | Full Wallet History Analyzer with multi-chain history pull, 3/5-hop default tracing, per-address summaries, attribution pass, obfuscation pass, sub-graph rendering, Wallet History Analysis Report |
-| **Phase 3** | Seed-phrase / private-key derivation (with full audit + warrant attestation flow); incremental delta re-analysis; cross-wallet clustering across multiple wallets in the same case |
-| **Phase 4** | Cross-case wallet linking (consent-gated, with deconfliction integration); long-running watch mode on wallets (continuous monitoring after analysis) |
+| **Phase 3** | Seed-phrase / private-key derivation (with full audit + warrant attestation flow); incremental delta re-analysis; cross-wallet clustering across multiple wallets in the same case                  |
+| **Phase 4** | Cross-case wallet linking (consent-gated, with deconfliction integration); long-running watch mode on wallets (continuous monitoring after analysis)                                                |
 
 ---
 

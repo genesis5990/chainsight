@@ -1,6 +1,6 @@
 # ChainSight v0.6 — Caching, UTXO Clustering, Personal Attribution
 
-> Four new features. The caching layer is the most architecturally consequential — it determines whether the BYOK marketplace is economically viable at scale. The UTXO co-input clustering is the most technically interesting. The personal attribution system is the one that turns the platform from a tool investigators *use* into a tool that *learns* them.
+> Four new features. The caching layer is the most architecturally consequential — it determines whether the BYOK marketplace is economically viable at scale. The UTXO co-input clustering is the most technically interesting. The personal attribution system is the one that turns the platform from a tool investigators _use_ into a tool that _learns_ them.
 
 This addendum extends every prior version. It does not replace anything; it adds cross-cutting systems that every other feature now depends on.
 
@@ -18,19 +18,19 @@ If we don't cache aggressively, the platform makes BYOK a financial trap rather 
 
 Different data has different "freshness needs." We tier accordingly:
 
-| Tier | Examples | Default TTL | Refresh policy |
-|---|---|---|---|
-| **Immutable** | Confirmed transaction data, block contents, historical state at a finalized block | Forever | Never refreshed unless block reorg invalidates |
-| **Slow-drift** | Address attribution labels, entity clusters, contract metadata, sanctions lists | 7 days | Background refresh on weekly cadence; manual refresh available |
-| **Medium-drift** | Token metadata, market caps, contract verification status | 24 hours | Daily background; manual refresh available |
-| **Fast-drift** | Spot prices, address balances, mempool state | 5 minutes | On-demand only; manual refresh always available |
-| **Live** | Streaming subscriptions (Allium Kafka, Blocknative mempool, etc.) | N/A | Always live; no caching |
+| Tier             | Examples                                                                          | Default TTL | Refresh policy                                                 |
+| ---------------- | --------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------- |
+| **Immutable**    | Confirmed transaction data, block contents, historical state at a finalized block | Forever     | Never refreshed unless block reorg invalidates                 |
+| **Slow-drift**   | Address attribution labels, entity clusters, contract metadata, sanctions lists   | 7 days      | Background refresh on weekly cadence; manual refresh available |
+| **Medium-drift** | Token metadata, market caps, contract verification status                         | 24 hours    | Daily background; manual refresh available                     |
+| **Fast-drift**   | Spot prices, address balances, mempool state                                      | 5 minutes   | On-demand only; manual refresh always available                |
+| **Live**         | Streaming subscriptions (Allium Kafka, Blocknative mempool, etc.)                 | N/A         | Always live; no caching                                        |
 
 These TTLs are defaults the agency admin can override per provider, per capability, per case. A high-priority active case might force shorter TTLs; a long-running historical investigation might extend them.
 
 ### 9.3 The first-touch rule (your spec, locked)
 
-**Live tracing of previously unsearched information always hits the API first.** Whenever the investigator initiates an action that touches an address, transaction, or entity that the platform has *no cached data on*, the call goes straight through to the provider. Caching is the result of that first call, not a precondition.
+**Live tracing of previously unsearched information always hits the API first.** Whenever the investigator initiates an action that touches an address, transaction, or entity that the platform has _no cached data on_, the call goes straight through to the provider. Caching is the result of that first call, not a precondition.
 
 This rule guarantees that the first time an investigator looks at something, they see ground truth from the live provider — not stale data from another investigator's earlier work. After the first touch, subsequent reads use the cache until the TTL expires or the investigator manually refreshes.
 
@@ -179,13 +179,13 @@ The agency admin sees in real time which cases and which capabilities are drivin
 
 ### 9.9 Integration with the pillars
 
-| Pillar | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Cache hits and misses logged as provenance events on every BeliefAtom — "this attribution came from cache X, fetched at timestamp Y" |
-| **Reproducibility (Pillar 2)** | The cache *is* the reproducibility substrate — every cached response is the snapshot that survives in the Pack. Replays use the cache, not the live provider. |
-| **BYOK Marketplace (Pillar 3)** | The cache makes BYOK economically viable; without it, the marketplace's commercial promise breaks at the first 200-address wallet analysis |
-| **Court Mode** | Presentations run entirely from cache (Pillar 2 already locked this); the cache *is* the frozen state |
-| **Transaction Inspector** | Every Inspector call checks cache first; cache hits return instantly, cache misses fire to the provider |
+| Pillar                          | Touchpoint                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**     | Cache hits and misses logged as provenance events on every BeliefAtom — "this attribution came from cache X, fetched at timestamp Y"                          |
+| **Reproducibility (Pillar 2)**  | The cache _is_ the reproducibility substrate — every cached response is the snapshot that survives in the Pack. Replays use the cache, not the live provider. |
+| **BYOK Marketplace (Pillar 3)** | The cache makes BYOK economically viable; without it, the marketplace's commercial promise breaks at the first 200-address wallet analysis                    |
+| **Court Mode**                  | Presentations run entirely from cache (Pillar 2 already locked this); the cache _is_ the frozen state                                                         |
+| **Transaction Inspector**       | Every Inspector call checks cache first; cache hits return instantly, cache misses fire to the provider                                                       |
 
 ### 9.10 What this gives investigators
 
@@ -329,25 +329,25 @@ This is what survives the [D'Aloia mathematical audit](https://capturacyber.com/
 
 ### 10.7 Integration with locked features
 
-| System | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Every cluster membership, every change detection, every override emits BeliefAtoms |
-| **Reproducibility (Pillar 2)** | Cluster definitions are content-hashed; replay reconstructs identical clusters from frozen tx data |
-| **BYOK Marketplace (Pillar 3)** | UTXO data pulled through installed chain-data providers (Blockchair, Blockstream, Mempool.space, Allium); change detection rules versioned and pinned |
-| **Cache layer (Feature 9)** | All UTXO data pulled during clustering is cached at the `global_chain_data` scope — tx structure is immutable, so the cache amortizes the cost across every case in the agency forever |
-| **Wallet History Analyzer (v0.5 F7)** | The wallet analyzer auto-runs clustering on every UTXO address as part of its pass; clusters discovered there feed back into the case graph |
-| **Transaction-centric graph (v0.5 F6)** | Clusters are grouped AddressNodes; the transaction-in-the-middle rule is preserved (transactions don't get clustered; only addresses do) |
-| **Canvas UX** | Cluster rendering follows the icon and color discipline; double-click-to-expand is the universal expand affordance |
-| **Obfuscation Detection (v0.5 F4)** | CoinJoin detection is shared between this clustering feature and the obfuscation detection layer — both use the same detector |
+| System                                  | Touchpoint                                                                                                                                                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**             | Every cluster membership, every change detection, every override emits BeliefAtoms                                                                                                     |
+| **Reproducibility (Pillar 2)**          | Cluster definitions are content-hashed; replay reconstructs identical clusters from frozen tx data                                                                                     |
+| **BYOK Marketplace (Pillar 3)**         | UTXO data pulled through installed chain-data providers (Blockchair, Blockstream, Mempool.space, Allium); change detection rules versioned and pinned                                  |
+| **Cache layer (Feature 9)**             | All UTXO data pulled during clustering is cached at the `global_chain_data` scope — tx structure is immutable, so the cache amortizes the cost across every case in the agency forever |
+| **Wallet History Analyzer (v0.5 F7)**   | The wallet analyzer auto-runs clustering on every UTXO address as part of its pass; clusters discovered there feed back into the case graph                                            |
+| **Transaction-centric graph (v0.5 F6)** | Clusters are grouped AddressNodes; the transaction-in-the-middle rule is preserved (transactions don't get clustered; only addresses do)                                               |
+| **Canvas UX**                           | Cluster rendering follows the icon and color discipline; double-click-to-expand is the universal expand affordance                                                                     |
+| **Obfuscation Detection (v0.5 F4)**     | CoinJoin detection is shared between this clustering feature and the obfuscation detection layer — both use the same detector                                                          |
 
 ### 10.8 Build phasing
 
-| Phase | Clustering additions |
-|---|---|
-| **Phase 1** | UTXOCluster data model; one-click CIH-only clustering on Bitcoin; basic change detection (optimal-change heuristic only) |
+| Phase       | Clustering additions                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 1** | UTXOCluster data model; one-click CIH-only clustering on Bitcoin; basic change detection (optimal-change heuristic only)                                     |
 | **Phase 2** | Full change detection heuristic ensemble; CoinJoin detection and exclusion; cluster rendering on canvas with expand/collapse; investigator override controls |
 | **Phase 3** | Cluster Provenance Report as a default exhibit; auto-clustering during Wallet History Analyzer runs; multi-UTXO-chain support (Bitcoin Cash, Litecoin, Doge) |
-| **Phase 4** | ML-augmented change detection (gradient-boosted classifier as a T3 supplement to T1 rules); cross-cluster relationship inference |
+| **Phase 4** | ML-augmented change detection (gradient-boosted classifier as a T3 supplement to T1 rules); cross-cluster relationship inference                             |
 
 ---
 
@@ -464,28 +464,33 @@ The personal attribution **does not replace provider attribution** — both are 
 The four visibility levels:
 
 **Private** (default)
+
 - Only the attributing investigator sees the label
 - Stored in their personal attribution space
 - Survives across all their cases forever
 - Other investigators on shared cases see the provider attribution; they don't even know a personal attribution exists
 
 **Shared with specific users**
+
 - The investigator picks named colleagues
 - Those colleagues see the attribution in their canvas going forward
 - They can accept it (it joins their personal attributions, with the original attributor cited), reject it, or simply view it without accepting (visible while looking at the entity in a shared case but not added to their personal store)
 
 **Shared with team**
+
 - All members of the investigator's team see and have access
 - Useful for joint task forces working a multi-suspect operation
 - Team members can accept individually
 
 **Shared with organization**
+
 - The entire agency tenant inherits the attribution
 - Surfaces alongside provider attributions for everyone
 - Subject to org-level governance (org admin can revoke org-wide shares)
 - Becomes effectively a private label database the agency builds over time
 
 **Shared externally** (Phase 4, opt-in, federated)
+
 - Cross-agency sharing through the same federated mechanism as cross-agency deconfliction (v0.5 F1)
 - Privacy-preserving by default — uses hashed exchange so other agencies discover that a label exists without revealing its content until they request to view
 - Subject to MOU and signed agreements between agencies
@@ -560,17 +565,17 @@ Third, **investigators trust their own work**. A platform that treats their judg
 
 ### 11.11 Integration with locked features
 
-| System | Touchpoint |
-|---|---|
-| **Belief State (Pillar 1)** | Personal attributions are BeliefAtoms; the platform's primary attribution-reasoning system reads them alongside provider attributions |
-| **Reproducibility (Pillar 2)** | Attributions referenced in reports are frozen in the Reproducibility Pack at report-generation time |
-| **BYOK Marketplace (Pillar 3)** | Personal attributions coexist with provider attributions; disagreements surface as Critic Challenges; multi-source corroboration (now including personal) raises confidence |
-| **Cache layer (Feature 9)** | Personal attributions are part of the agency cache (with strict per-user isolation for private attributions); they're never invalidated by external provider refreshes |
-| **Canvas UX** | Personal attributions get visual priority for the attributing user; color and icon overrides logged to audit |
-| **Transaction Inspector (v0.5 F8)** | Counterparty intelligence section lists personal attributions alongside provider attributions |
-| **PSR and reports** | Personal attributions cited in reports with the attributor and basis named explicitly |
-| **Wallet History Analyzer (v0.5 F7)** | Wallet analysis surfaces personal attributions for any of the wallet's addresses immediately |
-| **Court Mode (v0.5 F3)** | Personal attributions visible during presentation, with the attributor named on hover |
+| System                                | Touchpoint                                                                                                                                                                  |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Belief State (Pillar 1)**           | Personal attributions are BeliefAtoms; the platform's primary attribution-reasoning system reads them alongside provider attributions                                       |
+| **Reproducibility (Pillar 2)**        | Attributions referenced in reports are frozen in the Reproducibility Pack at report-generation time                                                                         |
+| **BYOK Marketplace (Pillar 3)**       | Personal attributions coexist with provider attributions; disagreements surface as Critic Challenges; multi-source corroboration (now including personal) raises confidence |
+| **Cache layer (Feature 9)**           | Personal attributions are part of the agency cache (with strict per-user isolation for private attributions); they're never invalidated by external provider refreshes      |
+| **Canvas UX**                         | Personal attributions get visual priority for the attributing user; color and icon overrides logged to audit                                                                |
+| **Transaction Inspector (v0.5 F8)**   | Counterparty intelligence section lists personal attributions alongside provider attributions                                                                               |
+| **PSR and reports**                   | Personal attributions cited in reports with the attributor and basis named explicitly                                                                                       |
+| **Wallet History Analyzer (v0.5 F7)** | Wallet analysis surfaces personal attributions for any of the wallet's addresses immediately                                                                                |
+| **Court Mode (v0.5 F3)**              | Personal attributions visible during presentation, with the attributor named on hover                                                                                       |
 
 ---
 
@@ -589,13 +594,13 @@ These four features (9, 10, 11) interlock with everything earlier. The most impo
 
 ## Build phasing (consolidated, with these features)
 
-| Phase | Highlights |
-|---|---|
-| **Phase 0** | Cache layer foundation (global-chain-data scope, immutable-tier caching, manual refresh button, last-refresh badge); Personal Attribution data model + basic apply-and-render |
-| **Phase 1** | Full cache tier system (immutable / slow / medium / fast); refresh scope dropdown; cost telemetry stub; UTXOCluster v1 (CIH + optimal-change only); Personal Attribution sharing with specific users |
+| Phase       | Highlights                                                                                                                                                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 0** | Cache layer foundation (global-chain-data scope, immutable-tier caching, manual refresh button, last-refresh badge); Personal Attribution data model + basic apply-and-render                                                            |
+| **Phase 1** | Full cache tier system (immutable / slow / medium / fast); refresh scope dropdown; cost telemetry stub; UTXOCluster v1 (CIH + optimal-change only); Personal Attribution sharing with specific users                                     |
 | **Phase 2** | Refresh cost estimator with real provider price sheets; full UTXO change detection ensemble; CoinJoin detection and exclusion; cluster rendering on canvas; Personal Attribution team and org sharing; Personal Attribution library view |
-| **Phase 3** | Provider webhook-driven cache invalidation; chain-reorg listeners; sanctions-list-driven invalidation; ML-augmented change detection (T3); counter-attribution flow with Critic-mediated disagreement resolution |
-| **Phase 4** | Cross-agency Personal Attribution federation (privacy-preserving); admin-level cache governance; advanced cluster analytics (cross-cluster relationship inference) |
+| **Phase 3** | Provider webhook-driven cache invalidation; chain-reorg listeners; sanctions-list-driven invalidation; ML-augmented change detection (T3); counter-attribution flow with Critic-mediated disagreement resolution                         |
+| **Phase 4** | Cross-agency Personal Attribution federation (privacy-preserving); admin-level cache governance; advanced cluster analytics (cross-cluster relationship inference)                                                                       |
 
 ---
 
