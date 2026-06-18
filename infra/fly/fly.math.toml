@@ -1,0 +1,27 @@
+# Fly.io app definition for the ChainSight Math Service (Python/FastAPI).
+
+app = "chainsight-math-dev"
+primary_region = "ord"
+
+[build]
+  dockerfile = "../../apps/math/Dockerfile"
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[env]
+  PORT = "8081"
+
+[[restart]]
+  policy = "on-failure"
+  retries = 3

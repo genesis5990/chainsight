@@ -1,0 +1,13 @@
+{
+  "name": "@chainsight/math",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run uvicorn chainsight_math.main:app --reload --host 0.0.0.0 --port 8081",
+    "build": "echo 'No build step for Python; Docker handles it'",
+    "test": "uv run pytest",
+    "lint": "uv run ruff check src",
+    "typecheck": "uv run mypy src",
+    "clean": "rm -rf .ruff_cache .mypy_cache .pytest_cache __pycache__"
+  }
+}

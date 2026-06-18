@@ -1,0 +1,42 @@
+# Local development infrastructure for ChainSight.
+#
+# Supabase runs via `supabase start` (separate). This Compose file handles
+# everything that's NOT in Supabase: Memgraph (graph), Redis (cache + queues),
+# and observability.
+#
+# Usage:
+#   docker compose -f infra/docker/docker-compose.yml up -d
+#
+# Then in another terminal:
+#   pnpm supabase:start
+#   pnpm dev
+
+services:
+  memgraph:
+    image: memgraph/memgraph:latest
+    ports:
+      - "7687:7687"  # Bolt protocol
+      - "7444:7444"  # Lab UI (optional)
+    volumes:
+      - memgraph_data:/var/lib/memgraph
+      - memgraph_log:/var/log/memgraph
+      - memgraph_etc:/etc/memgraph
+    restart: unless-stopped
+    command:
+      - "--also-log-to-stderr=true"
+      - "--log-level=WARNING"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  memgraph_data:
+  memgraph_log:
+  memgraph_etc:
+  redis_data:

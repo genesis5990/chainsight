@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  lint-typecheck-test:
+    name: Lint, Typecheck, Test (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+  math-service:
+    name: Math Service (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/math
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv pip install --system --no-cache ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check src
+
+      - name: Mypy
+        run: mypy src
+        continue-on-error: true  # strict mypy gating starts Week 4
+
+      - name: Pytest
+        run: pytest
+        continue-on-error: true  # first tests land Week 2
+
+  supabase-lint:
+    name: Supabase migrations lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Lint SQL migrations
+        run: |
+          # Syntactic lint pass — full db lint requires a running project,
+          # which is the per-PR Supabase preview branch (separate workflow).
+          for f in supabase/migrations/*.sql; do
+            echo "Checking $f"
+            head -c 0 "$f"  # quick existence check; real linting comes Week 2
+          done
+
+  anti-feature-check:
+    name: Anti-feature CI guard (F41)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for anti-feature code paths
+        run: |
+          # Per v0.8 F41: predictive policing, demographic correlation,
+          # mass surveillance, key escrow features must never be added.
+          # Phase 0 baseline check: forbidden tokens.
+          set -e
+          forbidden=(
+            "predict_suspicious"
+            "demographic_correlation"
+            "mass_surveillance"
+            "key_escrow_service"
+          )
+          for term in "${forbidden[@]}"; do
+            if grep -r -l --include="*.ts" --include="*.tsx" --include="*.py" "$term" \
+                 apps packages tools 2>/dev/null | grep -v node_modules; then
+              echo "::error::Forbidden term '$term' found. See v0.8 F41 anti-feature commitments."
+              exit 1
+            fi
+          done
+          echo "Anti-feature scan passed."

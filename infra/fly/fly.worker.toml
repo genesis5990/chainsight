@@ -1,0 +1,21 @@
+# Fly.io app definition for the ChainSight worker (BullMQ consumer).
+# No HTTP service — workers connect to Redis and process queues.
+
+app = "chainsight-worker-dev"
+primary_region = "ord"
+
+[build]
+  dockerfile = "../../apps/worker/Dockerfile"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+[env]
+  NODE_ENV = "production"
+  LOG_LEVEL = "info"
+
+[[restart]]
+  policy = "on-failure"
+  retries = 3
