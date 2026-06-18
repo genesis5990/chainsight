@@ -13,6 +13,7 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 ## The eight surfaces, in priority order
 
 ### Surface 1 — Transaction Inspector (highest demo leverage)
+
 **What it shows:** Click a tx diamond on the canvas → non-modal popup floats in. Eight sections stream in as AI populates them (plain-language summary, structured facts, decoded action, counterparty intel, case context, obfuscation findings, Critic notes, suggested actions).
 
 **Why first:** This is the "one click, eight seconds, complete answer" demo moment that sells the platform in a 30-second pitch. Everything else is in service of this.
@@ -20,9 +21,11 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 **Reference:** `docs/chainsight_v0_5_addendum_3.md` for the spec.
 
 **v0 prompt to start:**
+
 > Create a Next.js 15 + shadcn/ui non-modal popup component called TransactionInspector for a blockchain forensics platform. The popup is draggable and pin-able. It shows 8 sections that stream in: (1) Plain-language summary paragraph, (2) Structured facts table (tx hash, from/to, gas, value, block), (3) Decoded action panel showing a Uniswap swap with token in/out and slippage, (4) Counterparty intelligence table with attribution per address from Chainalysis/TRM/Arkham, (5) Case context section showing position in path A hop 7, cumulative taint percentage, related memos, (6) Obfuscation findings with peel-chain flag, (7) Critic Agent notes, (8) Suggested actions buttons (mark important, attach memo, trace forward 3 hops). Use semantic colors: red=taint, orange=elevated risk, green=clean attribution, blue=investigator markup.
 
 ### Surface 2 — The Canvas (with markup)
+
 **What it shows:** Force-directed graph rendering address→tx→address (circles + diamonds). Marks, memos, icons, color discipline. Value-split percentages on multi-output edges. "Where did the money go?" overlay with methodology toggle.
 
 **Why second:** The investigator's primary workspace. Everything else is reached from here.
@@ -32,6 +35,7 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 **Library:** Sigma.js v3 with WebGL renderer. v0 won't generate this directly — but it can generate the surrounding chrome (sidebars, top bar with refresh button, Important sidebar, layer toggles).
 
 ### Surface 3 — Court Mode (the "wow" moment for prosecutor demos)
+
 **What it shows:** Full-screen presenter view. Four view modes (timeline, value-Sankey, by-path, by-entity). Accounting-follows-the-frame side panel that updates every advance.
 
 **Why third:** Different audience (prosecutors, not investigators) but the highest emotional impact in any demo where the question is "what does this look like in front of a jury?"
@@ -39,6 +43,7 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 **Reference:** `docs/chainsight_v0_5_addendum.md` §17 (F17).
 
 ### Surface 4 — Provider Marketplace + Model Configuration matrix
+
 **What it shows:** Catalog of providers (Chainalysis, TRM, Etherscan, etc.) with one-click install. The `.env`-easy key entry modal. The Model Configuration matrix (per AI role × installed model providers) from v0.9.
 
 **Why fourth:** Locks in the BYOK + sovereignty story visually.
@@ -46,21 +51,25 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 **Reference:** `docs/chainsight_v0_3_byok_addendum.md`, `docs/chainsight_v0_4_api_key_entry_addendum.md`, `docs/chainsight_v0_9_ai_strategy.md` §3.
 
 ### Surface 5 — PSR (Path Selection → Report)
+
 **What it shows:** Four selection modes (click / lasso / auto-pathfind / natural-language) and the path-styled overlay with name + color + curated palette.
 
 **Reference:** `docs/chainsight_v0_3_addendum.md`, `docs/chainsight_v0_5_addendum_2.md` F19.
 
 ### Surface 6 — Wallet History Analyzer
+
 **What it shows:** Wallet creation flow (paste addresses or drop CSV), real-time analysis progress, sub-graph rendering, flagged addresses panel, one-click Wallet History Analysis Report.
 
 **Reference:** `docs/chainsight_v0_5_addendum_2.md` F21.
 
 ### Surface 7 — Supervisor Dashboard
+
 **What it shows:** Span-of-control cases with risk-tier indicators, review checkpoints, caseload balancing, non-destructive approval sidebar.
 
 **Reference:** `docs/chainsight_v0_8_addendum.md` F27.
 
 ### Surface 8 — Personal Attribution library
+
 **What it shows:** Investigator's accumulated attributions across all their cases. Sortable, searchable, sharing controls (private / team / org), counter-attribution flow.
 
 **Reference:** `docs/chainsight_v0_6_addendum.md` F25.
