@@ -5,7 +5,7 @@ app = "chainsight-worker-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "../../apps/worker/Dockerfile"
+  dockerfile = "apps/worker/Dockerfile"
 
 [[vm]]
   cpu_kind = "shared"

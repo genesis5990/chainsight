@@ -1,0 +1,89 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'infra/fly/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy (api / web / worker / math / all)'
+        required: true
+        default: 'all'
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  # Each service deploys independently. Failures in one don't block others.
+  deploy-api:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'api' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy chainsight-api-dev
+        run: flyctl deploy --config infra/fly/fly.api.toml --remote-only --wait-timeout=600
+
+  deploy-web:
+    name: Deploy Web
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'web' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy chainsight-web-dev
+        run: flyctl deploy --config infra/fly/fly.web.toml --remote-only --wait-timeout=600
+
+  deploy-worker:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'worker' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy chainsight-worker-dev
+        run: flyctl deploy --config infra/fly/fly.worker.toml --remote-only --wait-timeout=600
+
+  deploy-math:
+    name: Deploy Math Service
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'math' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy chainsight-math-dev
+        run: flyctl deploy --config infra/fly/fly.math.toml --remote-only --wait-timeout=600
+
+  health-check:
+    name: Post-deploy health check
+    runs-on: ubuntu-latest
+    needs: [deploy-api, deploy-web, deploy-math]
+    if: success()
+    steps:
+      - name: Verify API health
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -sf "https://chainsight-api-dev.fly.dev/v1/health/live" > /dev/null; then
+              echo "API healthy"
+              break
+            fi
+            echo "Attempt $i: API not ready yet, retrying..."
+            sleep 10
+          done
+      - name: Verify Math service health
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -sf "https://chainsight-math-dev.fly.dev/health" > /dev/null; then
+              echo "Math service healthy"
+              break
+            fi
+            echo "Attempt $i: Math service not ready yet, retrying..."
+            sleep 10
+          done

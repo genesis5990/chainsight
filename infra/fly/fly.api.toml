@@ -6,7 +6,7 @@ app = "chainsight-api-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "../../apps/api/Dockerfile"
+  dockerfile = "apps/api/Dockerfile"
 
 [http_service]
   internal_port = 8080
