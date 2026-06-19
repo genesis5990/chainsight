@@ -4,17 +4,39 @@ Manual one-time setup steps to get CI/CD wired between GitHub → Fly.io → Sup
 
 ## Status
 
-| Item                                    | Status                                           |
-| --------------------------------------- | ------------------------------------------------ |
-| GitHub repo created                     | ✅ `genesis5990/chainsight`                      |
-| Supabase project provisioned            | ✅ `chainsight-dev` (`uyiabyyovwhciitlzkal`)     |
-| Supabase migrations applied             | ✅ 3 migrations, zero security advisories        |
-| Fly apps created                        | ✅ chainsight-{api,web,worker,math}-dev          |
-| Fly secrets staged                      | ✅ Supabase URL + anon key set on api + web apps |
-| GitHub Actions deploy workflow          | ✅ `.github/workflows/deploy.yml`                |
-| **FLY_API_TOKEN GitHub secret**         | ⏳ **You do this** (1 minute)                    |
-| **SUPABASE_ACCESS_TOKEN GitHub secret** | ⏳ **You do this** (1 minute)                    |
-| First deploy                            | Triggers automatically once secrets are set      |
+| Item                                                       | Status                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------- |
+| GitHub repo created                                        | ✅ `genesis5990/chainsight`                             |
+| Supabase project provisioned                               | ✅ `chainsight-dev` (`uyiabyyovwhciitlzkal`)            |
+| Supabase migrations applied                                | ✅ 3 migrations, zero security advisories               |
+| Fly apps created                                           | ✅ chainsight-{api,web,worker,math}-dev                 |
+| Fly secrets staged                                         | ✅ Supabase URL + anon key + service role on api/web/worker |
+| GitHub Actions deploy workflow                             | ✅ `.github/workflows/deploy.yml`                       |
+| FLY_API_TOKEN GitHub secret                                | ✅ Set (org-scoped, expires 2027-06-18)                 |
+| SUPABASE_ACCESS_TOKEN GitHub secret                        | ✅ Set                                                   |
+| SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY GitHub secrets  | ✅ Set (used by workflow to stage Fly secrets)          |
+| First deploy                                               | ✅ **DEPLOYED** — all 4 services live (June 18, 2026)   |
+
+## Live URLs (Phase 0 dev)
+
+| Service | URL                                          | Health endpoint                |
+| ------- | -------------------------------------------- | ------------------------------ |
+| API     | https://chainsight-api-dev.fly.dev/          | `/v1/health/live` → HTTP 200   |
+| Web     | https://chainsight-web-dev.fly.dev/          | `/` → HTTP 200 (Next.js page)  |
+| Math    | https://chainsight-math-dev.fly.dev/         | `/health` → HTTP 200           |
+| Worker  | (no public endpoint by design)               | Fly machine status: `started`  |
+
+## Deploy run reference
+
+- First successful deploy: GitHub Actions run [27798542644](https://github.com/genesis5990/chainsight/actions/runs/27798542644) on commit `5167af9`
+- All four services + post-deploy health check passed
+- Scale-to-zero is enabled (`min_machines_running = 0`); machines wake on first request (~2-5s cold start)
+
+## Known follow-ups
+
+- **Worker** is running but will crash-loop once it tries to connect to Redis. `REDIS_URL` is a placeholder (`redis://localhost:6379`). Wire Upstash before BullMQ-backed work is enqueued. Workflow marks worker `continue-on-error` so this doesn't block other deploys.
+- **Custom dedicated IPv4** not allocated — we use Fly's shared IPv4 (free). For production, run `flyctl ips allocate-v4` per app.
+- **Math service uses HTTP/JSON Phase 0**, not gRPC. gRPC client lands Week 2-3 per `chainsight_v1_0_backend_architecture.md`.
 
 ## Step 1 — Generate Fly deploy token (1 minute)
 
