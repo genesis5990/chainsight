@@ -1,5 +1,8 @@
 # Multi-stage Dockerfile for the ChainSight API.
 # Used by Fly.io and Helm (On-Prem) — same image.
+#
+# Strategy: build inside the pnpm workspace, then use `pnpm deploy` to
+# produce a flat, runnable directory with all transitive deps inlined.
 
 FROM node:22-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
@@ -15,11 +18,13 @@ COPY packages/capability-router/package.json ./packages/capability-router/
 RUN pnpm install --frozen-lockfile
 
 # ---- builder stage ----
-FROM base AS builder
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/apps/api/node_modules ./apps/api/node_modules
+FROM deps AS builder
 COPY . .
 RUN pnpm --filter @chainsight/api build
+
+# ---- deploy stage: create a flat, production-only bundle ----
+FROM builder AS deploy
+RUN pnpm --filter @chainsight/api --prod deploy --legacy /out
 
 # ---- runner stage ----
 FROM node:22-alpine AS runner
@@ -27,9 +32,11 @@ ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S chainsight -u 1001
 
-COPY --from=builder /repo/apps/api/dist ./dist
-COPY --from=builder /repo/apps/api/package.json ./package.json
-COPY --from=builder /repo/node_modules ./node_modules
+# /out from the deploy stage is a self-contained app folder with
+# package.json + node_modules + dist (compiled output).
+COPY --from=deploy /out/package.json ./package.json
+COPY --from=deploy /out/node_modules ./node_modules
+COPY --from=deploy /out/dist ./dist
 
 USER chainsight
 EXPOSE 8080
