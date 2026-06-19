@@ -4,8 +4,9 @@ app = "chainsight-math-dev"
 primary_region = "ord"
 
 [build]
-  # Resolved relative to the directory flyctl runs in (apps/math).
-  dockerfile = "Dockerfile"
+  # Resolved relative to this toml file (infra/fly/) since flyctl's --dockerfile
+  # CLI flag is overridden by [build].dockerfile when both are present.
+  dockerfile = "../../apps/math/Dockerfile"
 
 [http_service]
   internal_port = 8081

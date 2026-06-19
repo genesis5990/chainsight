@@ -180,11 +180,11 @@ jobs:
         # Math service Dockerfile expects the build context to be apps/math
         # (it has COPY pyproject.toml ./ etc. with no repo-root prefix).
         # We cd into apps/math so the relative --config path resolves correctly.
+        # The dockerfile path is in fly.math.toml [build] (relative to that file).
         run: |
           cd apps/math
           flyctl deploy . \
             --config ../../infra/fly/fly.math.toml \
-            --dockerfile Dockerfile \
             --remote-only --wait-timeout=600 --ha=false
 
       - name: Dump Math logs on failure
