@@ -4,7 +4,8 @@ app = "chainsight-math-dev"
 primary_region = "ord"
 
 [build]
-  dockerfile = "../../apps/math/Dockerfile"
+  # Resolved relative to the directory flyctl runs in (apps/math).
+  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 8081

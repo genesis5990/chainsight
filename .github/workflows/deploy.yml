@@ -179,7 +179,13 @@ jobs:
       - name: Deploy chainsight-math-dev
         # Math service Dockerfile expects the build context to be apps/math
         # (it has COPY pyproject.toml ./ etc. with no repo-root prefix).
-        run: flyctl deploy apps/math --config infra/fly/fly.math.toml --dockerfile apps/math/Dockerfile --remote-only --wait-timeout=600 --ha=false
+        # We cd into apps/math so the relative --config path resolves correctly.
+        run: |
+          cd apps/math
+          flyctl deploy . \
+            --config ../../infra/fly/fly.math.toml \
+            --dockerfile Dockerfile \
+            --remote-only --wait-timeout=600 --ha=false
 
       - name: Dump Math logs on failure
         if: failure()
