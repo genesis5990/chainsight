@@ -68,11 +68,12 @@ jobs:
 
       - name: Dump API logs on failure
         if: failure()
+        timeout-minutes: 2
         run: |
-          echo '--- flyctl logs (chainsight-api-dev) ---'
-          flyctl logs -a chainsight-api-dev --no-tail || true
           echo '--- flyctl machine list ---'
-          flyctl machine list -a chainsight-api-dev || true
+          timeout 30 flyctl machine list -a chainsight-api-dev || true
+          echo '--- flyctl logs (chainsight-api-dev) ---'
+          timeout 60 flyctl logs -a chainsight-api-dev --no-tail || true
 
   deploy-web:
     name: Deploy Web
@@ -109,11 +110,12 @@ jobs:
 
       - name: Dump Web logs on failure
         if: failure()
+        timeout-minutes: 2
         run: |
-          echo '--- flyctl logs (chainsight-web-dev) ---'
-          flyctl logs -a chainsight-web-dev --no-tail || true
           echo '--- flyctl machine list ---'
-          flyctl machine list -a chainsight-web-dev || true
+          timeout 30 flyctl machine list -a chainsight-web-dev || true
+          echo '--- flyctl logs (chainsight-web-dev) ---'
+          timeout 60 flyctl logs -a chainsight-web-dev --no-tail || true
 
   deploy-worker:
     name: Deploy Worker
@@ -181,11 +183,12 @@ jobs:
 
       - name: Dump Math logs on failure
         if: failure()
+        timeout-minutes: 2
         run: |
-          echo '--- flyctl logs (chainsight-math-dev) ---'
-          flyctl logs -a chainsight-math-dev --no-tail || true
           echo '--- flyctl machine list ---'
-          flyctl machine list -a chainsight-math-dev || true
+          timeout 30 flyctl machine list -a chainsight-math-dev || true
+          echo '--- flyctl logs (chainsight-math-dev) ---'
+          timeout 60 flyctl logs -a chainsight-math-dev --no-tail || true
 
   health-check:
     name: Post-deploy health check
