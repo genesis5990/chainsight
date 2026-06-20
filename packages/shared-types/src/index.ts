@@ -37,6 +37,9 @@ export * from './psr';
 // Surface 6 — Wallet History Analyzer shapes.
 export * from './wallet_history';
 
+// Surface 7 — Supervisor Dashboard shapes.
+export * from './supervisor';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

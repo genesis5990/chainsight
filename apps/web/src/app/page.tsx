@@ -92,6 +92,17 @@ export default function HomePage() {
               · paste addresses, multi-stage streaming analysis, flagged-for-review panel
             </span>
           </li>
+          <li>
+            <a
+              href="/supervisor-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 7 — Supervisor Dashboard
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · case portfolio heatmap, caseload balance, deconfliction feed, CADNP
+            </span>
+          </li>
         </ul>
       </div>
 
