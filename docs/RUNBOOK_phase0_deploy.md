@@ -15,7 +15,9 @@ Manual one-time setup steps to get CI/CD wired between GitHub → Fly.io → Sup
 | FLY_API_TOKEN GitHub secret                                | ✅ Set (org-scoped, expires 2027-06-18)                 |
 | SUPABASE_ACCESS_TOKEN GitHub secret                        | ✅ Set                                                   |
 | SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY GitHub secrets  | ✅ Set (used by workflow to stage Fly secrets)          |
+| REDIS_URL GitHub secret (Upstash)                          | ✅ Set — `famous-albacore-127705.upstash.io` (June 20, 2026) |
 | First deploy                                               | ✅ **DEPLOYED** — all 4 services live (June 18, 2026)   |
+| Worker connected to broker                                 | ✅ BullMQ → Upstash — end-to-end job round-trip verified |
 
 ## Live URLs (Phase 0 dev)
 
@@ -24,7 +26,7 @@ Manual one-time setup steps to get CI/CD wired between GitHub → Fly.io → Sup
 | API     | https://chainsight-api-dev.fly.dev/          | `/v1/health/live` → HTTP 200   |
 | Web     | https://chainsight-web-dev.fly.dev/          | `/` → HTTP 200 (Next.js page)  |
 | Math    | https://chainsight-math-dev.fly.dev/         | `/health` → HTTP 200           |
-| Worker  | (no public endpoint by design)               | Fly machine status: `started`  |
+| Worker  | (no public endpoint by design)               | Fly machine status: `started` · Redis PING: PONG |
 
 ## Deploy run reference
 
@@ -32,11 +34,20 @@ Manual one-time setup steps to get CI/CD wired between GitHub → Fly.io → Sup
 - All four services + post-deploy health check passed
 - Scale-to-zero is enabled (`min_machines_running = 0`); machines wake on first request (~2-5s cold start)
 
+## Job-queue broker (Upstash Redis)
+
+- Provisioned: `chainsight-dev`, Upstash Regional, us-east-1, TLS on, Free plan (10k commands/day)
+- Host: `famous-albacore-127705.upstash.io:6379`
+- Connection string lives only in two places: the Upstash console + the `REDIS_URL` GitHub Actions secret. Never committed.
+- Workflow `Deploy Worker` job stages it as a Fly secret on every worker deploy.
+- Worker emits a `redis broker reachable` log line with `pong: "PONG"` on boot. If you see `redis broker unreachable` instead, the secret was misconfigured.
+- End-to-end smoke test (June 20, 2026): enqueue from sandbox → picked up by worker in ord region → completed in ~100ms. See deploy run [27876418633](https://github.com/genesis5990/chainsight/actions/runs/27876418633).
+
 ## Known follow-ups
 
-- **Worker** is running but will crash-loop once it tries to connect to Redis. `REDIS_URL` is a placeholder (`redis://localhost:6379`). Wire Upstash before BullMQ-backed work is enqueued. Workflow marks worker `continue-on-error` so this doesn't block other deploys.
 - **Custom dedicated IPv4** not allocated — we use Fly's shared IPv4 (free). For production, run `flyctl ips allocate-v4` per app.
 - **Math service uses HTTP/JSON Phase 0**, not gRPC. gRPC client lands Week 2-3 per `chainsight_v1_0_backend_architecture.md`.
+- **Upstash free tier caps at 10k commands/day**. BullMQ uses several commands per job (typical: 5-10), so the free tier supports ~1k-2k jobs/day. Upgrade to Pay-as-you-go (~$0.20 per 100k commands) before Phase 1 traffic.
 
 ## Step 1 — Generate Fly deploy token (1 minute)
 
