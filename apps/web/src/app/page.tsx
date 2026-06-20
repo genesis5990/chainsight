@@ -70,6 +70,28 @@ export default function HomePage() {
               · provider catalog, .env-easy key entry, per-role model overrides
             </span>
           </li>
+          <li>
+            <a
+              href="/canvas-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 5 — PSR (Path Selection → Report)
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · click Start Path Selection on the canvas — shift+click hops, drawer drafts the report
+            </span>
+          </li>
+          <li>
+            <a
+              href="/wallet-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 6 — Wallet History Analyzer
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · paste addresses, multi-stage streaming analysis, flagged-for-review panel
+            </span>
+          </li>
         </ul>
       </div>
 

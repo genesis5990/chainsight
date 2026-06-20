@@ -34,6 +34,9 @@ export * from './marketplace';
 // Surface 5 — PSR (Path Selection → Report) shapes.
 export * from './psr';
 
+// Surface 6 — Wallet History Analyzer shapes.
+export * from './wallet_history';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
