@@ -44,6 +44,8 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 
 ### Surface 2 — The Canvas (with markup)
 
+**Status:** ✅ **SHIPPED** — [chainsight-web-dev.fly.dev/canvas-demo](https://chainsight-web-dev.fly.dev/canvas-demo)
+
 **What it shows:** Force-directed graph rendering address→tx→address (circles + diamonds). Marks, memos, icons, color discipline. Value-split percentages on multi-output edges. "Where did the money go?" overlay with methodology toggle.
 
 **Why second:** The investigator's primary workspace. Everything else is reached from here.
@@ -51,6 +53,22 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 **Reference:** `docs/chainsight_v0_4_canvas_ux_addendum.md`, `docs/chainsight_v0_5_addendum_2.md`.
 
 **Library:** Sigma.js v3 with WebGL renderer. v0 won't generate this directly — but it can generate the surrounding chrome (sidebars, top bar with refresh button, Important sidebar, layer toggles).
+
+**What's in the repo:**
+- Data shapes: `packages/shared-types/src/canvas.ts` (AddressNode + TransactionNode + CanvasEdge + TracePath + InvestigatorMark + layer toggles + helper hex maps)
+- Renderer: `apps/web/src/components/canvas/CanvasView.tsx` (Sigma v3 WebGL + graphology + forceAtlas2 layout, EdgeArrowProgram registered)
+- Chrome: `apps/web/src/components/canvas/Chrome.tsx` (TopBar, LayerRail, ImportantSidebar, StatusBar)
+- Seed: `apps/web/src/components/canvas/seed.ts` (17 addresses + 10 transactions + 23 edges + 2 paths + 5 marks — a complete Acme Corp ransomware case)
+- Demo route: `apps/web/src/app/canvas-demo/`
+- Click any tx node → spawns the Surface 1 Inspector with streaming sections; click an address → sets the top-bar event ribbon.
+
+**Not implemented yet (deferred):**
+- Real Sigma diamond/square node program (Phase 1) — transactions currently use circles with ◆ prefix
+- Cumulative-taint live recoloring when methodology changes (Phase 1, requires Math Service)
+- Right-click context menus (Phase 1)
+- Lasso / multi-select / Shift+click path extension (Phase 1, part of PSR Surface 5)
+- Layered concentric rings when a node is in multiple paths (Phase 1)
+- LOD pagination at >10k nodes (Phase 2)
 
 ### Surface 3 — Court Mode (the "wow" moment for prosecutor demos)
 
