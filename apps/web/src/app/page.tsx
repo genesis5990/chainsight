@@ -37,7 +37,17 @@ export default function HomePage() {
               · click a tx node, watch 8 sections stream in
             </span>
           </li>
-          <li className="text-context-500">→ Surface 2: Canvas (Sigma.js, Week 4-5)</li>
+          <li>
+            <a
+              href="/canvas-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 2 — Canvas
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · ransomware case graph, layer toggles, Important sidebar
+            </span>
+          </li>
           <li className="text-context-500">→ Surface 3: Court Mode (Week 6)</li>
         </ul>
       </div>

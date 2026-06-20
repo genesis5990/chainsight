@@ -22,6 +22,9 @@ export type Tier = 'T0' | 'T1' | 'T2' | 'T3';
 // Surface 1 — Transaction Inspector data shapes.
 export * from './inspector';
 
+// Surface 2 — Canvas data shapes.
+export * from './canvas';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
