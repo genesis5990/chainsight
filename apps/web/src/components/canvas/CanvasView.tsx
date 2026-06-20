@@ -166,15 +166,36 @@ export function CanvasView({
       maxCameraRatio: 10,
     });
 
-    sigma.on('clickNode', ({ node }) => {
+    // ---------- Click semantics ----------
+    //
+    // Drag is the default. The Inspector spawns on:
+    //   - double-click (the demo-friendly default), OR
+    //   - right-click (matches the canvas UX addendum spec verbatim)
+    //
+    // A single click does nothing destructive — it just announces the
+    // selection upstream so a future Phase 1 selection sidebar can react.
+    // Empty-canvas clicks intentionally do nothing (no ribbon clearing,
+    // no surprise UI changes).
+    sigma.on('doubleClickNode', (event) => {
+      const { node } = event;
       const attrs = g.getNodeAttributes(node);
       handlersRef.current.onNodeClick?.(
         node as CanvasNodeId,
         attrs.kind as 'address' | 'transaction',
       );
+      // Sigma's default doubleClick zooms the camera. We don't want that
+      // when we're using the gesture to spawn the Inspector.
+      event.preventSigmaDefault();
     });
-    sigma.on('clickStage', () => {
-      handlersRef.current.onCanvasClick?.();
+    sigma.on('rightClickNode', (event) => {
+      const { node } = event;
+      const attrs = g.getNodeAttributes(node);
+      handlersRef.current.onNodeClick?.(
+        node as CanvasNodeId,
+        attrs.kind as 'address' | 'transaction',
+      );
+      // Suppress the browser context menu so it doesn't appear over the canvas.
+      event.event.original.preventDefault();
     });
 
     // ---------- Node drag-to-reposition ----------
