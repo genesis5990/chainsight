@@ -151,8 +151,23 @@ export default function CanvasDemoClient() {
 
           {/* Helper toast */}
           {analyses.size === 0 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-context-700/85 text-white text-[11px] font-medium shadow-lg pointer-events-none">
-              Click any transaction node (square) to spawn the Inspector
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-context-700/85 text-white text-[11px] font-medium shadow-lg">
+              <span className="pointer-events-none">
+                Click any ◆ transaction node to spawn the Inspector
+              </span>
+              <span className="text-context-100/60 pointer-events-none">|</span>
+              <button
+                type="button"
+                onClick={() =>
+                  handleNodeClick(
+                    'tx-uniswap-swap' as CanvasNodeId,
+                    'transaction',
+                  )
+                }
+                className="underline hover:text-white/80"
+              >
+                Spawn for the Uniswap swap tx
+              </button>
             </div>
           )}
         </main>
