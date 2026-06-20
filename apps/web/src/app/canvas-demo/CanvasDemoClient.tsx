@@ -22,14 +22,20 @@ import {
   seedSwapAnalysis,
 } from '../../components/inspector/seed';
 import { TransactionInspector } from '../../components/inspector/TransactionInspector';
+import { PsrToolbar } from '../../components/psr/PsrToolbar';
+import { PsrDrawer } from '../../components/psr/PsrDrawer';
 import type {
   ActionSuggestion,
   CanvasLayerToggles,
+  CanvasNode,
   CanvasNodeId,
+  PsrDraft,
+  PsrReportDraft,
+  PsrSelectionMode,
   TaintMethodology,
   TransactionAnalysis,
 } from '@chainsight/shared-types';
-import { DEFAULT_LAYER_TOGGLES } from '@chainsight/shared-types';
+import { DEFAULT_LAYER_TOGGLES, emptyReportDraft } from '@chainsight/shared-types';
 
 // Sigma touches window/canvas; load client-only.
 const CanvasView = dynamic(
@@ -44,6 +50,16 @@ const CanvasView = dynamic(
   },
 );
 
+const EMPTY_DRAFT: PsrDraft = {
+  display_name: '',
+  color: 'cool_blue',
+  methodology: 'fifo',
+  is_primary_candidate: false,
+  ordered_nodes: [],
+  last_selection_mode: 'click',
+  commentary: '',
+};
+
 export default function CanvasDemoClient() {
   const [layers, setLayers] = useState<CanvasLayerToggles>(DEFAULT_LAYER_TOGGLES);
   const [methodology, setMethodology] = useState<TaintMethodology>('fifo');
@@ -51,6 +67,18 @@ export default function CanvasDemoClient() {
   const [lastEvent, setLastEvent] = useState<string | undefined>();
   const [analyses, setAnalyses] = useState<Map<string, TransactionAnalysis>>(new Map());
   const nextId = useRef(1);
+
+  // PSR (Path Selection → Report) state
+  const [psrActive, setPsrActive] = useState(false);
+  const [psrMode, setPsrMode] = useState<PsrSelectionMode>('click');
+  const [psrDraft, setPsrDraft] = useState<PsrDraft>(EMPTY_DRAFT);
+  const [psrReport, setPsrReport] = useState<PsrReportDraft>(() => emptyReportDraft(EMPTY_DRAFT));
+
+  const nodeMap = useMemo(() => {
+    const m = new Map<CanvasNodeId, CanvasNode>();
+    for (const n of SEED_CASE.nodes) m.set(n.id, n);
+    return m;
+  }, []);
 
   // Click a tx node → spawn a streaming Inspector.
   const handleNodeClick = useCallback(
@@ -107,6 +135,81 @@ export default function CanvasDemoClient() {
     setLastEvent(`Jump-to ${id} — Phase 1 will animate the camera`);
   }, []);
 
+  // ---------- PSR handlers ----------
+
+  const handlePsrStart = useCallback(() => {
+    const fresh: PsrDraft = { ...EMPTY_DRAFT, methodology, last_selection_mode: psrMode };
+    setPsrDraft(fresh);
+    setPsrReport(emptyReportDraft(fresh));
+    setPsrActive(true);
+    setLastEvent('Path Selection — shift+click hops to build the path');
+  }, [methodology, psrMode]);
+
+  const handlePsrCancel = useCallback(() => {
+    setPsrActive(false);
+    setPsrDraft(EMPTY_DRAFT);
+    setPsrReport(emptyReportDraft(EMPTY_DRAFT));
+    setLastEvent('Path Selection cancelled');
+  }, []);
+
+  const handlePsrShiftClick = useCallback(
+    (nodeId: CanvasNodeId) => {
+      if (!psrActive) return;
+      setPsrDraft((cur) => {
+        // No-op if same as last hop.
+        const last = cur.ordered_nodes[cur.ordered_nodes.length - 1];
+        if (last === nodeId) return cur;
+        const next: PsrDraft = {
+          ...cur,
+          ordered_nodes: [...cur.ordered_nodes, nodeId],
+          last_selection_mode: psrMode,
+        };
+        setPsrReport(emptyReportDraft(next));
+        return next;
+      });
+      setLastEvent(`Added hop → ${String(nodeId).slice(0, 18)}…`);
+    },
+    [psrActive, psrMode],
+  );
+
+  const handlePsrAltClick = useCallback(() => {
+    if (!psrActive) return;
+    setPsrDraft((cur) => {
+      if (cur.ordered_nodes.length === 0) return cur;
+      const next: PsrDraft = {
+        ...cur,
+        ordered_nodes: cur.ordered_nodes.slice(0, -1),
+      };
+      setPsrReport(emptyReportDraft(next));
+      return next;
+    });
+    setLastEvent('Removed last hop');
+  }, [psrActive]);
+
+  const handlePsrRemoveHop = useCallback((index: number) => {
+    setPsrDraft((cur) => {
+      const next: PsrDraft = {
+        ...cur,
+        ordered_nodes: cur.ordered_nodes.filter((_, i) => i !== index),
+      };
+      setPsrReport(emptyReportDraft(next));
+      return next;
+    });
+  }, []);
+
+  const handlePsrChange = useCallback((next: PsrDraft) => {
+    setPsrDraft(next);
+    setPsrReport((cur) => ({ ...cur, draft: next }));
+  }, []);
+
+  const handlePsrSaveDraft = useCallback(() => {
+    setLastEvent(`Saved draft “${psrDraft.display_name || 'Untitled path'}” (Phase 1 persists to Supabase)`);
+  }, [psrDraft.display_name]);
+
+  const handlePsrPromote = useCallback(() => {
+    setLastEvent(`Promoted “${psrDraft.display_name || 'Untitled path'}” → under_review`);
+  }, [psrDraft.display_name]);
+
   const counts = useMemo(
     () => ({
       nodeCount: SEED_CASE.nodes.length,
@@ -127,6 +230,16 @@ export default function CanvasDemoClient() {
         onPresentInCourt={() => {
           window.location.href = '/court-demo';
         }}
+        psrSlot={
+          <PsrToolbar
+            active={psrActive}
+            mode={psrMode}
+            hopCount={psrDraft.ordered_nodes.length}
+            onActivate={handlePsrStart}
+            onCancel={handlePsrCancel}
+            onModeChange={setPsrMode}
+          />
+        }
         isRefreshing={isRefreshing}
         lastEvent={lastEvent}
       />
@@ -150,6 +263,8 @@ export default function CanvasDemoClient() {
             methodology={methodology}
             onNodeClick={handleNodeClick}
             onCanvasClick={handleCanvasClick}
+            onShiftClickNode={handlePsrShiftClick}
+            onAltClickNode={handlePsrAltClick}
           />
 
           {/* Helper toast */}
@@ -195,6 +310,19 @@ export default function CanvasDemoClient() {
           onActionClick={handleAction}
         />
       ))}
+
+      {/* PSR drawer (right-anchored) */}
+      <PsrDrawer
+        open={psrActive}
+        draft={psrDraft}
+        report={psrReport}
+        nodeMap={nodeMap}
+        onClose={handlePsrCancel}
+        onChange={handlePsrChange}
+        onRemoveHop={handlePsrRemoveHop}
+        onSaveDraft={handlePsrSaveDraft}
+        onPromote={handlePsrPromote}
+      />
     </div>
   );
 }

@@ -31,6 +31,9 @@ export * from './court';
 // Surface 4 — Provider Marketplace + Model Configuration shapes.
 export * from './marketplace';
 
+// Surface 5 — PSR (Path Selection → Report) shapes.
+export * from './psr';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

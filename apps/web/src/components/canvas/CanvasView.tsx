@@ -36,6 +36,10 @@ export interface CanvasViewProps {
   onNodeClick?: (nodeId: CanvasNodeId, kind: 'address' | 'transaction') => void;
   /** Fires when the investigator clicks the empty canvas. */
   onCanvasClick?: () => void;
+  /** Shift+click on a node — used by PSR mode to extend the path. */
+  onShiftClickNode?: (nodeId: CanvasNodeId, kind: 'address' | 'transaction') => void;
+  /** Alt+click on a node — used by PSR mode to remove the last hop. */
+  onAltClickNode?: () => void;
 }
 
 export function CanvasView({
@@ -44,13 +48,15 @@ export function CanvasView({
   methodology: _methodology, // reserved — drives cumulative-taint overlay coloring (Phase 1)
   onNodeClick,
   onCanvasClick,
+  onShiftClickNode,
+  onAltClickNode,
 }: CanvasViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sigmaRef = useRef<Sigma | null>(null);
   // Stable ref to the latest click handlers so we don't rebuild the graph
   // every time the parent re-renders for non-graph reasons.
-  const handlersRef = useRef({ onNodeClick, onCanvasClick });
-  handlersRef.current = { onNodeClick, onCanvasClick };
+  const handlersRef = useRef({ onNodeClick, onCanvasClick, onShiftClickNode, onAltClickNode });
+  handlersRef.current = { onNodeClick, onCanvasClick, onShiftClickNode, onAltClickNode };
 
   // Rebuild the graph when seed data or visibility toggles change.
   useEffect(() => {
@@ -186,6 +192,31 @@ export function CanvasView({
       // Sigma's default doubleClick zooms the camera. We don't want that
       // when we're using the gesture to spawn the Inspector.
       event.preventSigmaDefault();
+    });
+
+    // Shift+click → PSR path extension; Alt+click → remove last hop.
+    // Sigma fires clickNode regardless of modifier; we read the original
+    // MouseEvent off the event to branch.
+    sigma.on('clickNode', (event) => {
+      const orig = event.event.original;
+      const shift = 'shiftKey' in orig ? orig.shiftKey : false;
+      const alt = 'altKey' in orig ? orig.altKey : false;
+      if (shift) {
+        const { node } = event;
+        const attrs = g.getNodeAttributes(node);
+        handlersRef.current.onShiftClickNode?.(
+          node as CanvasNodeId,
+          attrs.kind as 'address' | 'transaction',
+        );
+        event.preventSigmaDefault();
+        return;
+      }
+      if (alt) {
+        handlersRef.current.onAltClickNode?.();
+        event.preventSigmaDefault();
+        return;
+      }
+      // Default single-click on a node is a no-op (drag-friendly).
     });
     sigma.on('rightClickNode', (event) => {
       const { node } = event;

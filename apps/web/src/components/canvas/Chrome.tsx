@@ -52,6 +52,8 @@ export interface TopBarProps {
   onMethodologyChange: (m: TaintMethodology) => void;
   onRefresh: () => void;
   onPresentInCourt?: () => void;
+  /** Slot for the PSR toolbar (or its 'Start Path Selection' button when inactive). */
+  psrSlot?: React.ReactNode;
   isRefreshing?: boolean;
   /** When set, show a tiny "Inspector spawned" indicator. */
   lastEvent?: string;
@@ -72,6 +74,7 @@ export function TopBar({
   onMethodologyChange,
   onRefresh,
   onPresentInCourt,
+  psrSlot,
   isRefreshing,
   lastEvent,
 }: TopBarProps) {
@@ -114,6 +117,8 @@ export function TopBar({
           <RefreshCw className={cn('size-3.5', isRefreshing && 'animate-spin')} />
           Refresh
         </button>
+
+        {psrSlot}
 
         {onPresentInCourt && (
           <button
