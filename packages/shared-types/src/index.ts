@@ -40,6 +40,9 @@ export * from './wallet_history';
 // Surface 7 — Supervisor Dashboard shapes.
 export * from './supervisor';
 
+// Surface 8 — Personal Attribution Library (F25) shapes.
+export * from './personal_attribution';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

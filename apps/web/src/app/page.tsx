@@ -103,6 +103,17 @@ export default function HomePage() {
               · case portfolio heatmap, caseload balance, deconfliction feed, CADNP
             </span>
           </li>
+          <li>
+            <a
+              href="/attribution-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 8 — Personal Attribution Library
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · the investigator's accumulated knowledge — 24 attributions across 4 cases, sharing log + incoming queue
+            </span>
+          </li>
         </ul>
       </div>
 
