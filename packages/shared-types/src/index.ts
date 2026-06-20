@@ -28,6 +28,9 @@ export * from './canvas';
 // Surface 3 — Court Mode data shapes.
 export * from './court';
 
+// Surface 4 — Provider Marketplace + Model Configuration shapes.
+export * from './marketplace';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

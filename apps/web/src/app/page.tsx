@@ -59,6 +59,17 @@ export default function HomePage() {
               · 10-frame presenter deck with live accounting panel
             </span>
           </li>
+          <li>
+            <a
+              href="/marketplace-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 4 — BYOK Marketplace + Model Configuration
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · provider catalog, .env-easy key entry, per-role model overrides
+            </span>
+          </li>
         </ul>
       </div>
 
