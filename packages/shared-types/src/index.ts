@@ -25,6 +25,9 @@ export * from './inspector';
 // Surface 2 — Canvas data shapes.
 export * from './canvas';
 
+// Surface 3 — Court Mode data shapes.
+export * from './court';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

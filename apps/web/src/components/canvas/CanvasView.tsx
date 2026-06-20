@@ -176,12 +176,61 @@ export function CanvasView({
     sigma.on('clickStage', () => {
       handlersRef.current.onCanvasClick?.();
     });
-    // Hover highlight via cursor + slight scale bump.
+
+    // ---------- Node drag-to-reposition ----------
+    // Standard Sigma pattern: track mousedown on a node, disable camera pan
+    // while dragging, convert viewport coords → graph coords on every move,
+    // re-emit the node's x/y. A pure-click (no movement) still fires clickNode
+    // because we only set draggedNode after the first non-trivial mousemove.
+    let draggedNode: string | null = null;
+    let mouseDownNode: string | null = null;
+
+    sigma.on('downNode', ({ node }) => {
+      mouseDownNode = node;
+      // Pin the node so forceAtlas / future relayouts don't tug it away.
+      g.setNodeAttribute(node, 'highlighted', true);
+    });
+
+    sigma.getMouseCaptor().on('mousemovebody', (e) => {
+      if (!mouseDownNode) return;
+      // First real movement promotes mousedown → drag.
+      if (!draggedNode) {
+        draggedNode = mouseDownNode;
+        // Disable Sigma's camera pan so the canvas doesn't slide while we drag.
+        sigma.getCamera().disable();
+        if (containerRef.current) containerRef.current.style.cursor = 'grabbing';
+      }
+      const pos = sigma.viewportToGraph(e);
+      g.setNodeAttribute(draggedNode, 'x', pos.x);
+      g.setNodeAttribute(draggedNode, 'y', pos.y);
+      // Prevent the event from also reaching the stage as a pan gesture.
+      e.preventSigmaDefault();
+      e.original.preventDefault();
+      e.original.stopPropagation();
+    });
+
+    const endDrag = () => {
+      if (draggedNode) {
+        g.removeNodeAttribute(draggedNode, 'highlighted');
+        sigma.getCamera().enable();
+        if (containerRef.current) containerRef.current.style.cursor = '';
+        draggedNode = null;
+      }
+      mouseDownNode = null;
+    };
+    sigma.getMouseCaptor().on('mouseup', endDrag);
+    sigma.getMouseCaptor().on('mouseupBody' as 'mouseup', endDrag);
+
+    // Hover highlight via cursor.
     sigma.on('enterNode', () => {
-      if (containerRef.current) containerRef.current.style.cursor = 'pointer';
+      if (containerRef.current && !draggedNode) {
+        containerRef.current.style.cursor = 'grab';
+      }
     });
     sigma.on('leaveNode', () => {
-      if (containerRef.current) containerRef.current.style.cursor = '';
+      if (containerRef.current && !draggedNode) {
+        containerRef.current.style.cursor = '';
+      }
     });
 
     sigmaRef.current = sigma;
