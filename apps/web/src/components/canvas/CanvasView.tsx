@@ -235,6 +235,12 @@ export function CanvasView({
 
     sigmaRef.current = sigma;
 
+    // Expose for in-browser debugging / Playwright tests.
+    // No-op in prod where window.__chainsightSigma callers are absent.
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __chainsightSigma?: Sigma }).__chainsightSigma = sigma;
+    }
+
     return () => {
       sigma.kill();
       sigmaRef.current = null;
