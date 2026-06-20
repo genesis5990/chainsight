@@ -15,6 +15,7 @@
 import Graph from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { Sigma } from 'sigma';
+import { EdgeArrowProgram } from 'sigma/rendering';
 import { useEffect, useRef } from 'react';
 import {
   ACTIVITY_GLYPH,
@@ -80,15 +81,21 @@ export function CanvasView({
         }
       }
 
+      // Sigma v3 ships only circle / point programs. To visually distinguish
+      // transaction nodes from addresses we prepend a glyph and use the
+      // family's STROKE color as the tx fill (so tx nodes read as darker
+      // 'punched-out' versions of the same family). Phase 1 will register
+      // a custom diamond program to match the spec literally.
+      const fillColor = isTx ? baseColor.stroke : baseColor.fill;
+      const txLabel = isTx ? `◆ ${labelParts.join(' ')}` : labelParts.join(' ');
+
       g.addNode(node.id, {
         x: Math.random(), // seeded by forceAtlas later
         y: Math.random(),
         size: baseSize + sizeBoost,
-        color: baseColor.fill,
-        // sigma supports a small set of programs by default. We extend
-        // 'square' for transactions, 'circle' for addresses.
-        type: isTx ? 'square' : 'circle',
-        label: labelParts.join(' '),
+        color: fillColor,
+        type: 'circle',
+        label: txLabel,
         // Stash kind for click routing.
         kind: node.kind,
         family: node.family,
@@ -154,6 +161,7 @@ export function CanvasView({
       edgeLabelSize: 10,
       edgeLabelColor: { color: '#6b7280' },
       defaultEdgeType: 'arrow',
+      edgeProgramClasses: { arrow: EdgeArrowProgram },
       minCameraRatio: 0.1,
       maxCameraRatio: 10,
     });
