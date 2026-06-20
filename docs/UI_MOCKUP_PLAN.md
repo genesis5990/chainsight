@@ -140,11 +140,16 @@ Live at `/supervisor-demo`. **Reference:** `docs/chainsight_v1_0_supervisor_dash
 
 Seeded with FBI Cyber Squad 14 (6 investigators × 24 active cases). Five-tile KPI strip with 7-day deltas; scope picker (3 scopes with audit-log notice); Case Portfolio Heatmap with full cell encoding per spec §2.2 (fill=risk, width=SLA, top-right pip=sanctions, bottom-left dot=dormant, diagonal hatch=awaiting input, 2-px outline ring=in overlap group, L/M/H/C glyph for a11y); per-investigator OUT banner with reassign-flow CTA; Caseload Balance sparklines with shaded target bands and the explicit 'routing input only, not performance evaluation' label; Pending Approvals queue with urgency chips and pre-freeze/pre-seizure/pre-court quick-approve gating; Deconfliction Feed with 4 severity tiers and CADNP badge for cross-agency alerts; click-through Case Sidebar (480px slide-in, non-destructive) and Alert Modal with the 5-way resolution ladder. CADNP modal renders the bilateral hash-only model exactly: peer-agency card shows count band + since-timestamp + the 'Peer revealed no case identifiers' disclaimer.
 
-### Surface 8 — Personal Attribution library
+### Surface 8 — Personal Attribution Library ✅ SHIPPED (Phase-0 mockup)
 
-**What it shows:** Investigator's accumulated attributions across all their cases. Sortable, searchable, sharing controls (private / team / org), counter-attribution flow.
+Live at `/attribution-demo`. **Reference:** `docs/chainsight_v0_6_addendum.md` F25.
 
-**Reference:** `docs/chainsight_v0_6_addendum.md` F25.
+Seeded with Det. T. Nguyen’s 4-year library (24 attributions across address / cluster / entity / bridge_contract / transaction targets on ETH/BTC/SOL/TRON spanning all 11 categories and 6 bases). 7-tile KPI strip (total / private / shared-out / accepted by others / cases touched / incoming pending / disagreements with taint-red accent). Sticky filter sidebar (search across label/description/canonical, chain · category · basis · visibility chips, 5 sort orders). Library list with color+icon swatch, 5-dot confidence indicator, T0/T2/T3 tier-prefixed basis label, visibility chip, description excerpt, and right-rail meta. Incoming shares panel (sticky right rail) with Park’s Kraken hot wallet, Cho’s overlapping Fox-runner cluster, and Patel’s MSB-registry correction that disputes attr-011 — each with inline Accept / Reject / Counter actions. Click-through AttributionDetail drawer (480px slide-in, non-destructive) renders canonical with copy, supporting evidence, cases referenced with PRIMARY badge, share log with action icons, lifecycle KVs, and Edit/Share/Export/Revoke buttons with the G5 immutability disclosure. IncomingShareModal renders the full F25 §11.6 layout with all 4 actions.
+
+## 8 of 8 surfaces shipped
+
+All Phase-0 UI mockups complete. Next phase wires real backend services (case-stream API, BeliefAtom persistence, real BYOK provider calls, deconfliction scan worker, supervisor-api service).
+
 
 ## Constraints (locked from canvas UX addendum)
 
