@@ -30,12 +30,12 @@ export interface WalletSourceMeta {
 
 export const WALLET_SOURCES: WalletSourceMeta[] = [
   { id: 'forensic_seizure', label: 'Forensic seizure', hint: 'Drive image, seized device, recovered keystore' },
-  { id: 'subpoena_dump', label: 'Subpoena dump', hint: 'Exchange returned the suspect\u2019s controlled deposit addresses' },
+  { id: 'subpoena_dump', label: 'Subpoena dump', hint: 'Exchange returned the suspect’s controlled deposit addresses' },
   { id: 'osint', label: 'OSINT', hint: 'Public posts, Telegram dump, GitHub leaks, doxxed wallet' },
   { id: 'self_reported_victim', label: 'Victim self-reported', hint: 'Victim shared their own addresses with the investigator' },
   { id: 'suspect_voluntary', label: 'Suspect voluntary', hint: 'Suspect cooperated and disclosed addresses' },
   { id: 'exchange_export', label: 'Exchange export', hint: 'CSV the suspect exported from their account' },
-  { id: 'seed_recovered', label: 'Seed phrase recovered', hint: 'Platform derives addresses in-memory only \u2014 never persisted' },
+  { id: 'seed_recovered', label: 'Seed phrase recovered', hint: 'Platform derives addresses in-memory only — never persisted' },
 ];
 
 export type WalletChain = 'btc' | 'eth' | 'sol' | 'tron' | 'polygon' | 'arbitrum' | 'base' | 'unknown';
@@ -80,7 +80,7 @@ export const ADDRESS_ANALYSIS_STAGES: StageMeta[] = [
   { id: 'tracing_hops', label: 'Hop tracing', description: '3-hop incoming, 5-hop outgoing' },
   { id: 'scoring', label: 'Scoring', description: 'Composite evidentiary value' },
   { id: 'ready', label: 'Ready', description: 'Available for canvas + report' },
-  { id: 'failed', label: 'Failed', description: 'See error \u2014 retryable in Phase 1' },
+  { id: 'failed', label: 'Failed', description: 'See error — retryable in Phase 1' },
 ];
 
 export interface AddressActivitySummary {
@@ -163,7 +163,7 @@ export interface WalletDraft {
   description: string;
   source: WalletSource;
   source_provenance: string;
-  /** Color from curated palette \u2014 the wallet rings on canvas use this. */
+  /** Color from curated palette — the wallet rings on canvas use this. */
   color: PathColor;
   addresses: WalletAddressInput[];
   config: WalletAnalysisConfig;

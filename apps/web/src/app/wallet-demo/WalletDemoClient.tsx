@@ -62,11 +62,11 @@ export default function WalletDemoClient() {
   }, []);
 
   const handleGenerateReport = useCallback(() => {
-    setToast('Wallet History Analysis Report draft created \u2014 visible in the case Reports tab (Phase 1)');
+    setToast('Wallet History Analysis Report draft created — visible in the case Reports tab (Phase 1)');
   }, []);
 
   const handlePromote = useCallback((raw: string) => {
-    setToast(`Promoted ${raw.slice(0, 14)}\u2026 to BeliefAtom \u2014 enters the case ledger (Phase 1)`);
+    setToast(`Promoted ${raw.slice(0, 14)}… to BeliefAtom — enters the case ledger (Phase 1)`);
   }, []);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function WalletDemoClient() {
       <header className="h-12 border-b border-context-100 bg-white/95 backdrop-blur flex items-center gap-3 px-4 shrink-0">
         <Wallet className="size-4 text-context-700" />
         <h1 className="text-[13px] font-semibold text-context-900">Wallet History Analyzer</h1>
-        <span className="text-[11px] text-context-500">Surface 6 \u00b7 v0.5 F21</span>
+        <span className="text-[11px] text-context-500">Surface 6 · v0.5 F21</span>
         <span className="ml-auto text-[11px] text-context-500">
           {draft ? draft.name : 'New wallet'}
         </span>

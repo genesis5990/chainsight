@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Surface 6 \u2014 streaming analysis panel. Three columns:
+ * Surface 6 — streaming analysis panel. Three columns:
  *
  *   ┌─────────────────────────────┬───────────────────────────┐
  *   │ Per-address progress rows   │ Flagged for review        │
@@ -65,7 +65,7 @@ export function WalletAnalysisPanel({
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-semibold text-context-900 truncate">{draft.name}</div>
           <div className="text-[11px] text-context-500 truncate">
-            {draft.source} \u00b7 {draft.addresses.length} addresses \u00b7 {progressPct}% analyzed
+            {draft.source} · {draft.addresses.length} addresses · {progressPct}% analyzed
           </div>
         </div>
         <StatusChip status={run.status} />
@@ -120,7 +120,7 @@ export function WalletAnalysisPanel({
           <Stat label="Current balance" value={run.aggregate.current_balance_fiat_display} />
           <Stat
             label="Findings"
-            value={`${run.aggregate.flagged_address_count} flagged \u00b7 ${run.aggregate.obfuscation_finding_count} obf hits`}
+            value={`${run.aggregate.flagged_address_count} flagged · ${run.aggregate.obfuscation_finding_count} obf hits`}
           />
         </footer>
       )}
@@ -251,7 +251,7 @@ function FlagRow({
         onClick={() => onPromote(analysis.raw_address)}
         className="mt-2 text-[10px] font-semibold text-markup-700 hover:underline"
       >
-        Promote to BeliefAtom \u2192
+        Promote to BeliefAtom →
       </button>
     </div>
   );
@@ -278,5 +278,5 @@ function chainDot(chain: string): string {
 
 function truncateAddress(addr: string): string {
   if (addr.length <= 22) return addr;
-  return `${addr.slice(0, 12)}\u2026${addr.slice(-8)}`;
+  return `${addr.slice(0, 12)}…${addr.slice(-8)}`;
 }

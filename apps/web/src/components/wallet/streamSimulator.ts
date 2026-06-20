@@ -1,6 +1,6 @@
 /**
  * Phase 0 streaming simulator for Wallet History Analyzer. Mirrors the
- * Inspector pattern \u2014 each address walks through the analysis stages on a
+ * Inspector pattern — each address walks through the analysis stages on a
  * randomized schedule so the UI looks alive without real backend calls.
  */
 
@@ -90,7 +90,7 @@ export function runWalletSim(
             label_from_source: addr.label_from_source,
             stage: willFail ? 'failed' : 'ready',
             progress: 1,
-            message: willFail ? 'Etherscan returned 429 \u2014 retry available' : undefined,
+            message: willFail ? 'Etherscan returned 429 — retry available' : undefined,
             summary: willFail ? undefined : synthesizeSummary(addr, i),
             score: willFail ? undefined : synthesizeScore(addr, i),
             flag: willFail ? undefined : maybeFlag(addr, i),
@@ -144,7 +144,7 @@ function stageMessage(stage: AddressAnalysisStage, addr: WalletAddressInput): st
   switch (stage) {
     case 'fetching_history': return `pulling ${addr.chain.toUpperCase()} history via BYOK provider`;
     case 'clustering': return 'common-input + change-output heuristics';
-    case 'attribution': return 'TRM \u00d7 Chainabuse \u00d7 OFAC corroboration';
+    case 'attribution': return 'TRM × Chainabuse × OFAC corroboration';
     case 'obfuscation_scan': return 'mixer / peel-chain / bridge detector';
     case 'tracing_hops': return '3-hop incoming, 5-hop outgoing';
     case 'scoring': return 'composite evidentiary value';
@@ -235,7 +235,7 @@ function maybeFlag(addr: WalletAddressInput, i: number): AddressAnalysis['flag']
     return {
       kind: 'cluster_anchor',
       label: 'Cluster anchor',
-      rationale: 'Common-input clustering links this address to 11 others in the wallet \u2014 likely the same Ledger account.',
+      rationale: 'Common-input clustering links this address to 11 others in the wallet — likely the same Ledger account.',
       weight: 58,
     };
   }
@@ -256,7 +256,7 @@ export function buildAggregate(rows: AddressAnalysis[], totalRequested: number) 
   const failed = rows.filter((r) => r.stage === 'failed');
   const flagged = rows.filter((r) => r.flag);
 
-  // Synthetic fiat totals \u2014 sum the index-based inflows pseudo-realistically.
+  // Synthetic fiat totals — sum the index-based inflows pseudo-realistically.
   const sumInflow = ready.reduce((acc, r, i) => acc + 18_000 + i * 4_700, 0);
   const sumOutflow = ready.reduce((acc, r, i) => acc + 12_000 + i * 4_100, 0);
   const balance = sumInflow - sumOutflow;

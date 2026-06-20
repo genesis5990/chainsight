@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Surface 6 \u2014 Wallet intake form. The investigator pastes addresses (or
+ * Surface 6 — Wallet intake form. The investigator pastes addresses (or
  * drops a CSV), picks the source + color + name, and hits Analyze.
  */
 
@@ -40,15 +40,15 @@ const COLOR_HEX: Record<PathColor, string> = {
 
 export interface WalletIntakeProps {
   onAnalyze: (draft: WalletDraft) => void;
-  /** True while analysis is running \u2014 disables the Analyze button. */
+  /** True while analysis is running — disables the Analyze button. */
   busy?: boolean;
 }
 
 export function WalletIntake({ onAnalyze, busy }: WalletIntakeProps) {
-  const [name, setName] = useState('John Doe \u2014 seized Ledger Nano (2026-04-12)');
+  const [name, setName] = useState('John Doe — seized Ledger Nano (2026-04-12)');
   const [description, setDescription] = useState('');
   const [source, setSource] = useState<WalletSource>('forensic_seizure');
-  const [sourceProvenance, setSourceProvenance] = useState('Warrant SDIL-2026-0042; seized at the suspect\u2019s residence by FBI Field Office 14.');
+  const [sourceProvenance, setSourceProvenance] = useState('Warrant SDIL-2026-0042; seized at the suspect’s residence by FBI Field Office 14.');
   const [color, setColor] = useState<PathColor>('cool_blue');
   const [pasted, setPasted] = useState('');
 
@@ -115,7 +115,7 @@ export function WalletIntake({ onAnalyze, busy }: WalletIntakeProps) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. John Doe \u2014 seized Ledger Nano"
+            placeholder="e.g. John Doe — seized Ledger Nano"
             className="w-full text-sm px-2.5 py-1.5 rounded border border-context-100 focus:outline-none focus:border-context-400"
           />
         </Field>
@@ -248,7 +248,7 @@ export function WalletIntake({ onAnalyze, busy }: WalletIntakeProps) {
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] uppercase tracking-wide bg-white border border-context-100"
                 >
                   <span className={clsx('size-1.5 rounded-full', chainColor(chain))} />
-                  {chain} \u00b7 {n}
+                  {chain} · {n}
                 </span>
               ))}
             </div>
@@ -289,7 +289,7 @@ function chainColor(chain: string): string {
   }
 }
 
-const SAMPLE_WALLET = `# Suspect's seized Ledger Nano \u2014 23 addresses across BTC + ETH
+const SAMPLE_WALLET = `# Suspect's seized Ledger Nano — 23 addresses across BTC + ETH
 # Format: address,optional label
 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1,LedgerLive ETH #1
 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97,LedgerLive ETH #2
@@ -301,11 +301,11 @@ bc1q9d4ywgfnd8h43da5tpcxcn6ajv590cg6d3tg6axemvljvt2k76zs50tv4q,Native segwit #2
 bc1pmzfrwwndsqmk5yh69yjr5lfgfg4ev8c0tsc06e,Taproot test
 3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5,P2SH legacy
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,Satoshi memorial probe
-0xdAC17F958D2ee523a2206206994597C13D831ec7,Possibly Tether contract \u2014 verify
-0x6B175474E89094C44Da98b954EedeAC495271d0F,Possibly DAI contract \u2014 verify
-0x5754284f345afc66a98fbB0a0Afe71e0F007B949,Tornado Cash 10-ETH? \u2014 verify
+0xdAC17F958D2ee523a2206206994597C13D831ec7,Possibly Tether contract — verify
+0x6B175474E89094C44Da98b954EedeAC495271d0F,Possibly DAI contract — verify
+0x5754284f345afc66a98fbB0a0Afe71e0F007B949,Tornado Cash 10-ETH? — verify
 TJYeasTPa6gpEEfYYsa1fAR7H6ZNbQa1KE,TRON USDT
 TQrY8tryqsYVCYS3MFbtffiPp2ccyn4STm,TRON USDT
-not-a-real-address,Sanity check \u2014 should be flagged invalid
+not-a-real-address,Sanity check — should be flagged invalid
 junk_input_xyz,Another sanity probe
 `;
