@@ -142,18 +142,18 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
-          # NOTE: REDIS_URL is a placeholder until Upstash is provisioned.
-          # The worker will crash-loop until a real Redis is wired in — by design for Phase 0.
+          # REDIS_URL is the Upstash rediss:// URL (TLS-enabled).
+          # BullMQ needs Redis for its job queue + pub/sub broker.
           flyctl secrets set --app chainsight-worker-dev --stage \
             SUPABASE_URL="$SUPABASE_URL" \
             SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
-            REDIS_URL="redis://localhost:6379"
+            REDIS_URL="$REDIS_URL"
 
       - name: Deploy chainsight-worker-dev
         # Worker has no http_service so it doesn't need a public IP.
         run: flyctl deploy . --config infra/fly/fly.worker.toml --dockerfile apps/worker/Dockerfile --remote-only --wait-timeout=600 --ha=false
-        continue-on-error: true  # Phase 0: worker crash-loops until Redis is wired — don't block other deploys.
 
   deploy-math:
     name: Deploy Math Service

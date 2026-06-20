@@ -40,4 +40,25 @@ worker.on('failed', (job, err) => {
   log.error({ id: job?.id, err }, 'job failed');
 });
 
+// Eagerly verify the broker is reachable so a misconfigured REDIS_URL
+// fails fast at boot instead of on the first job enqueue.
+(async () => {
+  try {
+    const pingClient = new IORedis(REDIS_URL, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 3,
+      connectTimeout: 5000,
+    });
+    await pingClient.connect();
+    const pong = await pingClient.ping();
+    const host = (() => {
+      try { return new URL(REDIS_URL).host; } catch { return 'unknown'; }
+    })();
+    log.info({ host, pong }, 'redis broker reachable');
+    await pingClient.quit();
+  } catch (err) {
+    log.error({ err }, 'redis broker unreachable — worker will not process jobs');
+  }
+})();
+
 log.info('ChainSight worker started');
