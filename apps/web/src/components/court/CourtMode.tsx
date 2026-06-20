@@ -85,7 +85,11 @@ export function CourtMode({ deck, onExit }: CourtModeProps) {
       } else if (e.key === 'r' || e.key === 'R') {
         setReadAloud((r) => !r);
       } else if (e.key === 'm' || e.key === 'M') {
-        setMethodologyOverride((cur) => cycleMethodology(cur));
+        // Cycle relative to whatever the user is currently seeing — if no
+        // override yet, start from the deck's default so the first press
+        // is a visible advance.
+        const seed = frame?.accounting.frame_methodology ?? deck.methodology;
+        setMethodologyOverride((cur) => cycleMethodology(cur ?? seed));
       } else if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
         setShowHotkeys((s) => !s);
       }
@@ -143,9 +147,9 @@ export function CourtMode({ deck, onExit }: CourtModeProps) {
   );
 }
 
-function cycleMethodology(current: TaintMethodology | null): TaintMethodology {
+function cycleMethodology(current: TaintMethodology): TaintMethodology {
   const order: TaintMethodology[] = ['fifo', 'lifo', 'hifo', 'libr', 'pari_passu', 'rolling_charge'];
-  const idx = current ? order.indexOf(current) : -1;
+  const idx = order.indexOf(current);
   return order[(idx + 1) % order.length]!;
 }
 
