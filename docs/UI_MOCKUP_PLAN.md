@@ -72,11 +72,30 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 
 ### Surface 3 — Court Mode (the "wow" moment for prosecutor demos)
 
+**Status:** ✅ **SHIPPED** — [chainsight-web-dev.fly.dev/court-demo](https://chainsight-web-dev.fly.dev/court-demo)
+
 **What it shows:** Full-screen presenter view. Four view modes (timeline, value-Sankey, by-path, by-entity). Accounting-follows-the-frame side panel that updates every advance.
 
 **Why third:** Different audience (prosecutors, not investigators) but the highest emotional impact in any demo where the question is "what does this look like in front of a jury?"
 
-**Reference:** `docs/chainsight_v0_5_addendum.md` §17 (F17).
+**Reference:** `docs/chainsight_v0_5_addendum.md` §3 (Feature 3).
+
+**What's in the repo:**
+- Data shapes: `packages/shared-types/src/court.ts` (FrameDeck + 6 frame kinds + AccountingState).
+- Views: `apps/web/src/components/court/Views.tsx` (TitleView, OverTimeView, ByValueView with pure-SVG Sankey, ByTracePathView, ByEntityView, DocumentView).
+- Shell: `apps/web/src/components/court/CourtMode.tsx` (full-screen presenter with title bar, accounting panel, frame strip, hotkey overlay).
+- Seed: 10-frame Acme Corp narrative — title → timeline → 5 path hops → case Sankey → Binance entity → source document.
+- Demo route: `apps/web/src/app/court-demo/`. Reachable from the canvas TopBar via 'Present in Court'.
+- Hotkeys live: ←/→/Space (nav), P (pause), R (read-aloud teleprompter), M (cycle methodology), Esc (exit), Shift+Esc (reset), ? (overlay).
+
+**Not implemented yet (deferred to Phase 1+ per spec §3.5):**
+- J (jump-to-entity by typing an address)
+- C (Critic challenges overlay)
+- D (open source document at exact bounding box — the document frame is mocked, not a real PDF viewer)
+- Real per-methodology recomputation when M is pressed (currently just relabels; numbers are deck-baked)
+- d3-sankey replacement for the hand-rolled SVG (labels collide at high density)
+- Court Export Bundle (`.zip` with ChainSight Viewer)
+- Audit log of every frame shown
 
 ### Surface 4 — Provider Marketplace + Model Configuration matrix
 
