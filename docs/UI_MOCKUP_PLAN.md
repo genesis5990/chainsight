@@ -130,17 +130,15 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 
 **Status:** Live at `/canvas-demo` — click **Start Path Selection** to open the PATH MODE toolbar + right-side Path & Report Draft drawer. Shift+click extends path, Alt+click removes last hop. Drawer has path name, 10-color curated palette (Cool / Warm / Primary evidentiary gold+lime / Neutral), methodology, primary-candidate toggle, hop list with per-hop remove, investigator commentary, and an 8-section live report preview. Save draft + Promote to under_review fire UI events (Supabase persistence lands Phase 1).
 
-### Surface 6 — Wallet History Analyzer
+### Surface 6 — Wallet History Analyzer ✅ SHIPPED
 
-**What it shows:** Wallet creation flow (paste addresses or drop CSV), real-time analysis progress, sub-graph rendering, flagged addresses panel, one-click Wallet History Analysis Report.
+Live at `/wallet-demo`. Paste-or-upload intake with chain-of-custody capture and curated wallet color picker; live address detection for EVM/BTC/SOL/TRON; streaming per-address analysis through 7 stages (queued → fetching_history → clustering → attribution → obfuscation_scan → tracing_hops → scoring → ready/failed) with progress bars; flagged-for-review sidebar with composite-scored rationale + promote-to-BeliefAtom CTA; aggregate footer with inflow/outflow/balance/counterparties/cluster + obfuscation counts.
 
-**Reference:** `docs/chainsight_v0_5_addendum_2.md` F21.
+### Surface 7 — Supervisor Dashboard ✅ SHIPPED (Phase-0 mockup)
 
-### Surface 7 — Supervisor Dashboard
+Live at `/supervisor-demo`. **Reference:** `docs/chainsight_v1_0_supervisor_dashboard_addendum.md`.
 
-**What it shows:** Span-of-control cases with risk-tier indicators, review checkpoints, caseload balancing, non-destructive approval sidebar.
-
-**Reference:** `docs/chainsight_v0_8_addendum.md` F27.
+Seeded with FBI Cyber Squad 14 (6 investigators × 24 active cases). Five-tile KPI strip with 7-day deltas; scope picker (3 scopes with audit-log notice); Case Portfolio Heatmap with full cell encoding per spec §2.2 (fill=risk, width=SLA, top-right pip=sanctions, bottom-left dot=dormant, diagonal hatch=awaiting input, 2-px outline ring=in overlap group, L/M/H/C glyph for a11y); per-investigator OUT banner with reassign-flow CTA; Caseload Balance sparklines with shaded target bands and the explicit 'routing input only, not performance evaluation' label; Pending Approvals queue with urgency chips and pre-freeze/pre-seizure/pre-court quick-approve gating; Deconfliction Feed with 4 severity tiers and CADNP badge for cross-agency alerts; click-through Case Sidebar (480px slide-in, non-destructive) and Alert Modal with the 5-way resolution ladder. CADNP modal renders the bilateral hash-only model exactly: peer-agency card shows count band + since-timestamp + the 'Peer revealed no case identifiers' disclaimer.
 
 ### Surface 8 — Personal Attribution library
 
