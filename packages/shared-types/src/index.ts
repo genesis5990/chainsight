@@ -19,6 +19,9 @@ export type Role = 'investigator' | 'supervisor' | 'admin' | 'service';
 // Tiered determinism from v0.2 B2.
 export type Tier = 'T0' | 'T1' | 'T2' | 'T3';
 
+// Surface 1 — Transaction Inspector data shapes.
+export * from './inspector';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
