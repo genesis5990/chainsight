@@ -24,6 +24,7 @@ import {
   Filter,
   Layers,
   Play,
+  Presentation,
   RefreshCw,
   Star,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ export interface TopBarProps {
   methodology: TaintMethodology;
   onMethodologyChange: (m: TaintMethodology) => void;
   onRefresh: () => void;
+  onPresentInCourt?: () => void;
   isRefreshing?: boolean;
   /** When set, show a tiny "Inspector spawned" indicator. */
   lastEvent?: string;
@@ -69,6 +71,7 @@ export function TopBar({
   methodology,
   onMethodologyChange,
   onRefresh,
+  onPresentInCourt,
   isRefreshing,
   lastEvent,
 }: TopBarProps) {
@@ -111,6 +114,18 @@ export function TopBar({
           <RefreshCw className={cn('size-3.5', isRefreshing && 'animate-spin')} />
           Refresh
         </button>
+
+        {onPresentInCourt && (
+          <button
+            type="button"
+            onClick={onPresentInCourt}
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded border border-markup-500 bg-markup-100/40 text-markup-700 hover:bg-markup-100/80"
+            title="Open the courtroom presenter"
+          >
+            <Presentation className="size-3.5" />
+            Present in Court
+          </button>
+        )}
 
         {lastEvent && (
           <span className="text-[10px] text-context-500 italic ml-2">{lastEvent}</span>

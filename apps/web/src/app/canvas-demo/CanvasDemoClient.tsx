@@ -124,6 +124,9 @@ export default function CanvasDemoClient() {
         methodology={methodology}
         onMethodologyChange={setMethodology}
         onRefresh={handleRefresh}
+        onPresentInCourt={() => {
+          window.location.href = '/court-demo';
+        }}
         isRefreshing={isRefreshing}
         lastEvent={lastEvent}
       />

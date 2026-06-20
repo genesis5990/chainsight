@@ -48,7 +48,17 @@ export default function HomePage() {
               · ransomware case graph, layer toggles, Important sidebar
             </span>
           </li>
-          <li className="text-context-500">→ Surface 3: Court Mode (Week 6)</li>
+          <li>
+            <a
+              href="/court-demo"
+              className="text-markup-700 underline hover:text-markup-500"
+            >
+              Surface 3 — Court Mode
+            </a>{' '}
+            <span className="text-xs text-context-500">
+              · 10-frame presenter deck with live accounting panel
+            </span>
+          </li>
         </ul>
       </div>
 
