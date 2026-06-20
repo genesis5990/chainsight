@@ -122,11 +122,13 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 - Coverage map (capability × provider grid) from v0.3 §3.2
 - 'Suggest provider' button when coverage has gaps
 
-### Surface 5 — PSR (Path Selection → Report)
+### Surface 5 — PSR (Path Selection → Report) ✅ SHIPPED
 
 **What it shows:** Four selection modes (click / lasso / auto-pathfind / natural-language) and the path-styled overlay with name + color + curated palette.
 
 **Reference:** `docs/chainsight_v0_3_addendum.md`, `docs/chainsight_v0_5_addendum_2.md` F19.
+
+**Status:** Live at `/canvas-demo` — click **Start Path Selection** to open the PATH MODE toolbar + right-side Path & Report Draft drawer. Shift+click extends path, Alt+click removes last hop. Drawer has path name, 10-color curated palette (Cool / Warm / Primary evidentiary gold+lime / Neutral), methodology, primary-candidate toggle, hop list with per-hop remove, investigator commentary, and an 8-section live report preview. Save draft + Promote to under_review fire UI events (Supabase persistence lands Phase 1).
 
 ### Surface 6 — Wallet History Analyzer
 
