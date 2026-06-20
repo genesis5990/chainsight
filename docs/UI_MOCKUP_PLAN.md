@@ -99,11 +99,28 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 
 ### Surface 4 — Provider Marketplace + Model Configuration matrix
 
+**Status:** ✅ **SHIPPED** — [chainsight-web-dev.fly.dev/marketplace-demo](https://chainsight-web-dev.fly.dev/marketplace-demo)
+
 **What it shows:** Catalog of providers (Chainalysis, TRM, Etherscan, etc.) with one-click install. The `.env`-easy key entry modal. The Model Configuration matrix (per AI role × installed model providers) from v0.9.
 
 **Why fourth:** Locks in the BYOK + sovereignty story visually.
 
 **Reference:** `docs/chainsight_v0_3_byok_addendum.md`, `docs/chainsight_v0_4_api_key_entry_addendum.md`, `docs/chainsight_v0_9_ai_strategy.md` §3.
+
+**What's in the repo:**
+- Data shapes: `packages/shared-types/src/marketplace.ts` (ProviderDefinition, ProviderInstall, LlmModel, AgentRole, ModelMatrix, EnvParseResult).
+- Seed catalog: 14 providers across 7 categories; 9 LLM models across the three tiers; 10 agent roles matching the v0.9 §3.3 baseline.
+- Marketplace component (Marketplace.tsx): two-tab shell (Providers / Model Configuration). Providers tab has search + 3 filter chips, categorized cards with health dot + cost telemetry, install/configure/remove actions. Model Configuration tab is the v0.9 §3.3 matrix verbatim with tier chips + cost summary + four bulk-action buttons.
+- .env-easy KeyEntryModal: bulk-paste with client-side detection, masked previews, unrecognized-line disclosure. Single-key fallback when launched per-provider.
+- /marketplace-demo route. Linked from homepage.
+- Verified: 'Use only local models' bulk action flipped all 10 roles to Qwen 3.5 8B local and the cost dropped from $1,972/mo to $0 — the air-gap-with-one-click moment from §3.3.
+
+**Not implemented yet (deferred to Phase 1+):**
+- Real key persistence to the agency vault (current state is in-memory only)
+- Per-case key scoping (data shape supports it; UI is agency-only)
+- Live health pings
+- Coverage map (capability × provider grid) from v0.3 §3.2
+- 'Suggest provider' button when coverage has gaps
 
 ### Surface 5 — PSR (Path Selection → Report)
 
