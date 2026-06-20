@@ -14,11 +14,29 @@ My recommendation: **v0.dev for surfaces 1-3 (the demo path), Figma for surfaces
 
 ### Surface 1 — Transaction Inspector (highest demo leverage)
 
+**Status:** ✅ **SHIPPED** — [chainsight-web-dev.fly.dev/inspector-demo](https://chainsight-web-dev.fly.dev/inspector-demo)
+
 **What it shows:** Click a tx diamond on the canvas → non-modal popup floats in. Eight sections stream in as AI populates them (plain-language summary, structured facts, decoded action, counterparty intel, case context, obfuscation findings, Critic notes, suggested actions).
 
 **Why first:** This is the "one click, eight seconds, complete answer" demo moment that sells the platform in a 30-second pitch. Everything else is in service of this.
 
 **Reference:** `docs/chainsight_v0_5_addendum_3.md` for the spec.
+
+**What's in the repo:**
+- Data shapes: `packages/shared-types/src/inspector.ts`
+- Components: `apps/web/src/components/inspector/{TransactionInspector,Sections,seed,utils,types}.tsx?`
+- Demo route: `apps/web/src/app/inspector-demo/`
+- Seed data mirrors the Uniswap V3 example from §8.2 verbatim.
+- Streaming schedule lands sections progressively over ~6.2s.
+- Two demo modes: happy path + with failures (Critic + Obfuscation fail with retry-style error cards).
+- Behaviors implemented: drag (by header), resize (right edge), pin/unpin, collapse/expand, Esc-to-close, multi-popup, copy tx hash, explorer link.
+
+**Not implemented yet (deferred to later phases per spec §8.10):**
+- Real Narrative Agent + Verifier gate (Phase 2)
+- Real Critic Agent (Phase 3)
+- Compare-two-transactions mode (Phase 3)
+- PDF exhibit export (Phase 3)
+- Saved-analysis persistence + reproducibility hash (Phase 3)
 
 **v0 prompt to start:**
 
