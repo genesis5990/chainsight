@@ -12,17 +12,28 @@ import { apiFetch } from './fetch';
 
 export interface PathfinderPathRequest {
   case_id: string;
+  /** Single origin subject — the API accepts an array but we use [0] for k-shortest. */
   origin: string[];
   destination: string[];
   k?: number;
-  window?: { from: number; to: number };
+  max_hops?: number;
 }
 
 export function usePaths(req: PathfinderPathRequest | null, opts?: Partial<UseQueryOptions<unknown>>) {
   return useQuery({
     queryKey: ['pathfinder', 'paths', req],
     enabled: !!req,
-    queryFn: async () => apiFetch(`/v1/pathfinder/paths`, { method: 'POST', body: JSON.stringify(req) }),
+    queryFn: async () => {
+      if (!req) return { paths: [] };
+      const body = {
+        case_id: req.case_id,
+        from: req.origin[0],
+        to: req.destination[0],
+        k: req.k ?? 3,
+        max_hops: req.max_hops ?? 8,
+      };
+      return apiFetch(`/v1/pathfinder/k-shortest`, { method: 'POST', body: JSON.stringify(body) });
+    },
     staleTime: 30_000,
     ...opts,
   });
@@ -43,7 +54,7 @@ export function useTraceJobs(case_id: string | null) {
   return useQuery({
     queryKey: ['tracer', 'list', case_id],
     enabled: !!case_id,
-    queryFn: async () => apiFetch(`/v1/tracer/case/${case_id}/jobs`),
+    queryFn: async () => apiFetch(`/v1/cases/${case_id}/traces`),
     staleTime: 10_000,
   });
 }
@@ -52,7 +63,7 @@ export function usePackList(case_id: string | null) {
   return useQuery({
     queryKey: ['packs', case_id],
     enabled: !!case_id,
-    queryFn: async () => apiFetch<{ packs: PackStatusRowDto[] }>(`/v1/repro_pack/case/${case_id}/list`),
+    queryFn: async () => apiFetch<{ packs: PackStatusRowDto[] }>(`/v1/cases/${case_id}/repro-pack`),
     staleTime: 10_000,
   });
 }
@@ -61,7 +72,7 @@ export function useBuildPack() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (req: { case_id: string; finalize?: boolean }) =>
-      apiFetch<PackBuildResultDto>(`/v1/repro_pack/build`, { method: 'POST', body: JSON.stringify(req) }),
+      apiFetch<PackBuildResultDto>(`/v1/cases/${req.case_id}/repro-pack`, { method: 'POST', body: JSON.stringify({ finalize: req.finalize ?? true }) }),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['packs', vars.case_id] });
     },
@@ -70,14 +81,14 @@ export function useBuildPack() {
 
 export function useVerifyPack() {
   return useMutation({
-    mutationFn: (pack_id: string) => apiFetch<VerificationResultDto>(`/v1/repro_pack/${pack_id}/verify`, { method: 'POST' }),
+    mutationFn: (pack_id: string) => apiFetch<VerificationResultDto>(`/v1/repro-pack/${pack_id}/verify`, { method: 'POST' }),
   });
 }
 
 export function useDownloadPack() {
   return useMutation({
     mutationFn: (pack_id: string) =>
-      apiFetch<{ signed_url: string; ttl_seconds: number }>(`/v1/repro_pack/${pack_id}/download`),
+      apiFetch<{ signed_url: string; ttl_seconds: number }>(`/v1/repro-pack/${pack_id}/download`),
   });
 }
 

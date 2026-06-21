@@ -6,11 +6,16 @@ import { usePaths, useStartTrace, useTraceJobs } from '../../../../lib/api/hooks
 import { useSSE } from '../../../../lib/api/sse';
 import { ApiError } from '../../../../lib/api/fetch';
 
+interface LiveEdge {
+  tx_ref: string;
+  from_subject: string;
+  to_subject: string;
+  value_minor: string;
+}
+
 interface LivePath {
-  rank: number;
-  hops: number;
-  edges: Array<{ tx_hash: string; from_subject: string; to_subject: string; value_native_minor: string }>;
-  termination_kind?: string | null;
+  nodes: string[];
+  edges: LiveEdge[];
 }
 
 export function CanvasLiveClient({ case_id }: { case_id: string }) {
@@ -32,7 +37,7 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
     },
   });
 
-  const paths = ((pathsQuery.data as { paths?: LivePath[] })?.paths ?? []) as LivePath[];
+  const paths = ((pathsQuery.data as { paths?: LivePath[]; truncated?: boolean })?.paths ?? []) as LivePath[];
 
   return (
     <main className="min-h-screen px-6 py-8 max-w-7xl mx-auto">
@@ -97,20 +102,17 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
               <p className="text-sm text-context-500">No paths yet — set origin + destination and resolve.</p>
             )}
             <ul className="divide-y divide-context-200">
-              {paths.map((p) => (
-                <li key={p.rank} className="py-2 text-sm">
+              {paths.map((p, idx) => (
+                <li key={idx} className="py-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Path #{p.rank}</span>
-                    <span className="text-xs text-context-500">{p.hops} hops · {p.edges?.length ?? 0} edges</span>
+                    <span className="font-medium">Path #{idx + 1}</span>
+                    <span className="text-xs text-context-500">{p.edges?.length ?? 0} edges · {p.nodes?.length ?? 0} nodes</span>
                   </div>
-                  {p.termination_kind && (
-                    <div className="text-xs text-context-600 mt-0.5">terminates: <code>{p.termination_kind}</code></div>
-                  )}
                   <details className="mt-1">
                     <summary className="text-xs text-blue-700 cursor-pointer">show edges</summary>
                     <ul className="font-mono text-[11px] mt-1 space-y-0.5">
                       {(p.edges ?? []).map((e, i) => (
-                        <li key={i} className="text-context-700 truncate">{e.from_subject} → {e.to_subject} <span className="text-context-500">({e.tx_hash.slice(0, 14)}…)</span></li>
+                        <li key={i} className="text-context-700 truncate">{e.from_subject} → {e.to_subject} <span className="text-context-500">({e.tx_ref.slice(0, 14)}…)</span></li>
                       ))}
                     </ul>
                   </details>
@@ -126,7 +128,7 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
             <h2 className="text-lg font-semibold mb-3">Trace jobs</h2>
             {traceJobs.isLoading && <p className="text-sm text-context-500">Loading…</p>}
             <ul className="divide-y divide-context-200 text-sm">
-              {((traceJobs.data as { jobs?: Array<{ job_id: string; status: string; total_hops: number; total_atoms_emitted: number }> })?.jobs ?? []).map((j) => (
+              {((traceJobs.data as { traces?: Array<{ job_id: string; status: string; total_hops: number; total_atoms_emitted: number }> })?.traces ?? []).map((j) => (
                 <li key={j.job_id} className="py-2 flex items-center justify-between">
                   <span className="font-mono text-xs text-context-700 truncate">{j.job_id.slice(0, 8)}…</span>
                   <span className="text-xs">
@@ -139,7 +141,7 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
                   </span>
                 </li>
               ))}
-              {(traceJobs.data as { jobs?: unknown[] })?.jobs?.length === 0 && (
+              {(traceJobs.data as { traces?: unknown[] })?.traces?.length === 0 && (
                 <li className="text-context-500 py-2 text-sm">No trace jobs yet.</li>
               )}
             </ul>
