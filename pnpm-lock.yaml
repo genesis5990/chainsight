@@ -254,6 +254,9 @@ importers:
 
   packages/belief-state:
     dependencies:
+      '@chainsight/math-client':
+        specifier: workspace:*
+        version: link:../math-client
       '@chainsight/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -294,6 +297,10 @@ importers:
         version: 5.9.3
 
   packages/math-client:
+    dependencies:
+      '@chainsight/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -301,6 +308,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)
 
   packages/reproducibility:
     dependencies:

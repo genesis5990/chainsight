@@ -19,9 +19,11 @@ import type {
   SupportingEvidence,
 } from '@chainsight/shared-types';
 
+import { MathClient, asConfidence, type CallContext } from '@chainsight/math-client';
+
 import { BeliefError } from './errors';
 import { computePayloadHash } from './hash';
-import { fillConfidenceInputs, computeConfidence } from './math-stub';
+import { fillConfidenceInputs, computeConfidence as computeConfidenceLocal } from './math-stub';
 import { L1Cache, RedisL2Cache } from './cache';
 import { BeliefPubSub } from './pubsub';
 import {
@@ -101,6 +103,12 @@ export interface SupabaseBeliefStateOptions {
   l2Cache: RedisL2Cache;
   /** Pub/sub for streaming. */
   pubsub: BeliefPubSub;
+  /**
+   * Optional Math Service client. If provided, confidence math goes through
+   * the live service (preferred). If omitted, the local math-stub is used.
+   * The two paths produce byte-identical recipe_hash values.
+   */
+  mathClient?: MathClient;
   /** Override: clock for tests. */
   now?: () => Date;
 }
@@ -109,6 +117,7 @@ export class SupabaseBeliefStateService implements BeliefStateService {
   private readonly db: SupabaseClient;
   private readonly l2: RedisL2Cache;
   private readonly pubsub: BeliefPubSub;
+  private readonly mathClient?: MathClient;
   private readonly l1 = new L1Cache();
   private readonly now: () => Date;
 
@@ -116,7 +125,36 @@ export class SupabaseBeliefStateService implements BeliefStateService {
     this.db = opts.serviceClient;
     this.l2 = opts.l2Cache;
     this.pubsub = opts.pubsub;
+    this.mathClient = opts.mathClient;
     this.now = opts.now ?? (() => new Date());
+  }
+
+  /**
+   * Compute the confidence for an emitting atom. Uses the live Math Service
+   * when configured, falling back to the local stub for dev / offline.
+   *
+   * Parity contract: both paths produce the same recipe_hash for the same
+   * inputs. Verified by the parity tests in packages/math-client/tests.
+   */
+  private async resolveConfidence(
+    input: BeliefAtomInput,
+    ctx: AgencyContext,
+  ): Promise<BeliefAtom['confidence']> {
+    const inputs = fillConfidenceInputs(input.basis, input.confidence_input);
+    if (this.mathClient) {
+      const callCtx: CallContext = {
+        actor_id: ctx.user_id,
+        agency_id: ctx.agency_id,
+      };
+      try {
+        const r = await this.mathClient.computeConfidence(inputs, callCtx);
+        return asConfidence(r);
+      } catch (e) {
+        // Math down should not silently corrupt the ledger. Surface as internal.
+        throw new BeliefError('internal', `math.compute_confidence failed: ${(e as Error).message}`, e);
+      }
+    }
+    return computeConfidenceLocal(inputs);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -148,8 +186,8 @@ export class SupabaseBeliefStateService implements BeliefStateService {
     // 3. authz — caller must have write access on the case
     await this.assertCanWrite(input.case_id, ctx);
 
-    // 4. compute confidence (Math stub for week 1; gRPC client in week 2)
-    const confidence = computeConfidence(fillConfidenceInputs(input.basis, input.confidence_input));
+    // 4. compute confidence — live Math Service if available, stub otherwise.
+    const confidence = await this.resolveConfidence(input, ctx);
 
     // 5. payload hash
     const payloadHash = computePayloadHash(input);
@@ -359,7 +397,20 @@ export class SupabaseBeliefStateService implements BeliefStateService {
 
     if (atom.locked_at) {
       // Spec §3.8: locked atoms cannot mutate evidence; emit a parented confidence-score atom.
-      const newConfidence = computeConfidence(fillConfidenceInputs(atom.basis, atom.confidence.inputs));
+      const newConfidence = await this.resolveConfidence(
+        {
+          case_id: atom.case_id,
+          subject_ref: atom.subject_ref,
+          predicate: 'has_confidence_score',
+          object_payload: {},
+          basis: atom.basis,
+          basis_detail: 'evidence link recompute',
+          confidence_input: atom.confidence.inputs,
+          emitted_by_kind: 'system',
+          emitted_by_id: ctx.user_id,
+        },
+        ctx,
+      );
       return await this.emit(
         {
           case_id: atom.case_id,

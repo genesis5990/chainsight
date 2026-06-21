@@ -1,44 +1,24 @@
 /**
- * @chainsight/math-client
+ * @chainsight/math-client v0.2.0 — typed HTTP client for the Math Service.
  *
- * Typed client for the Python Math Service. The LLM never types numbers —
- * every value comes from a call to the Math Service. This package is what
- * the API and worker import to make those calls.
- *
- * Phase 0 Week 1: REST client. Phase 0 Week 2-3: switch to gRPC for hot path.
+ * Phase-1 Week-2: HTTP/1.1 transport. Spec calls for gRPC; the swap is a
+ * Week-3 task. All RPCs already produce recipe_hash so the migration is
+ * transport-only.
  */
 
-export interface ValueAtBlockInput {
-  chain: string;
-  block_height: number;
-  token_address?: string | null;
-  amount_native: string;
-}
-
-export interface ValueAtBlockResult {
-  chain: string;
-  block_height: number;
-  amount_native: string;
-  amount_fiat_usd: string;
-  method: string;
-  rule_version: string;
-}
-
-export class MathClient {
-  constructor(private readonly baseUrl: string) {}
-
-  async computeValueAtBlock(input: ValueAtBlockInput): Promise<ValueAtBlockResult> {
-    const res = await fetch(`${this.baseUrl}/v1/compute_value_at_block`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) throw new Error(`Math service responded ${res.status}`);
-    return (await res.json()) as ValueAtBlockResult;
-  }
-
-  async health(): Promise<{ status: string }> {
-    const res = await fetch(`${this.baseUrl}/health`);
-    return (await res.json()) as { status: string };
-  }
-}
+export type { CallContext, MathClientOptions } from './client';
+export { MathClient, canonicalFingerprint } from './client';
+export { RecipeLru } from './lru';
+export {
+  MathClientError,
+  asConfidence,
+} from './types';
+export type {
+  ApplyMethodologyRequest, ApplyMethodologyResponse,
+  BatchPriceRequest, BatchPriceResponse,
+  ComputeConfidenceRequest, ComputeConfidenceResponse,
+  ComputeFeeRequest, ComputeFeeResponse,
+  ComputeValueAtBlockRequest, ComputeValueAtBlockResponse,
+  DecodeActionRequest, DecodeActionResponse,
+  Lot, MathErrorBody, MethodologySelection, PriceSnapshot,
+} from './types';

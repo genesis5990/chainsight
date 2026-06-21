@@ -16,6 +16,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@chainsight/math-client": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
     "@noble/hashes": "^1.6.1",
     "@supabase/supabase-js": "^2.47.10",
