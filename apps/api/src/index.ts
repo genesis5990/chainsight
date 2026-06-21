@@ -23,6 +23,12 @@ import {
   SupabaseTraceJobStore,
   TracerService,
 } from '@chainsight/tracer-agent';
+import {
+  ReproPackService,
+  SupabaseCaseSource,
+  SupabasePackRepository,
+  SupabaseStorageBackend,
+} from '@chainsight/reproducibility';
 import { env } from './env.js';
 import { authPlugin } from './plugins/auth.js';
 import { healthRoutes } from './routes/health.js';
@@ -30,6 +36,7 @@ import { caseRoutes } from './routes/cases.js';
 import { pathfinderRoutes } from './routes/pathfinder.js';
 import { tracerRoutes } from './routes/tracer.js';
 import { eventsRoutes } from './routes/events.js';
+import { reproPackRoutes } from './routes/repro_pack.js';
 
 const fastify = Fastify({
   logger: {
@@ -98,6 +105,20 @@ await fastify.register(eventsRoutes, {
   redis_url: env.REDIS_URL,
   namespace: process.env.CHAINSIGHT_NAMESPACE ?? 'dev',
 });
+
+// ─── Reproducibility Pack ───────────────────────────────────────────────────────────────────────────────────
+const reproService = new ReproPackService({
+  source: new SupabaseCaseSource(
+    pfSupabase as unknown as ConstructorParameters<typeof SupabaseCaseSource>[0],
+  ),
+  repo: new SupabasePackRepository(
+    pfSupabase as unknown as ConstructorParameters<typeof SupabasePackRepository>[0],
+  ),
+  storage: new SupabaseStorageBackend(
+    pfSupabase as unknown as ConstructorParameters<typeof SupabaseStorageBackend>[0],
+  ),
+});
+await fastify.register(reproPackRoutes, { prefix: '/v1', service: reproService });
 
 // Boot
 const port = env.PORT;

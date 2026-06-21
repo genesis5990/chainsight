@@ -1,27 +1,62 @@
 /**
- * @chainsight/reproducibility
+ * @chainsight/reproducibility v0.2.0 (Phase-1 Week-7 implementation of
+ * v1.0 Backend §1.8).
  *
- * Pillar 2. Every report ships with a frozen snapshot — chain data, rule
- * versions, attribution snapshots, tool log, model card, SBS history, and a
- * replay.sh that reconstructs identical output. Opposing counsel re-runs it
- * on their hardware; same inputs produce same outputs forever.
- *
- * Phase 0 Week 1 skeleton. Real pack builder lands Week 6.
+ * Pillar 2 — every report ships with a frozen snapshot. Two builds from
+ * the same case state produce byte-identical pack bytes; the verifier
+ * confirms the manifest hash + section hashes + hash chain offline.
  */
 
-export interface ReproducibilityPackManifest {
-  case_id: string;
-  built_at: string;
-  content_hash: string;
-  contents: {
-    chain_data_snapshot: string;
-    rule_version_manifest: string;
-    attribution_snapshot: string;
-    tool_log: string;
-    model_card: string;
-    sbs_history: string;
-    replay_script: string;
-  };
-}
+export {
+  canonicalJson,
+  chainLinkHash,
+  hashValue,
+  sha256Bytes,
+  sha256Hex,
+} from './canonical';
 
+export {
+  PackBuilder,
+  type PackBuilderOptions,
+  type PackBuildOutput,
+} from './builder';
+
+export {
+  PackVerifier,
+  type PackVerifierOptions,
+} from './verifier';
+
+export {
+  ReproPackService,
+  defaultPackIdProvider,
+  type ReproPackServiceOptions,
+  type PackManifest,
+} from './service';
+
+export type { CaseSource } from './case_source';
+export {
+  SupabaseCaseSource,
+  type SupabaseSourceClient,
+} from './supabase_source';
+
+export {
+  InMemoryStorageBackend,
+  SupabaseStorageBackend,
+  type SupabaseStorageClient,
+} from './storage';
+
+export {
+  SupabasePackRepository,
+  type FinalizeInput,
+  type InsertBuildingInput,
+  type PackRepository,
+  type SupabaseRepoClient,
+} from './pack_repository';
+
+export {
+  renderReplayScript,
+  renderOfflineVerifier,
+} from './replay_script';
+
+// Phase-0 placeholder kept for backward compat; will be removed in Phase-2.
 export const phase0Placeholder = true;

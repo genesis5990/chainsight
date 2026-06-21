@@ -18,6 +18,7 @@
     "@chainsight/belief-state": "workspace:*",
     "@chainsight/capability-router": "workspace:*",
     "@chainsight/pathfinder": "workspace:*",
+    "@chainsight/reproducibility": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
     "@chainsight/tracer-agent": "workspace:*",
     "@fastify/cors": "^10.0.1",

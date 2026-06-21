@@ -53,6 +53,8 @@ export * from './pathfinder';
 
 export * from './tracer';
 
+export * from './reproducibility';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
