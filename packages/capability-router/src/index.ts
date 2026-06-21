@@ -1,38 +1,101 @@
 /**
- * @chainsight/capability-router
+ * @chainsight/capability-router v0.2.0 (Phase-1 Week-4).
  *
- * Pillar 3. Every external data source is a capability, not a vendor name.
+ * Pillar 3 — every external data source is a capability, not a vendor.
  * Calling code never says `etherscan.getTx()` — it says
- * `router.resolve("get_tx_by_hash", args)`. Provider selection, fallback,
- * budget enforcement, and cache integration all happen here.
- *
- * Phase 0 Week 1 skeleton. Real implementation lands Week 3 with the first
- * Etherscan provider wired in.
+ * `router.resolve('get_tx_by_hash', args, ctx)`. Provider selection,
+ * fallback, budget enforcement, retries, circuit breaking, and caching
+ * all happen here.
  */
 
-import type { AgencyId, CaseId } from '@chainsight/shared-types';
+export {
+  CapabilityRouter,
+  NoopAudit,
+  type CapabilityRouterOptions,
+  type ResolutionAudit,
+} from './router';
 
-export type Capability =
-  | 'get_tx_by_hash'
-  | 'get_address_balance'
-  | 'get_address_attribution'
-  | 'get_price_at_timestamp'
-  | 'decode_router_swap'
-  | 'get_sanctions_status';
+export type {
+  AgencyContext,
+  AgencyProviderInstall,
+  BudgetContext,
+  Capability,
+  CapabilityResult,
+  CapabilityResultSource,
+  CacheScope,
+  CacheTtlTier,
+  ConnectorCallOptions,
+  ConnectorMetadata,
+  ConnectorResponse,
+  ProviderConnector,
+  ResolveOptions,
+  ResolvedCredential,
+} from './types';
+export {
+  AllProvidersFailedError,
+  BudgetExhaustedError,
+  CapabilityUnavailableError,
+  CircuitBreakerOpenError,
+} from './types';
 
-export interface ResolveInput<TArgs = Record<string, unknown>> {
-  capability: Capability;
-  args: TArgs;
-  case_id: CaseId;
-  agency_id: AgencyId;
-}
+export {
+  ProviderCircuitBreaker,
+  FAILURE_THRESHOLD,
+  FAILURE_WINDOW_MS,
+  RESET_TIMEOUT_MS,
+  type BreakerSnapshot,
+  type BreakerState,
+  type CircuitBreakerOptions,
+} from './circuit_breaker';
 
-export interface ResolveOutput<TPayload = unknown> {
-  payload: TPayload;
-  provider_id: string;
-  cached: boolean;
-  fetched_at: string;
-}
+export {
+  EnvCredentialStore,
+  InMemoryCredentialStore,
+  type CredentialStore,
+} from './credential_store';
 
-// Phase 0 Week 1: placeholder.
+export {
+  InMemoryInstallRegistry,
+  type InstallRegistry,
+} from './install_registry';
+
+export {
+  SupabaseInstallRegistry,
+  SupabaseResolutionAudit,
+  type SupabaseRouterClient,
+} from './supabase_registry';
+
+export {
+  RedisL1Cache,
+  SupabaseL2Cache,
+  computeArgsHash,
+  computeCacheKey,
+  deriveScope,
+  deriveTtlTier,
+  ttlSeconds,
+  type CacheBackend,
+  type CacheEntry,
+  type SupabaseCacheClient,
+} from './cache';
+
+export {
+  EtherscanConnector,
+  type EtherscanConnectorOptions,
+  type EtherscanTxResponse,
+} from './connectors/etherscan';
+
+export {
+  OpenSanctionsConnector,
+  type OpenSanctionsConnectorOptions,
+  type OpenSanctionsResponse,
+} from './connectors/opensanctions';
+
+export {
+  AnthropicConnector,
+  type AnthropicConnectorOptions,
+  type AnthropicNarrativeRequest,
+  type AnthropicNarrativeResponse,
+} from './connectors/anthropic';
+
+// Legacy placeholder (kept so older imports don't break during the transition)
 export const phase0Placeholder = true;

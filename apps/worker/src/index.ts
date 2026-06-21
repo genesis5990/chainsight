@@ -16,11 +16,26 @@ import {
 import { MathClient } from '@chainsight/math-client';
 import {
   FixtureChainProvider,
+  RouterChainProvider,
+  RouterLlmClient,
   StubLlmClient,
+  SupabaseInspectorRunLookup,
+  SupabaseInspectorRunPersister,
   makeBullMQConsumer as makeInspectorConsumer,
   INSPECTOR_QUEUE_NAME,
-  SupabaseInspectorRunPersister,
 } from '@chainsight/inspector-pipeline';
+import {
+  AnthropicConnector,
+  CapabilityRouter,
+  EnvCredentialStore,
+  EtherscanConnector,
+  OpenSanctionsConnector,
+  RedisL1Cache,
+  SupabaseInstallRegistry,
+  SupabaseL2Cache,
+  SupabaseResolutionAudit,
+} from '@chainsight/capability-router';
+import type { AgencyContext } from '@chainsight/shared-types';
 
 const log = pino({ name: 'chainsight-worker', level: process.env.LOG_LEVEL ?? 'info' });
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -75,21 +90,72 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     mathClient: math,
   });
 
+  // ── Capability Router wiring ─────────────────────────────────────────
+  // Connectors are stateless; Router resolves install + credential per call.
+  const router = new CapabilityRouter({
+    connectors: [
+      new EtherscanConnector(),
+      new OpenSanctionsConnector(),
+      new AnthropicConnector(),
+    ],
+    installs: new SupabaseInstallRegistry(
+      supabase as unknown as ConstructorParameters<typeof SupabaseInstallRegistry>[0],
+    ),
+    credentials: new EnvCredentialStore(),
+    caches: {
+      l1: new RedisL1Cache(pubsubConn),
+      l2: new SupabaseL2Cache(
+        supabase as unknown as ConstructorParameters<typeof SupabaseL2Cache>[0],
+      ),
+    },
+    redis: pubsubConn,
+    audit: new SupabaseResolutionAudit(
+      supabase as unknown as ConstructorParameters<typeof SupabaseResolutionAudit>[0],
+    ),
+  });
+
+  // Worker-level AgencyContext used by router-backed providers. Real per-job
+  // context comes from the inspector request; this is the boot-time identity.
+  const workerCtx: AgencyContext = {
+    user_id: process.env.WORKER_USER_ID ?? '00000000-0000-0000-0000-000000000000',
+    agency_id: process.env.WORKER_AGENCY_ID ?? '*',
+    active_case_id: null,
+    roles: ['investigator'],
+    supervisory_scope_id: null,
+    available_capabilities: ['get_tx_by_hash', 'get_address_attribution', 'llm_narrative'],
+  };
+
   // supabase-js client exposes the schema().from().insert() shape the
   // persister depends on; cast for the structural interface check.
   const persister = new SupabaseInspectorRunPersister(
     supabase as unknown as ConstructorParameters<typeof SupabaseInspectorRunPersister>[0],
   );
+  const lookup = new SupabaseInspectorRunLookup(
+    supabase as unknown as ConstructorParameters<typeof SupabaseInspectorRunLookup>[0],
+  );
 
   const inspectorWorker = makeInspectorConsumer({
     belief,
     math,
-    chain: new FixtureChainProvider(),
-    llm: new StubLlmClient(),
+    // RouterChainProvider falls back to FixtureChainProvider for the seeded
+    // Op Lemon + USDT test fixtures, so demos still work without an Etherscan key.
+    chain: new RouterChainProvider({
+      router,
+      ctx: workerCtx,
+      fallback: new FixtureChainProvider(),
+    }),
+    // RouterLlmClient falls back to StubLlmClient when no Anthropic install
+    // is configured for the agency — keeps the pipeline explainable end-to-end.
+    llm: new RouterLlmClient({
+      router,
+      ctx: workerCtx,
+      fallback: new StubLlmClient(),
+    }),
     connection,
     publisher: pubsubConn,
     namespace: NAMESPACE,
     persister,
+    lookup,
   });
   inspectorWorker.on('completed', (job, result) => {
     log.info({ id: job.id, run_id: result.run_id, emitted: result.emitted_atom_ids.length }, 'inspector job completed');

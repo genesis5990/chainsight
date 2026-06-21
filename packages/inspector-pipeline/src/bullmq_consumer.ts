@@ -16,6 +16,7 @@ import type {
 } from '@chainsight/shared-types';
 import { InspectorRunner, type InspectorRunnerOptions } from './runner';
 import type { InspectorRunPersister } from './run_persister';
+import type { InspectorRunLookup } from './run_lookup';
 
 export const INSPECTOR_QUEUE_NAME = 'inspector:analyze';
 
@@ -30,6 +31,8 @@ export interface BullMQConsumerOptions extends InspectorRunnerOptions {
   concurrency?: number;
   /** Optional persister — writes the completed run to belief.inspector_runs. */
   persister?: InspectorRunPersister;
+  /** Optional lookup — short-circuits the run if a fresh cached run exists. */
+  lookup?: InspectorRunLookup;
 }
 
 export function makeBullMQConsumer(opts: BullMQConsumerOptions): Worker<InspectorRunRequest, InspectorRunResult> {
@@ -50,6 +53,29 @@ export function makeBullMQConsumer(opts: BullMQConsumerOptions): Worker<Inspecto
           console.warn('[inspector] pubsub publish failed', { channel, e });
         }
       };
+
+      // Cache short-circuit: if a fresh run already exists, emit a single
+      // cached run_completed event and return the prior result without
+      // re-emitting atoms / running providers.
+      if (opts.lookup) {
+        try {
+          const methodology = req.methodology ?? 'fifo';
+          const cached = await opts.lookup.byTxAndMethodology(req.case_id, req.tx_ref, methodology);
+          if (cached) {
+            await emit({ kind: 'run_started', run_id: cached.run_id, tx_ref: req.tx_ref, cached: true });
+            await emit({
+              kind: 'run_completed',
+              run_id: cached.run_id,
+              emitted_atom_ids: cached.emitted_atom_ids,
+              recipe_hash_bundle: (cached.recipe_hash_bundle ?? {}) as Record<string, string>,
+            });
+            return { ...cached, cached: true };
+          }
+        } catch (e) {
+           
+          console.warn('[inspector] lookup failed', { tx_ref: req.tx_ref, e });
+        }
+      }
 
       const runner = new InspectorRunner({ ...opts, emit });
       try {

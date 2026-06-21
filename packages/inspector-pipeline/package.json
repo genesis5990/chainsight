@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@chainsight/belief-state": "workspace:*",
+    "@chainsight/capability-router": "workspace:*",
     "@chainsight/math-client": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
     "@noble/hashes": "^1.6.1",

@@ -25,3 +25,12 @@ export {
   computeCacheKey,
 } from './run_persister';
 export type { InspectorRunPersister, SupabaseLike } from './run_persister';
+
+export { RouterChainProvider, adaptEtherscan } from './router_chain_provider';
+export type { RouterChainProviderOptions } from './router_chain_provider';
+
+export { RouterLlmClient } from './router_llm_client';
+export type { RouterLlmClientOptions } from './router_llm_client';
+
+export { SupabaseInspectorRunLookup } from './run_lookup';
+export type { InspectorRunLookup } from './run_lookup';
