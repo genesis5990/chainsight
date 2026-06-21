@@ -1,13 +1,50 @@
 /**
- * @chainsight/belief-state
+ * @chainsight/belief-state — v0.2 (Phase 1 §3 implementation)
  *
- * Pillar 1. Every claim the AI makes is a first-class object with provenance,
- * derivation, confidence, tier, and challenge history. No agent has private
- * knowledge; every agent reads from and writes to this shared store.
+ * The case ledger. Every fact the system knows is a BeliefAtom; every read is
+ * a query against this module. Both the API and Worker import this package.
  *
- * Phase 0 Week 1 skeleton. The full event-sourced implementation lands Week 2.
+ * Spec: docs/chainsight_v1_1_technical_core_spec.md §3.
+ *
+ * The legacy v0.x `BeliefStateClient` interface is retained for callers that
+ * have not migrated to the canonical v1.1 `BeliefStateService` yet. Both
+ * share storage; v0.x clients are read-only against the new schema.
  */
 
+export * from './errors';
+export * from './hash';
+export { computeConfidence, fillConfidenceInputs } from './math-stub';
+export { L1Cache, RedisL2Cache } from './cache';
+export { BeliefPubSub } from './pubsub';
+export {
+  PREDICATE_PAYLOAD_SCHEMAS,
+  HUMAN_WRITABLE_PREDICATES,
+  SYSTEM_ONLY_PREDICATES,
+  SUPERVISOR_ONLY_PREDICATES,
+} from './predicates';
+export { SupabaseBeliefStateService } from './service';
+export type { SupabaseBeliefStateOptions } from './service';
+
+// Convenience: re-export the canonical service interface from shared-types so
+// callers only need to depend on this package.
+export type {
+  BeliefStateService,
+  BeliefStateEvent,
+  BeliefAtom,
+  BeliefAtomInput,
+  BeliefAtomChallenge,
+  BeliefAtomRetraction,
+  AtomFilter,
+  AtomPredicate,
+  AtomStatus,
+  AgencyContext,
+  Confidence,
+  ConfidenceInputs,
+  SubjectRef,
+  SupportingEvidence,
+} from '@chainsight/shared-types';
+
+// ─── legacy v0.x compatibility shim ─────────────────────────────────────────
 import type { BeliefAtomLite, CaseId, Tier } from '@chainsight/shared-types';
 
 export interface EmitBeliefAtomInput {
@@ -26,6 +63,3 @@ export interface BeliefStateClient {
   emit(input: EmitBeliefAtomInput): Promise<BeliefAtomLite>;
   getByCase(case_id: CaseId): Promise<BeliefAtomLite[]>;
 }
-
-// Phase 0 Week 1: placeholder export. Real Supabase-backed implementation in Week 2.
-export const phase0Placeholder = true;

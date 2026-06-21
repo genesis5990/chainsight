@@ -43,6 +43,9 @@ export * from './supervisor';
 // Surface 8 — Personal Attribution Library (F25) shapes.
 export * from './personal_attribution';
 
+// Phase 1 — Belief State Service canonical shapes (v1.1 §3).
+export * from './belief';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
