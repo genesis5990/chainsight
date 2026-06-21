@@ -254,6 +254,34 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     log.error({ id: job?.id, err }, 'trace job failed');
   });
   log.info('tracer agent consumers started');
+
+  // ── Envelope cipher boot probe ─────────────────────────────────────────────────────
+  // Record envelope cipher status in belief.envelope_health_probe so ops can
+  // verify api + worker share the same CHAINSIGHT_MASTER_KEY (key_fp match).
+  (async () => {
+    try {
+      const { createHash } = await import('node:crypto');
+      const { envelopeCipherFromEnv } = await import('@chainsight/capability-router');
+      const cipher = envelopeCipherFromEnv(process.env);
+      const probe = 'CHAINSIGHT_PROBE_V1';
+      const wrapped = cipher.wrap(probe);
+      const roundtrip_ok = cipher.unwrap(wrapped) === probe;
+      const keyMaterial = process.env.CHAINSIGHT_MASTER_KEY ?? '';
+      const key_fp = keyMaterial
+        ? createHash('sha256').update('chainsight-fp-v1:' + keyMaterial).digest('hex').slice(0, 16)
+        : null;
+      log.info({ active: cipher.active, key_fp, roundtrip_ok }, 'envelope cipher status');
+      await supabase.schema('belief').from('envelope_health_probe').upsert({
+        service: 'chainsight-worker',
+        active: cipher.active,
+        key_fp,
+        roundtrip_ok,
+        recorded_at: new Date().toISOString(),
+      }, { onConflict: 'service' });
+    } catch (err) {
+      log.error({ err }, 'envelope health probe write failed');
+    }
+  })();
 } else {
   log.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled');
 }
