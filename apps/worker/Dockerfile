@@ -12,6 +12,8 @@ COPY apps/worker/package.json ./apps/worker/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/belief-state/package.json ./packages/belief-state/
 COPY packages/capability-router/package.json ./packages/capability-router/
+COPY packages/inspector-pipeline/package.json ./packages/inspector-pipeline/
+COPY packages/math-client/package.json ./packages/math-client/
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
@@ -28,6 +30,8 @@ COPY --from=builder /repo/apps/worker/package.json ./apps/worker/
 COPY --from=builder /repo/packages/shared-types/package.json ./packages/shared-types/
 COPY --from=builder /repo/packages/belief-state/package.json ./packages/belief-state/
 COPY --from=builder /repo/packages/capability-router/package.json ./packages/capability-router/
+COPY --from=builder /repo/packages/inspector-pipeline/package.json ./packages/inspector-pipeline/
+COPY --from=builder /repo/packages/math-client/package.json ./packages/math-client/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /repo/apps/worker/dist ./apps/worker/dist
