@@ -51,7 +51,10 @@ export {
 export {
   EnvCredentialStore,
   InMemoryCredentialStore,
+  VaultCredentialStore,
+  FallbackCredentialStore,
   type CredentialStore,
+  type VaultStoreClient,
 } from './credential_store';
 
 export {

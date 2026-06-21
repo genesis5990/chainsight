@@ -51,3 +51,75 @@ export class InMemoryCredentialStore implements CredentialStore {
     return this.secrets.get(credential_ref) ?? null;
   }
 }
+
+/**
+ * Vault-backed credential store (Phase-2 SaaS Blind).
+ *
+ * credential_ref shape: 'vault:<credential_id>' where credential_id is the
+ * uuid of a belief.agency_credentials row. The store reads the row and
+ * decrypts secret_cipher according to cipher_algo:
+ *   - 'plain_b64'   → base64-decode (dev / no-pgsodium fallback)
+ *   - 'pgsodium'    → call belief.decrypt_agency_credential() RPC (server-side
+ *                     decryption; never exposes the key to the client).
+ */
+export interface VaultStoreClient {
+  schema(name: string): {
+    from(table: string): {
+      select(cols: string): {
+        eq(col: string, val: unknown): {
+          maybeSingle(): Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+        };
+      };
+    };
+  };
+  rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }>;
+}
+
+export class VaultCredentialStore implements CredentialStore {
+  constructor(private readonly client: VaultStoreClient) {}
+
+  async resolve(credential_ref: string): Promise<ResolvedCredential | null> {
+    if (!credential_ref?.startsWith('vault:')) return null;
+    const credential_id = credential_ref.slice('vault:'.length);
+    try {
+      const { data, error } = await this.client.schema('belief').from('agency_credentials')
+        .select('id, agency_id, provider_id, label, secret_cipher, cipher_algo')
+        .eq('id', credential_id).maybeSingle();
+      if (error || !data) return null;
+      const row = data as { secret_cipher: string; cipher_algo: string; agency_id: string; provider_id: string; label: string };
+      let secret: string | null = null;
+      if (row.cipher_algo === 'plain_b64') {
+        secret = Buffer.from(row.secret_cipher, 'base64').toString('utf8');
+      } else if (row.cipher_algo === 'pgsodium') {
+        const { data: decrypted, error: rpcErr } = await this.client.rpc<string>('decrypt_agency_credential', { p_credential_id: credential_id });
+        if (rpcErr || !decrypted) return null;
+        secret = decrypted;
+      }
+      if (!secret) return null;
+      return {
+        credential_ref,
+        secret,
+        extra: { provider_id: row.provider_id, label: row.label, agency_id: row.agency_id },
+      };
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * FallbackCredentialStore — try each backing store in order; first hit wins.
+ * Recommended chain for SaaS Blind: [VaultCredentialStore, EnvCredentialStore].
+ * Recommended for self-hosted dev: [EnvCredentialStore] only.
+ */
+export class FallbackCredentialStore implements CredentialStore {
+  constructor(private readonly stores: CredentialStore[]) {}
+
+  async resolve(credential_ref: string): Promise<ResolvedCredential | null> {
+    for (const s of this.stores) {
+      const hit = await s.resolve(credential_ref);
+      if (hit) return hit;
+    }
+    return null;
+  }
+}

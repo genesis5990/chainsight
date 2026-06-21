@@ -58,5 +58,13 @@ export {
   renderOfflineVerifier,
 } from './replay_script';
 
+export {
+  Ed25519PackSigner,
+  generateEd25519Keypair,
+  verifyDetachedSignature,
+  type PackSigner,
+  type PackVerifierKeys,
+} from './signer';
+
 // Phase-0 placeholder kept for backward compat; will be removed in Phase-2.
 export const phase0Placeholder = true;

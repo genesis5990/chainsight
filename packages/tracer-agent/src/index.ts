@@ -29,6 +29,12 @@ export {
 } from './neighbors_provider';
 
 export {
+  RouterNeighborsProvider,
+  type RouterNeighborsProviderOptions,
+  type RouterLike,
+} from './router_neighbors_provider';
+
+export {
   traceIdempotencyKey,
   withTraceDefaults,
 } from './idempotency';

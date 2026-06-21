@@ -37,6 +37,7 @@ import { pathfinderRoutes } from './routes/pathfinder.js';
 import { tracerRoutes } from './routes/tracer.js';
 import { eventsRoutes } from './routes/events.js';
 import { reproPackRoutes } from './routes/repro_pack.js';
+import { agencyRoutes } from './routes/agency.js';
 
 const fastify = Fastify({
   logger: {
@@ -107,6 +108,18 @@ await fastify.register(eventsRoutes, {
 });
 
 // ─── Reproducibility Pack ───────────────────────────────────────────────────────────────────────────────────
+const packSigner = env.PACK_SIGNER_ID && env.PACK_SIGNER_PRIVATE_KEY_B64 && env.PACK_SIGNER_PUBLIC_KEY_B64
+  ? new Ed25519PackSigner(env.PACK_SIGNER_ID, env.PACK_SIGNER_PRIVATE_KEY_B64, env.PACK_SIGNER_PUBLIC_KEY_B64)
+  : null;
+if (packSigner) {
+  fastify.log.info({ signer_id: packSigner.signer_id }, 'pack signer configured (ed25519)');
+} else {
+  fastify.log.warn('PACK_SIGNER_* env vars unset — packs will be persisted unsigned');
+}
+const verifierKeys = packSigner
+  ? { byId: { [packSigner.signer_id]: { algo: 'ed25519' as const, public_key_b64: packSigner.public_key_b64 } } }
+  : null;
+
 const reproService = new ReproPackService({
   source: new SupabaseCaseSource(
     pfSupabase as unknown as ConstructorParameters<typeof SupabaseCaseSource>[0],
@@ -117,8 +130,13 @@ const reproService = new ReproPackService({
   storage: new SupabaseStorageBackend(
     pfSupabase as unknown as ConstructorParameters<typeof SupabaseStorageBackend>[0],
   ),
+  signer: packSigner,
+  verifierKeys,
 });
 await fastify.register(reproPackRoutes, { prefix: '/v1', service: reproService });
+
+// ─── SaaS Blind agency-admin ───────────────────────────────────────────────────────────────────
+await fastify.register(agencyRoutes, { prefix: '/v1' });
 
 // Boot
 const port = env.PORT;

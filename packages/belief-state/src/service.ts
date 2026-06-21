@@ -224,7 +224,10 @@ export class SupabaseBeliefStateService implements BeliefStateService {
     // 7. invalidate L2 cache for this case (writes touched it)
     await this.l2.invalidateAtomsForCase(input.case_id);
 
-    // 8. publish event (best-effort, never aborts the write)
+    // 8. persist math recipe (Phase-2, best-effort — pack builder reads this)
+    await this.persistMathRecipe(input.case_id, ctx.user_id, confidence);
+
+    // 9. publish event (best-effort, never aborts the write)
     await this.pubsub.publish(input.case_id, {
       kind: 'atom_emitted',
       case_seq: row.case_seq,
@@ -232,6 +235,33 @@ export class SupabaseBeliefStateService implements BeliefStateService {
     });
 
     return atom;
+  }
+
+  /**
+   * Persist the confidence math recipe so the Reproducibility Pack builder
+   * can carry it deterministically. Idempotent via belief.upsert_math_recipe
+   * (ON CONFLICT DO NOTHING on recipe_hash). Best-effort: a failure here must
+   * never abort the atom write — the recipe will simply be missing from packs.
+   */
+  private async persistMathRecipe(
+    case_id: BeliefAtom['case_id'],
+    emitted_by_id: string,
+    confidence: BeliefAtom['confidence'],
+  ): Promise<void> {
+    try {
+      if (!confidence?.recipe_hash) return;
+      await this.db.schema('belief').rpc('upsert_math_recipe', {
+        p_recipe_hash: confidence.recipe_hash,
+        p_case_id: case_id,
+        p_rpc: 'compute_confidence',
+        p_algo_version: 'math@v0.2.0',
+        p_inputs: (confidence.inputs ?? {}) as unknown as Record<string, unknown>,
+        p_output: { value: confidence.value } as Record<string, unknown>,
+        p_emitted_by_id: emitted_by_id,
+      });
+    } catch {
+      // swallow — pack builder will fall back to whatever recipes were captured.
+    }
   }
 
   // ────────────────────────────────────────────────────────────────────────

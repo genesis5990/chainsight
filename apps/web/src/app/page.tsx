@@ -117,6 +117,29 @@ export default function HomePage() {
         </ul>
       </div>
 
+      <div className="bg-white border border-blue-200 rounded-lg p-6 mb-6">
+        <p className="text-sm text-blue-700 mb-2 uppercase tracking-wide">Phase 2 — wired to live API</p>
+        <h2 className="text-xl font-semibold mb-3">Live surfaces</h2>
+        <ul className="space-y-2 text-context-700">
+          <li>
+            <a href="/agency" className="text-markup-700 underline hover:text-markup-500">Agency admin</a>{' '}
+            <span className="text-xs text-context-500">· create an agency, invite teammates, manage BYOK provider installs</span>
+          </li>
+          <li>
+            <a href="/cases/00000000-0000-0000-0000-acceacceacce/canvas" className="text-markup-700 underline hover:text-markup-500">Live canvas (Op Lemon)</a>{' '}
+            <span className="text-xs text-context-500">· Pathfinder + Tracer + SSE wired to https://chainsight-api-dev.fly.dev/</span>
+          </li>
+          <li>
+            <a href="/cases/00000000-0000-0000-0000-acceacceacce/court" className="text-markup-700 underline hover:text-markup-500">Court view</a>{' '}
+            <span className="text-xs text-context-500">· read-only hop-by-hop path renderer with value Sankey</span>
+          </li>
+          <li>
+            <a href="/cases/00000000-0000-0000-0000-acceacceacce/packs" className="text-markup-700 underline hover:text-markup-500">Reproducibility packs</a>{' '}
+            <span className="text-xs text-context-500">· build, download, verify — with Sigstore-style signature verdicts</span>
+          </li>
+        </ul>
+      </div>
+
       <p className="text-xs text-context-500">
         The vendor is never a counterparty to your investigation.
       </p>

@@ -25,6 +25,15 @@ const schema = z.object({
 
   // Math service
   MATH_SERVICE_URL: z.string().default('http://localhost:50051'),
+
+  // Pack signing (Sigstore-style detached signatures)
+  // PACK_SIGNER_ID: stable UUID for this deployment's signing identity.
+  // PACK_SIGNER_PRIVATE_KEY_B64: base64-encoded PKCS#8 DER ed25519 private key.
+  // PACK_SIGNER_PUBLIC_KEY_B64:  base64-encoded SPKI DER ed25519 public key.
+  // If any are missing, packs are persisted unsigned and verifiers report 'unsigned'.
+  PACK_SIGNER_ID: z.string().uuid().optional(),
+  PACK_SIGNER_PRIVATE_KEY_B64: z.string().optional(),
+  PACK_SIGNER_PUBLIC_KEY_B64: z.string().optional(),
 });
 
 export const env = schema.parse(process.env);

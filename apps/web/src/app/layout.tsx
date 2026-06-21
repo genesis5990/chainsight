@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Providers } from '../components/Providers';
 
 export const metadata: Metadata = {
   title: 'ChainSight',
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-context-100 text-context-700 antialiased">{children}</body>
+      <body className="min-h-screen bg-context-100 text-context-700 antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

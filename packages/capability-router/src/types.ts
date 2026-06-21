@@ -26,6 +26,7 @@ export type Capability =
   | 'get_tx_by_hash'
   | 'get_address_balance'
   | 'get_address_attribution'
+  | 'get_address_neighbors'
   | 'get_price_at_timestamp'
   | 'decode_router_swap'
   | 'get_sanctions_status'

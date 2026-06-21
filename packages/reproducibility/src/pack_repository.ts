@@ -33,6 +33,9 @@ export interface FinalizeInput {
   chain_tip_hash: string;
   manifest_size_bytes: number;
   finalize_atoms: boolean;
+  /** Optional detached signature (Sigstore-style). */
+  signature?: string | null;
+  signer_id?: string | null;
 }
 
 /* ─── Supabase impl ────────────────────────────────────────────────────── */
@@ -74,7 +77,7 @@ export class SupabasePackRepository implements PackRepository {
   }
 
   async finalize(input: FinalizeInput): Promise<{ atoms_locked: number }> {
-    const { error } = await this.client.schema('belief').from('reproducibility_packs').update({
+    const updateRow: Record<string, unknown> = {
       status: 'finalized',
       finalized_at: new Date().toISOString(),
       storage_ref: input.storage_ref,
@@ -83,7 +86,15 @@ export class SupabasePackRepository implements PackRepository {
       total_events: input.total_events,
       chain_tip_hash: input.chain_tip_hash,
       manifest_size_bytes: input.manifest_size_bytes,
-    }).eq('id', input.pack_id);
+    };
+    if (input.signature) {
+      updateRow.signature = input.signature;
+      updateRow.signed_at = new Date().toISOString();
+    }
+    if (input.signer_id) {
+      updateRow.signer_id = input.signer_id;
+    }
+    const { error } = await this.client.schema('belief').from('reproducibility_packs').update(updateRow).eq('id', input.pack_id);
     if (error) throw new Error(`reproducibility_packs finalize failed: ${error.message}`);
 
     let atoms_locked = 0;
@@ -106,7 +117,7 @@ export class SupabasePackRepository implements PackRepository {
   async byId(pack_id: string): Promise<PackStatusRow | null> {
     try {
       const { data, error } = await this.client.schema('belief').from('reproducibility_packs')
-        .select('id, case_id, status, manifest_hash, storage_ref, built_at, finalized_at, total_atoms, total_traces, total_events, chain_tip_hash, error')
+        .select('id, case_id, status, manifest_hash, storage_ref, built_at, finalized_at, total_atoms, total_traces, total_events, chain_tip_hash, error, signature, signer_id, signed_at')
         .eq('id', pack_id).maybeSingle();
       if (error || !data) return null;
       return mapRow(data);
@@ -116,7 +127,7 @@ export class SupabasePackRepository implements PackRepository {
   async listForCase(case_id: CaseId, limit = 50): Promise<PackStatusRow[]> {
     try {
       const { data, error } = await this.client.schema('belief').from('reproducibility_packs')
-        .select('id, case_id, status, manifest_hash, storage_ref, built_at, finalized_at, total_atoms, total_traces, total_events, chain_tip_hash, error')
+        .select('id, case_id, status, manifest_hash, storage_ref, built_at, finalized_at, total_atoms, total_traces, total_events, chain_tip_hash, error, signature, signer_id, signed_at')
         .eq('case_id', case_id)
         .order('built_at', { ascending: false })
         .limit(limit);
@@ -133,6 +144,9 @@ function mapRow(r: Record<string, unknown>): PackStatusRow {
     status: r.status as PackStatusRow['status'],
     manifest_hash: String(r.manifest_hash),
     storage_ref: (r.storage_ref as string | null) ?? null,
+    signature: (r.signature as string | null) ?? null,
+    signer_id: (r.signer_id as string | null) ?? null,
+    signed_at: (r.signed_at as string | null) ?? null,
     built_at: String(r.built_at),
     finalized_at: (r.finalized_at as string | null) ?? null,
     total_atoms: Number(r.total_atoms ?? 0),

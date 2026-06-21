@@ -28,6 +28,8 @@ import {
   AnthropicConnector,
   CapabilityRouter,
   EnvCredentialStore,
+  VaultCredentialStore,
+  FallbackCredentialStore,
   EtherscanConnector,
   OpenSanctionsConnector,
   RedisL1Cache,
@@ -44,6 +46,8 @@ import {
 import {
   StubNeighborsProvider,
   CachedNeighborsProvider,
+  RouterNeighborsProvider,
+  type NeighborsCtx,
   SupabaseTraceJobStore,
   makeTraceConsumers,
 } from '@chainsight/tracer-agent';
@@ -112,7 +116,14 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     installs: new SupabaseInstallRegistry(
       supabase as unknown as ConstructorParameters<typeof SupabaseInstallRegistry>[0],
     ),
-    credentials: new EnvCredentialStore(),
+    // Phase-2 SaaS Blind: try Vault (encrypted agency_credentials), fall
+    // back to env (legacy installs configured with literal env-var refs).
+    credentials: new FallbackCredentialStore([
+      new VaultCredentialStore(
+        supabase as unknown as ConstructorParameters<typeof VaultCredentialStore>[0],
+      ),
+      new EnvCredentialStore(),
+    ]),
     caches: {
       l1: new RedisL1Cache(pubsubConn),
       l2: new SupabaseL2Cache(
@@ -191,13 +202,36 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   log.info('graph materializer started');
 
   // ── Tracer Agent (v1.1 §7) ────────────────────────────────────────────────────────────
-  // Phase-1 Week-6 uses a deterministic stub neighbors provider so the
-  // worker functions end-to-end without a paid chain-data install. The real
-  // CapabilityRouter-backed provider lands once Etherscan/Alchemy expose a
-  // neighbors capability (currently only get_tx_by_hash). The CachedNeighbors
-  // wrapper is in place so swapping in real providers is a one-line change.
+  // Phase-2: Router-backed neighbors with a deterministic stub fallback for
+  // dev / no-key environments. The router internally resolves the agency's
+  // 'get_address_neighbors' install (Etherscan default) → credential →
+  // cache → provider. If no install is configured, the resolve() call throws
+  // and FallbackNeighborsProvider yields to the seeded stub fixtures so
+  // demos keep working. CachedNeighborsProvider wraps both so Redis caches
+  // by canonical key on top of the router's own cache layers.
+  const stubNeighbors = new StubNeighborsProvider();
+  const routerNeighbors = new RouterNeighborsProvider({
+    router,
+    contextFor: (nctx: NeighborsCtx): AgencyContext => ({
+      user_id: workerCtx.user_id,
+      agency_id: nctx.agency_id || workerCtx.agency_id,
+      active_case_id: nctx.case_id as AgencyContext['active_case_id'],
+      roles: workerCtx.roles,
+      supervisory_scope_id: workerCtx.supervisory_scope_id,
+      available_capabilities: workerCtx.available_capabilities,
+    }),
+    log: { error: (obj, msg) => log.error(obj, msg) },
+  });
+  const fallbackNeighbors = {
+    async fetchNeighbors(query: Parameters<typeof routerNeighbors.fetchNeighbors>[0], ctx: NeighborsCtx) {
+      const r = await routerNeighbors.fetchNeighbors(query, ctx);
+      if (r.edges.length > 0) return r;
+      // No edges from router (no install OR genuinely empty) → fall back to stub
+      return stubNeighbors.fetchNeighbors(query, ctx);
+    },
+  };
   const tracerNeighbors = new CachedNeighborsProvider(
-    new StubNeighborsProvider(),
+    fallbackNeighbors,
     pubsubConn,
   );
   const traceJobStore = new SupabaseTraceJobStore(

@@ -277,6 +277,10 @@ export interface VerificationResult {
   chain_valid: boolean;
   /** Errors (non-empty when overall != 'pass'). */
   errors: string[];
+  /** Detached signature verdict (Phase-2, optional). */
+  signature_valid?: boolean;
+  signer_id?: string | null;
+  signature_reason?: string | null;
   verified_at: string;
 }
 
@@ -328,6 +332,10 @@ export interface PackStatusRow {
   status: 'building' | 'finalized' | 'failed';
   manifest_hash: string;
   storage_ref: string | null;
+  /** Sigstore-style detached signature over manifest_hash (base64). */
+  signature: string | null;
+  signer_id: string | null;
+  signed_at: string | null;
   built_at: string;
   finalized_at: string | null;
   total_atoms: number;

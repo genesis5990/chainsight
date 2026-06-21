@@ -47,9 +47,43 @@ export interface EtherscanConnectorOptions {
   fetch_impl?: typeof fetch;
 }
 
+export interface EtherscanNeighborsResponse {
+  chain: 'evm:1';
+  address: string;
+  direction: 'inflow' | 'outflow' | 'both';
+  edges: Array<{
+    chain: 'evm:1';
+    tx_hash: string;
+    edge_index: number;
+    block_height: number;
+    block_time_utc: string;
+    from_subject: string;
+    to_subject: string;
+    value_native_minor: string;
+    edge_kind: 'tx_native' | 'token_transfer';
+    cost_usd: number;
+  }>;
+  total_cost_usd: number;
+  node_attribution_kind: string | null;
+  raw_provider_id: 'etherscan';
+}
+
+export interface EtherscanAttributionResponse {
+  chain: 'evm:1';
+  address: string;
+  attribution_kind: string | null;
+  label: string | null;
+  source: 'etherscan_label' | 'unknown';
+  raw_provider_id: 'etherscan';
+}
+
 export class EtherscanConnector implements ProviderConnector {
   readonly provider_id = 'etherscan';
-  readonly capabilities: readonly Capability[] = ['get_tx_by_hash'];
+  readonly capabilities: readonly Capability[] = [
+    'get_tx_by_hash',
+    'get_address_neighbors',
+    'get_address_attribution',
+  ];
 
   constructor(private readonly opts: EtherscanConnectorOptions = {}) {}
 
@@ -59,6 +93,12 @@ export class EtherscanConnector implements ProviderConnector {
     credential: ResolvedCredential | null,
     options: ConnectorCallOptions,
   ): Promise<ConnectorResponse<TPayload>> {
+    if (capability === 'get_address_neighbors') {
+      return this.getNeighbors(args, credential, options) as Promise<ConnectorResponse<TPayload>>;
+    }
+    if (capability === 'get_address_attribution') {
+      return this.getAttribution(args, credential, options) as Promise<ConnectorResponse<TPayload>>;
+    }
     if (capability !== 'get_tx_by_hash') {
       throw new Error(`EtherscanConnector does not support capability '${capability}'`);
     }
@@ -137,6 +177,172 @@ export class EtherscanConnector implements ProviderConnector {
       },
     };
   }
+
+  /**
+   * get_address_neighbors — paginate Etherscan `txlist` + `tokentx` actions.
+   * Returns a normalized neighbors payload. Tracer filters by direction +
+   * block_window. Deterministic ordering for cache reproducibility.
+   */
+  private async getNeighbors(
+    args: Record<string, unknown>,
+    credential: ResolvedCredential | null,
+    options: ConnectorCallOptions,
+  ): Promise<ConnectorResponse<EtherscanNeighborsResponse>> {
+    const chain = String(args.chain ?? '');
+    if (chain !== 'evm:1') {
+      throw new Error(`EtherscanConnector.get_address_neighbors only supports 'evm:1', got '${chain}'`);
+    }
+    const address = String(args.address ?? '').toLowerCase();
+    if (!address.startsWith('0x')) {
+      throw new Error(`address must start with 0x: '${address}'`);
+    }
+    const direction = String(args.direction ?? 'both') as 'inflow' | 'outflow' | 'both';
+    const window = (args.block_window as { from?: number; to?: number } | undefined) ?? {};
+    const startBlock = Number.isFinite(window.from) ? Number(window.from) : 0;
+    const endBlock = Number.isFinite(window.to) ? Number(window.to) : 99999999;
+    const pageSize = Math.min(Number(args.page_size ?? 100), 1000);
+
+    const fetchImpl = this.opts.fetch_impl ?? fetch;
+    const base = this.opts.base_url ?? ETHERSCAN_BASE;
+    const apiKey = credential ? `&apikey=${encodeURIComponent(credential.secret)}` : '';
+
+    const txUrl = `${base}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
+    const ttUrl = `${base}?module=account&action=tokentx&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
+
+    const [txRes, ttRes] = await Promise.all([
+      fetchImpl(txUrl, { signal: options.signal }),
+      fetchImpl(ttUrl, { signal: options.signal }),
+    ]);
+    if (!txRes.ok) throw new Error(`etherscan neighbors-tx HTTP ${txRes.status}`);
+    if (!ttRes.ok) throw new Error(`etherscan neighbors-token HTTP ${ttRes.status}`);
+
+    const txBody = await txRes.json() as { status?: string; message?: string; result?: EtherscanListTx[] | string };
+    const ttBody = await ttRes.json() as { status?: string; message?: string; result?: EtherscanListToken[] | string };
+
+    const nativeTxs = Array.isArray(txBody.result) ? txBody.result : [];
+    const tokenTxs = Array.isArray(ttBody.result) ? ttBody.result : [];
+
+    const edges: EtherscanNeighborsResponse['edges'] = [];
+    for (const t of nativeTxs) {
+      if (!matchesDirection(address, t.from, t.to, direction)) continue;
+      if (BigInt(t.value || '0') === 0n) continue;
+      edges.push({
+        chain: 'evm:1',
+        tx_hash: t.hash,
+        edge_index: 0,
+        block_height: Number(t.blockNumber),
+        block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
+        from_subject: `evm:1_addr:${t.from.toLowerCase()}`,
+        to_subject: `evm:1_addr:${t.to.toLowerCase()}`,
+        value_native_minor: t.value,
+        edge_kind: 'tx_native',
+        cost_usd: 0.0001,
+      });
+    }
+    for (const t of tokenTxs) {
+      if (!matchesDirection(address, t.from, t.to, direction)) continue;
+      if (BigInt(t.value || '0') === 0n) continue;
+      edges.push({
+        chain: 'evm:1',
+        tx_hash: t.hash,
+        edge_index: Number(t.transactionIndex ?? 0),
+        block_height: Number(t.blockNumber),
+        block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
+        from_subject: `evm:1_addr:${t.from.toLowerCase()}`,
+        to_subject: `evm:1_addr:${t.to.toLowerCase()}`,
+        value_native_minor: t.value,
+        edge_kind: 'token_transfer',
+        cost_usd: 0.0001,
+      });
+    }
+
+    edges.sort((a, b) => {
+      if (a.block_height !== b.block_height) return a.block_height - b.block_height;
+      if (a.tx_hash !== b.tx_hash) return a.tx_hash < b.tx_hash ? -1 : 1;
+      return a.edge_index - b.edge_index;
+    });
+    const seen = new Set<string>();
+    const deduped = edges.filter((e) => {
+      const k = `${e.tx_hash}:${e.edge_index}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    const data: EtherscanNeighborsResponse = {
+      chain: 'evm:1',
+      address,
+      direction,
+      edges: deduped,
+      total_cost_usd: deduped.length * 0.0001,
+      node_attribution_kind: null,
+      raw_provider_id: 'etherscan',
+    };
+    return {
+      data,
+      metadata: { request_id: `etherscan-neighbors:${address}:${direction}:${startBlock}-${endBlock}` },
+    };
+  }
+
+  /**
+   * get_address_attribution — Etherscan's free tier does not expose a public
+   * attribution API. Return a safe 'unknown' shape; router falls through to
+   * OpenSanctions. Pro tier label-cloud left for a future extension.
+   */
+  private async getAttribution(
+    args: Record<string, unknown>,
+    _credential: ResolvedCredential | null,
+    _options: ConnectorCallOptions,
+  ): Promise<ConnectorResponse<EtherscanAttributionResponse>> {
+    const chain = String(args.chain ?? '');
+    if (chain !== 'evm:1') {
+      throw new Error(`EtherscanConnector.get_address_attribution only supports 'evm:1', got '${chain}'`);
+    }
+    const address = String(args.address ?? '').toLowerCase();
+    if (!address.startsWith('0x')) {
+      throw new Error(`address must start with 0x: '${address}'`);
+    }
+    const data: EtherscanAttributionResponse = {
+      chain: 'evm:1',
+      address,
+      attribution_kind: null,
+      label: null,
+      source: 'unknown',
+      raw_provider_id: 'etherscan',
+    };
+    return {
+      data,
+      metadata: { request_id: `etherscan-attr:${address}` },
+    };
+  }
+}
+
+function matchesDirection(
+  address: string,
+  from: string,
+  to: string,
+  direction: 'inflow' | 'outflow' | 'both',
+): boolean {
+  const a = address.toLowerCase();
+  const f = from.toLowerCase();
+  const t = to.toLowerCase();
+  if (direction === 'inflow') return t === a && f !== a;
+  if (direction === 'outflow') return f === a && t !== a;
+  return f === a || t === a;
+}
+
+interface EtherscanListTx {
+  blockNumber: string;
+  timeStamp: string;
+  hash: string;
+  from: string;
+  to: string;
+  value: string;
+}
+
+interface EtherscanListToken extends EtherscanListTx {
+  transactionIndex?: string;
+  contractAddress?: string;
 }
 
 /* ─── Etherscan v2 raw shapes (minimal) ────────────────────────────────── */

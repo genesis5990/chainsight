@@ -69,6 +69,7 @@ export function deriveScope(capability: Capability, ctx: { agency_id: string; ac
   switch (capability) {
     case 'get_tx_by_hash':
     case 'get_address_balance':
+    case 'get_address_neighbors':
     case 'decode_router_swap':
     case 'get_price_at_timestamp':
       return { scope: 'global_chain_data', scope_ref: null };
@@ -89,6 +90,10 @@ export function deriveTtlTier(capability: Capability): CacheTtlTier {
       return 'permanent';
     case 'get_address_balance':
       return 'short_5m';
+    case 'get_address_neighbors':
+      // Neighbors over confirmed blocks are immutable; new pages over recent
+      // blocks would require re-fetch but the tracer pins block_window per call.
+      return 'permanent';
     case 'get_address_attribution':
     case 'get_sanctions_status':
       return 'medium_1h';

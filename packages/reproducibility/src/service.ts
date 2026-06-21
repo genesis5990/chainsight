@@ -20,6 +20,8 @@ import { PackBuilder } from './builder';
 import type { CaseSource } from './case_source';
 import type { PackRepository } from './pack_repository';
 import { PackVerifier } from './verifier';
+import type { PackSigner, PackVerifierKeys } from './signer';
+import { verifyDetachedSignature } from './signer';
 
 export interface ReproPackServiceOptions {
   source: CaseSource;
@@ -31,6 +33,10 @@ export interface ReproPackServiceOptions {
   packIdProvider?: (input: { case_id: CaseId; manifest_hash: string }) => string;
   /** Signed-URL TTL in seconds. */
   signed_url_ttl_seconds?: number;
+  /** Optional Sigstore-style detached signer. */
+  signer?: PackSigner | null;
+  /** Optional trusted verifier keys (for verify() to attach a signature verdict). */
+  verifierKeys?: PackVerifierKeys | null;
 }
 
 export class ReproPackService implements ReproPackServiceContract {
@@ -96,6 +102,22 @@ export class ReproPackService implements ReproPackServiceContract {
       throw e;
     }
 
+    // Detached signature — Sigstore-style. Sign manifest_hash before finalize
+    // so the row lands with signature already attached. Signing failures are
+    // soft-degraded (logged via the repo error path) so a missing signer key
+    // does not block pack delivery; verifiers will mark such packs 'unsigned'.
+    let signature: string | null = null;
+    let signer_id: string | null = null;
+    if (this.opts.signer) {
+      try {
+        signature = await this.opts.signer.sign(manifest.manifest_hash);
+        signer_id = this.opts.signer.signer_id;
+      } catch {
+        signature = null;
+        signer_id = null;
+      }
+    }
+
     let finalize: { atoms_locked: number };
     try {
       finalize = await this.opts.repo.finalize({
@@ -108,6 +130,8 @@ export class ReproPackService implements ReproPackServiceContract {
         chain_tip_hash: manifest.chain_tip_hash,
         manifest_size_bytes: built.bytes.byteLength,
         finalize_atoms: req.finalize,
+        signature,
+        signer_id,
       });
     } catch (e) {
       await this.opts.repo.markFailed(built.pack_id, (e as Error).message);
@@ -151,7 +175,30 @@ export class ReproPackService implements ReproPackServiceContract {
       };
     }
     const bytes = await this.opts.storage.getPack(row.storage_ref);
-    return this.verifier.verify(bytes);
+    const base = await this.verifier.verify(bytes);
+    // Attach signature verdict if keys are configured.
+    if (this.opts.verifierKeys && row.manifest_hash) {
+      const sigCheck = verifyDetachedSignature(
+        row.manifest_hash,
+        row.signature,
+        row.signer_id,
+        this.opts.verifierKeys,
+      );
+      const augmented: VerificationResult = {
+        ...base,
+        signature_valid: sigCheck.valid,
+        signer_id: row.signer_id ?? null,
+        signature_reason: sigCheck.reason ?? null,
+      } as VerificationResult & { signature_valid: boolean; signer_id: string | null; signature_reason: string | null };
+      // If hash matched but signature failed, overall verdict drops to 'warn'
+      // (verifiable replay still works; provenance is unverifiable).
+      if (base.overall === 'pass' && !sigCheck.valid && row.signature) {
+        (augmented as { overall: 'pass' | 'warn' | 'fail' }).overall = 'warn';
+        (augmented as { errors: string[] }).errors = [...base.errors, `signature: ${sigCheck.reason ?? 'invalid'}`];
+      }
+      return augmented;
+    }
+    return base;
   }
 
   async listForCase(case_id: CaseId): Promise<PackStatusRow[]> {

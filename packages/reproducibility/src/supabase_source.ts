@@ -78,29 +78,50 @@ export class SupabaseCaseSource implements CaseSource {
 
   async loadEvents(case_id: CaseId): Promise<FrozenEvent[]> {
     try {
+      // Real schema (migration 0001): id, case_id, kind, payload, emitted_at, case_seq.
+      // payload carries { atom_id?, emitted_by_id?, delta? } populated by the
+      // append_atom path. Map them back into the FrozenEvent shape.
       const res = await this.client.schema('belief').from('events')
-        .select('event_seq, event_kind, atom_id, emitted_at, emitted_by_id, delta')
+        .select('case_seq, kind, payload, emitted_at')
         .eq('case_id', case_id)
-        .order('event_seq', { ascending: true });
+        .order('case_seq', { ascending: true });
       const { data, error } = res as { data: Array<Record<string, unknown>> | null; error: { message: string } | null };
       if (error || !data) return [];
-      return data.map((r) => ({
-        event_seq: Number(r.event_seq),
-        event_kind: String(r.event_kind ?? ''),
-        atom_id: (r.atom_id as FrozenEvent['atom_id']) ?? undefined,
-        emitted_at: String(r.emitted_at ?? ''),
-        emitted_by_id: String(r.emitted_by_id ?? ''),
-        delta: (r.delta as Record<string, unknown>) ?? {},
-      }));
+      return data.map((r) => {
+        const payload = (r.payload as Record<string, unknown> | null) ?? {};
+        const atomIdRaw = payload.atom_id;
+        const emittedById = payload.emitted_by_id;
+        const delta = (payload.delta as Record<string, unknown> | undefined) ?? payload;
+        return {
+          event_seq: Number(r.case_seq ?? 0),
+          event_kind: String(r.kind ?? ''),
+          atom_id: (typeof atomIdRaw === 'string' ? atomIdRaw : undefined) as FrozenEvent['atom_id'],
+          emitted_at: String(r.emitted_at ?? ''),
+          emitted_by_id: String(emittedById ?? ''),
+          delta: (delta as Record<string, unknown>) ?? {},
+        };
+      });
     } catch { return []; }
   }
 
-  async loadMathRecipes(_case_id: CaseId): Promise<FrozenMathRecipe[]> {
-    // Phase-1: math recipes are referenced inside atom.reproducibility_inputs
-    // (the inspector + tracer write their math recipe hashes there). We
-    // collect unique hashes from atoms and pair them with their reference
-    // payloads. A dedicated belief.math_recipes table will land in Phase-2.
-    return [];
+  async loadMathRecipes(case_id: CaseId): Promise<FrozenMathRecipe[]> {
+    // Phase-2: read from the dedicated belief.math_recipes table (migration 0009).
+    // Workers persist a row every time an atom emits with reproducibility_inputs.recipe_hash.
+    try {
+      const res = await this.client.schema('belief').from('math_recipes')
+        .select('recipe_hash, rpc, algo_version, inputs, output')
+        .eq('case_id', case_id)
+        .order('recipe_hash', { ascending: true });
+      const { data, error } = res as { data: Array<Record<string, unknown>> | null; error: { message: string } | null };
+      if (error || !data) return [];
+      return data.map((r) => ({
+        recipe_hash: String(r.recipe_hash),
+        rpc: String(r.rpc ?? ''),
+        inputs: (r.inputs as Record<string, unknown>) ?? {},
+        output: (r.output as Record<string, unknown>) ?? {},
+        algo_version: String(r.algo_version ?? 'math@v0.2.0'),
+      }));
+    } catch { return []; }
   }
 
   async loadProviderResponses(case_id: CaseId): Promise<FrozenProviderResponse[]> {
