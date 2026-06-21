@@ -18,7 +18,10 @@ import { InspectorRunner, type InspectorRunnerOptions } from './runner';
 import type { InspectorRunPersister } from './run_persister';
 import type { InspectorRunLookup } from './run_lookup';
 
-export const INSPECTOR_QUEUE_NAME = 'inspector:analyze';
+// BullMQ ≥5.x rejects queue names containing ':' (reserved as Redis key
+// separator). Pub/sub channels still use the colon-delimited shape — only
+// the queue name is dashed.
+export const INSPECTOR_QUEUE_NAME = 'inspector-analyze';
 
 export interface BullMQConsumerOptions extends InspectorRunnerOptions {
   /** Same connection as the worker's other queues (Upstash). */

@@ -223,8 +223,11 @@ export interface TraceJobStatus {
 
 /* ─── BullMQ queue names ───────────────────────────────────────────────── */
 
-export const TRACER_QUEUE_NAME = 'trace:analyze';
-export const TRACER_CANCEL_QUEUE_NAME = 'trace:cancel';
+// BullMQ queue names cannot contain `:` (it's reserved as the internal
+// Redis key separator). Pub/sub channels still use the colon-delimited
+// `case:{id}:trace:{job_id}:{ns}` shape — only the queue name is dashed.
+export const TRACER_QUEUE_NAME = 'trace-analyze';
+export const TRACER_CANCEL_QUEUE_NAME = 'trace-cancel';
 
 /* ─── Defaults ─────────────────────────────────────────────────────────── */
 
