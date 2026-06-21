@@ -36,6 +36,11 @@ import {
   SupabaseResolutionAudit,
 } from '@chainsight/capability-router';
 import type { AgencyContext } from '@chainsight/shared-types';
+import {
+  GraphMaterializer,
+  SupabaseAtomFeed,
+  SupabaseMaterializerSink,
+} from '@chainsight/pathfinder';
 
 const log = pino({ name: 'chainsight-worker', level: process.env.LOG_LEVEL ?? 'info' });
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -164,8 +169,22 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     log.error({ id: job?.id, err }, 'inspector job failed');
   });
   log.info({ queue: INSPECTOR_QUEUE_NAME }, 'inspector pipeline consumer started');
+
+  // ── Graph materializer (v1.1 §6.3) ────────────────────────────────────────────
+  const materializer = new GraphMaterializer({
+    feed: new SupabaseAtomFeed(
+      supabase as unknown as ConstructorParameters<typeof SupabaseAtomFeed>[0],
+    ),
+    sink: new SupabaseMaterializerSink(
+      supabase as unknown as ConstructorParameters<typeof SupabaseMaterializerSink>[0],
+    ),
+    publisher: pubsubConn,
+    namespace: NAMESPACE,
+  });
+  materializer.start();
+  log.info('graph materializer started');
 } else {
-  log.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline disabled');
+  log.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled');
 }
 
 // Eagerly verify the broker is reachable so a misconfigured REDIS_URL

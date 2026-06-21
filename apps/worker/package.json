@@ -19,6 +19,7 @@
     "@chainsight/capability-router": "workspace:*",
     "@chainsight/inspector-pipeline": "workspace:*",
     "@chainsight/math-client": "workspace:*",
+    "@chainsight/pathfinder": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
     "@noble/hashes": "^1.6.1",
     "@supabase/supabase-js": "^2.47.10",

@@ -49,6 +49,8 @@ export * from './belief';
 // Phase 1 — Inspector Pipeline (v1.1 §5) wire shapes.
 export * from './inspector_pipeline';
 
+export * from './pathfinder';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;

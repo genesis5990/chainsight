@@ -12,10 +12,18 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import rateLimit from '@fastify/rate-limit';
+import IORedis from 'ioredis';
+import { createClient } from '@supabase/supabase-js';
+import {
+  Pathfinder,
+  RedisPathResultCache,
+  SupabaseGraphLoader,
+} from '@chainsight/pathfinder';
 import { env } from './env.js';
 import { authPlugin } from './plugins/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { caseRoutes } from './routes/cases.js';
+import { pathfinderRoutes } from './routes/pathfinder.js';
 
 const fastify = Fastify({
   logger: {
@@ -46,6 +54,26 @@ await fastify.register(authPlugin);
 // Routes
 await fastify.register(healthRoutes, { prefix: '/v1' });
 await fastify.register(caseRoutes, { prefix: '/v1' });
+
+// ─── Pathfinder ───────────────────────────────────────────────────────────────────────────────────────────────────────
+const pfSupabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const pfRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null, lazyConnect: true });
+const pfRedisSubscriber = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null, lazyConnect: true });
+await pfRedis.connect().catch((e) => fastify.log.warn({ e }, 'pathfinder redis L1 unavailable'));
+await pfRedisSubscriber.connect().catch((e) => fastify.log.warn({ e }, 'pathfinder redis subscriber unavailable'));
+
+const pathfinder = new Pathfinder({
+  loader: new SupabaseGraphLoader(
+    pfSupabase as unknown as ConstructorParameters<typeof SupabaseGraphLoader>[0],
+  ),
+  resultCache: new RedisPathResultCache(pfRedis),
+  invalidatorSubscriber: pfRedisSubscriber,
+  namespace: process.env.CHAINSIGHT_NAMESPACE ?? 'dev',
+});
+
+await fastify.register(pathfinderRoutes, { prefix: '/v1', pathfinder });
 
 // Boot
 const port = env.PORT;

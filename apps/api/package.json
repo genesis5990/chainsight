@@ -17,6 +17,7 @@
   "dependencies": {
     "@chainsight/belief-state": "workspace:*",
     "@chainsight/capability-router": "workspace:*",
+    "@chainsight/pathfinder": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
     "@fastify/cors": "^10.0.1",
     "@fastify/helmet": "^13.0.0",
