@@ -46,6 +46,9 @@ export * from './personal_attribution';
 // Phase 1 — Belief State Service canonical shapes (v1.1 §3).
 export * from './belief';
 
+// Phase 1 — Inspector Pipeline (v1.1 §5) wire shapes.
+export * from './inspector_pipeline';
+
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {
   id: BeliefAtomId;
