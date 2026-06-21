@@ -23,6 +23,7 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/belief-state/package.json ./packages/belief-state/
 COPY packages/capability-router/package.json ./packages/capability-router/
 COPY packages/pathfinder/package.json ./packages/pathfinder/
+COPY packages/tracer-agent/package.json ./packages/tracer-agent/
 RUN pnpm install --frozen-lockfile
 
 # ---- builder stage: bundle the API with tsup ----
@@ -43,6 +44,7 @@ COPY --from=builder /repo/packages/shared-types/package.json ./packages/shared-t
 COPY --from=builder /repo/packages/belief-state/package.json ./packages/belief-state/
 COPY --from=builder /repo/packages/capability-router/package.json ./packages/capability-router/
 COPY --from=builder /repo/packages/pathfinder/package.json ./packages/pathfinder/
+COPY --from=builder /repo/packages/tracer-agent/package.json ./packages/tracer-agent/
 
 # Install only production dependencies into the runner stage.
 # This recreates the pnpm symlink layout (apps/api/node_modules/* -> /repo/node_modules/.pnpm/...).

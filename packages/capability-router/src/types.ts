@@ -29,7 +29,8 @@ export type Capability =
   | 'get_price_at_timestamp'
   | 'decode_router_swap'
   | 'get_sanctions_status'
-  | 'llm_narrative';
+  | 'llm_narrative'
+  | 'llm_narrative_stream';
 
 /* ─── Provider connector contract ──────────────────────────────────────── */
 

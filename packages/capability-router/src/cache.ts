@@ -76,6 +76,7 @@ export function deriveScope(capability: Capability, ctx: { agency_id: string; ac
     case 'get_sanctions_status':
       return { scope: 'agency', scope_ref: ctx.agency_id };
     case 'llm_narrative':
+    case 'llm_narrative_stream':
       return { scope: 'case', scope_ref: ctx.active_case_id ?? ctx.agency_id };
   }
 }
@@ -93,6 +94,9 @@ export function deriveTtlTier(capability: Capability): CacheTtlTier {
       return 'medium_1h';
     case 'llm_narrative':
       return 'short_5m';
+    case 'llm_narrative_stream':
+      // Streaming responses are not cached (router only caches final payloads).
+      return 'no_cache';
   }
 }
 

@@ -15,6 +15,7 @@ COPY packages/capability-router/package.json ./packages/capability-router/
 COPY packages/inspector-pipeline/package.json ./packages/inspector-pipeline/
 COPY packages/math-client/package.json ./packages/math-client/
 COPY packages/pathfinder/package.json ./packages/pathfinder/
+COPY packages/tracer-agent/package.json ./packages/tracer-agent/
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
@@ -34,6 +35,7 @@ COPY --from=builder /repo/packages/capability-router/package.json ./packages/cap
 COPY --from=builder /repo/packages/inspector-pipeline/package.json ./packages/inspector-pipeline/
 COPY --from=builder /repo/packages/math-client/package.json ./packages/math-client/
 COPY --from=builder /repo/packages/pathfinder/package.json ./packages/pathfinder/
+COPY --from=builder /repo/packages/tracer-agent/package.json ./packages/tracer-agent/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /repo/apps/worker/dist ./apps/worker/dist

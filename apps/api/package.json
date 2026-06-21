@@ -19,6 +19,7 @@
     "@chainsight/capability-router": "workspace:*",
     "@chainsight/pathfinder": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
+    "@chainsight/tracer-agent": "workspace:*",
     "@fastify/cors": "^10.0.1",
     "@fastify/helmet": "^13.0.0",
     "@fastify/jwt": "^9.0.1",

@@ -21,6 +21,7 @@
     "@chainsight/math-client": "workspace:*",
     "@chainsight/pathfinder": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
+    "@chainsight/tracer-agent": "workspace:*",
     "@noble/hashes": "^1.6.1",
     "@supabase/supabase-js": "^2.47.10",
     "bullmq": "^5.34.0",

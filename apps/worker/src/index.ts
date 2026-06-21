@@ -41,6 +41,12 @@ import {
   SupabaseAtomFeed,
   SupabaseMaterializerSink,
 } from '@chainsight/pathfinder';
+import {
+  StubNeighborsProvider,
+  CachedNeighborsProvider,
+  SupabaseTraceJobStore,
+  makeTraceConsumers,
+} from '@chainsight/tracer-agent';
 
 const log = pino({ name: 'chainsight-worker', level: process.env.LOG_LEVEL ?? 'info' });
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
@@ -183,6 +189,35 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   });
   materializer.start();
   log.info('graph materializer started');
+
+  // ── Tracer Agent (v1.1 §7) ────────────────────────────────────────────────────────────
+  // Phase-1 Week-6 uses a deterministic stub neighbors provider so the
+  // worker functions end-to-end without a paid chain-data install. The real
+  // CapabilityRouter-backed provider lands once Etherscan/Alchemy expose a
+  // neighbors capability (currently only get_tx_by_hash). The CachedNeighbors
+  // wrapper is in place so swapping in real providers is a one-line change.
+  const tracerNeighbors = new CachedNeighborsProvider(
+    new StubNeighborsProvider(),
+    pubsubConn,
+  );
+  const traceJobStore = new SupabaseTraceJobStore(
+    supabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
+  );
+  const traceConsumers = makeTraceConsumers({
+    belief,
+    neighbors: tracerNeighbors,
+    store: traceJobStore,
+    connection,
+    publisher: pubsubConn,
+    namespace: NAMESPACE,
+  });
+  traceConsumers.trace.on('completed', (job, result) => {
+    log.info({ id: job.id, job_id: result.job_id, hops: result.summary.total_hops, atoms: result.emitted_atom_ids.length }, 'trace job completed');
+  });
+  traceConsumers.trace.on('failed', (job, err) => {
+    log.error({ id: job?.id, err }, 'trace job failed');
+  });
+  log.info('tracer agent consumers started');
 } else {
   log.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled');
 }

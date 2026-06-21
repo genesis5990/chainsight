@@ -19,11 +19,17 @@ import {
   RedisPathResultCache,
   SupabaseGraphLoader,
 } from '@chainsight/pathfinder';
+import {
+  SupabaseTraceJobStore,
+  TracerService,
+} from '@chainsight/tracer-agent';
 import { env } from './env.js';
 import { authPlugin } from './plugins/auth.js';
 import { healthRoutes } from './routes/health.js';
 import { caseRoutes } from './routes/cases.js';
 import { pathfinderRoutes } from './routes/pathfinder.js';
+import { tracerRoutes } from './routes/tracer.js';
+import { eventsRoutes } from './routes/events.js';
 
 const fastify = Fastify({
   logger: {
@@ -74,6 +80,24 @@ const pathfinder = new Pathfinder({
 });
 
 await fastify.register(pathfinderRoutes, { prefix: '/v1', pathfinder });
+
+// ─── Tracer Agent ─────────────────────────────────────────────────────────────────────────────────────
+const tracerStore = new SupabaseTraceJobStore(
+  pfSupabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
+);
+const tracerQueueRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
+const tracer = new TracerService({
+  store: tracerStore,
+  connection: tracerQueueRedis as unknown as ConstructorParameters<typeof TracerService>[0]['connection'],
+});
+await fastify.register(tracerRoutes, { prefix: '/v1', tracer });
+
+// ─── SSE events bridge ────────────────────────────────────────────────────────────────────────
+await fastify.register(eventsRoutes, {
+  prefix: '/v1',
+  redis_url: env.REDIS_URL,
+  namespace: process.env.CHAINSIGHT_NAMESPACE ?? 'dev',
+});
 
 // Boot
 const port = env.PORT;

@@ -95,6 +95,7 @@ export {
   type AnthropicConnectorOptions,
   type AnthropicNarrativeRequest,
   type AnthropicNarrativeResponse,
+  type AnthropicStreamChunk,
 } from './connectors/anthropic';
 
 // Legacy placeholder (kept so older imports don't break during the transition)
