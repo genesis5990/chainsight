@@ -122,7 +122,10 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     credentials: new FallbackCredentialStore([
       new VaultCredentialStore(
         supabase as unknown as ConstructorParameters<typeof VaultCredentialStore>[0],
-        envelopeCipherFromEnv(process.env),
+        envelopeCipherFromEnv(process.env, {
+          onInvalid: 'fallback',
+          log: (msg, ctx) => log.error(ctx, 'envelope cipher init: ' + msg + ' — falling back to PassThrough'),
+        }),
       ),
       new EnvCredentialStore(),
     ]),
@@ -262,7 +265,10 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const { createHash } = await import('node:crypto');
       const { envelopeCipherFromEnv } = await import('@chainsight/capability-router');
-      const cipher = envelopeCipherFromEnv(process.env);
+      const cipher = envelopeCipherFromEnv(process.env, {
+        onInvalid: 'fallback',
+        log: (msg, ctx) => log.error(ctx, 'envelope cipher probe: ' + msg),
+      });
       const probe = 'CHAINSIGHT_PROBE_V1';
       const wrapped = cipher.wrap(probe);
       const roundtrip_ok = cipher.unwrap(wrapped) === probe;

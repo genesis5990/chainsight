@@ -89,10 +89,41 @@ export class PassThroughEnvelopeCipher implements EnvelopeCipher {
   unwrap(wrapped: string): string | null { return wrapped; }
 }
 
-export function envelopeCipherFromEnv(env: NodeJS.ProcessEnv = process.env): EnvelopeCipher {
+/**
+ * Envelope-cipher factory.
+ *
+ * Hard rules:
+ *   - CHAINSIGHT_MASTER_KEY unset → PassThrough (dev mode). Logs nothing
+ *     special; callers decide whether to warn.
+ *   - CHAINSIGHT_MASTER_KEY set + valid 32-byte base64 → Aes256Gcm.
+ *   - CHAINSIGHT_MASTER_KEY set but malformed (wrong length, non-base64) →
+ *     by default we throw, which crashes the boot. Pass
+ *     { onInvalid: 'fallback' } to log + fall back to PassThrough so the
+ *     service keeps running for ops diagnosis (the API /health/envelope
+ *     endpoint uses this).
+ */
+export interface EnvelopeCipherFromEnvOptions {
+  /** What to do if the env var is set but invalid. */
+  onInvalid?: 'throw' | 'fallback';
+  /** Optional logger for the fallback path. */
+  log?: (msg: string, ctx: Record<string, unknown>) => void;
+}
+
+export function envelopeCipherFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+  opts: EnvelopeCipherFromEnvOptions = {},
+): EnvelopeCipher {
   const raw = env.CHAINSIGHT_MASTER_KEY;
   if (!raw) return new PassThroughEnvelopeCipher();
   const key = Buffer.from(raw, 'base64');
+  if (key.length !== 32) {
+    const msg = `CHAINSIGHT_MASTER_KEY decoded to ${key.length} bytes, need 32`;
+    if (opts.onInvalid === 'fallback') {
+      opts.log?.(msg, { decoded_bytes: key.length, raw_length: raw.length });
+      return new PassThroughEnvelopeCipher();
+    }
+    throw new Error(msg);
+  }
   return new Aes256GcmEnvelopeCipher(key);
 }
 

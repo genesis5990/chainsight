@@ -36,6 +36,32 @@ export async function healthRoutes(fastify: FastifyInstance) {
    * block ops probes) since output exposes no plaintext or secret material.
    */
   fastify.get('/health/envelope', async () => {
+    const keyMaterialRaw = process.env.CHAINSIGHT_MASTER_KEY ?? '';
+    // Diagnostics: report key length info BEFORE constructing the cipher
+    // (which throws on bad length). Lets ops see what's actually set
+    // without leaking the key.
+    let key_b64_length: number | null = null;
+    let key_decoded_bytes: number | null = null;
+    let key_b64_has_whitespace: boolean | null = null;
+    if (keyMaterialRaw) {
+      key_b64_length = keyMaterialRaw.length;
+      key_b64_has_whitespace = /\s/.test(keyMaterialRaw);
+      try {
+        key_decoded_bytes = Buffer.from(keyMaterialRaw, 'base64').length;
+      } catch {
+        key_decoded_bytes = -1;
+      }
+    }
+    if (key_decoded_bytes !== null && key_decoded_bytes !== 32) {
+      return {
+        active: false,
+        service: 'chainsight-api',
+        error: 'CHAINSIGHT_MASTER_KEY decoded to ' + key_decoded_bytes + ' bytes, need 32',
+        key_b64_length,
+        key_decoded_bytes,
+        key_b64_has_whitespace,
+      };
+    }
     const cipher = envelopeCipherFromEnv(process.env);
     const probe = 'CHAINSIGHT_PROBE_V1';
     const wrapped = cipher.wrap(probe);
@@ -45,15 +71,17 @@ export async function healthRoutes(fastify: FastifyInstance) {
     // wrap a known fixed-IV-equivalent (i.e. hash the env var itself, truncated).
     // We hash with SHA-256 + truncate to 16 hex chars. This is a one-way
     // identifier safe to expose for ops comparison.
-    const keyMaterial = process.env.CHAINSIGHT_MASTER_KEY ?? '';
-    const key_fp = keyMaterial
-      ? createHash('sha256').update('chainsight-fp-v1:' + keyMaterial).digest('hex').slice(0, 16)
+    const key_fp = keyMaterialRaw
+      ? createHash('sha256').update('chainsight-fp-v1:' + keyMaterialRaw).digest('hex').slice(0, 16)
       : null;
     return {
       active: cipher.active,
       roundtrip_ok,
       wrapped_length: wrapped.length,
       key_fp,
+      key_b64_length,
+      key_decoded_bytes,
+      key_b64_has_whitespace,
       service: 'chainsight-api',
     };
   });
