@@ -207,29 +207,33 @@ export async function agencyRoutes(fastify: FastifyInstance) {
     return { ok: true };
   });
 
-  /* ── credentials (admin only; secret encrypted) ──────────────────────── */
+  /* ── credentials (admin only; envelope-wrapped + vault-encrypted) ────── */
   fastify.post<{ Params: { id: string } }>('/agency/:id/credentials', async (request, reply) => {
     if (!request.auth) return reply.unauthorized();
     const id = request.params.id;
     if (!await assertAdmin(supabase, id, request.auth.userId)) return reply.forbidden();
     const body = credentialSchema.parse(request.body);
 
-    // Try pgsodium first; fall back to base64 (dev) if pgsodium isn't available.
-    const cipherAlgo = process.env.PACK_VAULT_ALGO ?? 'plain_b64';
-    const secretCipher = cipherAlgo === 'plain_b64'
-      ? Buffer.from(body.secret, 'utf8').toString('base64')
-      : body.secret; // pgsodium path is via server-side function (TBD in 0011)
+    // App-layer envelope (AES-256-GCM with CHAINSIGHT_MASTER_KEY) BEFORE the
+    // blob enters Vault. Vault then encrypts again at rest. A reader with
+    // service_role + vault.decrypted_secrets access sees only the wrapped
+    // blob — they cannot recover the BYOK secret without the master key
+    // (held in Fly secrets, never in the database).
+    const wrappedSecret = envelopeCipher.wrap(body.secret);
 
-    const { data, error } = await supabase.schema('belief').from('agency_credentials').insert({
-      agency_id: id,
-      provider_id: body.provider_id,
-      label: body.label,
-      secret_cipher: secretCipher,
-      cipher_algo: cipherAlgo,
-      created_by: request.auth.userId,
-    }).select('id, agency_id, provider_id, label, cipher_algo, created_at').single();
-    if (error) return reply.code(400).send({ error: error.message });
-    return reply.code(201).send({ credential: data });
+    const { data: credId, error: rpcErr } = await supabase.schema('belief').rpc('store_agency_credential', {
+      p_agency: id,
+      p_provider: body.provider_id,
+      p_label: body.label,
+      p_secret: wrappedSecret,
+      p_creator: request.auth.userId,
+    });
+    if (rpcErr) return reply.code(400).send({ error: rpcErr.message });
+
+    const { data: row } = await supabase.schema('belief').from('agency_credentials')
+      .select('id, agency_id, provider_id, label, cipher_algo, created_at')
+      .eq('id', credId).maybeSingle();
+    return reply.code(201).send({ credential: row, envelope_wrapped: envelopeCipher.active });
   });
 
   fastify.delete<{ Params: { cred_id: string } }>('/agency/credentials/:cred_id', async (request, reply) => {

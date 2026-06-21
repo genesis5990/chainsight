@@ -30,6 +30,7 @@ import {
   EnvCredentialStore,
   VaultCredentialStore,
   FallbackCredentialStore,
+  envelopeCipherFromEnv,
   EtherscanConnector,
   OpenSanctionsConnector,
   RedisL1Cache,
@@ -121,6 +122,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     credentials: new FallbackCredentialStore([
       new VaultCredentialStore(
         supabase as unknown as ConstructorParameters<typeof VaultCredentialStore>[0],
+        envelopeCipherFromEnv(process.env),
       ),
       new EnvCredentialStore(),
     ]),

@@ -58,6 +58,14 @@ export {
 } from './credential_store';
 
 export {
+  Aes256GcmEnvelopeCipher,
+  PassThroughEnvelopeCipher,
+  envelopeCipherFromEnv,
+  generateMasterKey,
+  type EnvelopeCipher,
+} from './envelope_cipher';
+
+export {
   InMemoryInstallRegistry,
   type InstallRegistry,
 } from './install_registry';

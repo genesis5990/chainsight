@@ -75,8 +75,13 @@ export interface VaultStoreClient {
   rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }>;
 }
 
+import type { EnvelopeCipher } from './envelope_cipher';
+
 export class VaultCredentialStore implements CredentialStore {
-  constructor(private readonly client: VaultStoreClient) {}
+  constructor(
+    private readonly client: VaultStoreClient,
+    private readonly cipher?: EnvelopeCipher,
+  ) {}
 
   async resolve(credential_ref: string): Promise<ResolvedCredential | null> {
     if (!credential_ref?.startsWith('vault:')) return null;
@@ -87,15 +92,26 @@ export class VaultCredentialStore implements CredentialStore {
         .eq('id', credential_id).maybeSingle();
       if (error || !data) return null;
       const row = data as { secret_cipher: string; cipher_algo: string; agency_id: string; provider_id: string; label: string };
-      let secret: string | null = null;
-      if (row.cipher_algo === 'plain_b64') {
-        secret = Buffer.from(row.secret_cipher, 'base64').toString('utf8');
-      } else if (row.cipher_algo === 'pgsodium') {
+      let storedSecret: string | null = null;
+      if (row.cipher_algo === 'vault' || row.cipher_algo === 'pgsodium') {
+        // Vault path: call the controlled RPC to fetch the wrapped blob.
         const { data: decrypted, error: rpcErr } = await this.client.rpc<string>('decrypt_agency_credential', { p_credential_id: credential_id });
         if (rpcErr || !decrypted) return null;
-        secret = decrypted;
+        storedSecret = decrypted;
+      } else if (row.cipher_algo === 'plain_b64') {
+        storedSecret = Buffer.from(row.secret_cipher, 'base64').toString('utf8');
       }
-      if (!secret) return null;
+      if (!storedSecret) return null;
+
+      // App-layer envelope: unwrap with CHAINSIGHT_MASTER_KEY if the blob
+      // is wrapped. If unwrap returns null, fall back to storedSecret — we
+      // tolerate legacy unwrapped rows so an in-place upgrade works.
+      let secret = storedSecret;
+      if (this.cipher?.active) {
+        const unwrapped = this.cipher.unwrap(storedSecret);
+        if (unwrapped !== null) secret = unwrapped;
+      }
+
       return {
         credential_ref,
         secret,
