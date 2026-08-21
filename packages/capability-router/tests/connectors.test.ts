@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { EtherscanConnector } from '../src/connectors/etherscan';
+import { BlockchairConnector } from '../src/connectors/blockchair';
 import { OpenSanctionsConnector } from '../src/connectors/opensanctions';
 import { AnthropicConnector } from '../src/connectors/anthropic';
 import type { ResolvedCredential } from '../src/types';
@@ -54,7 +55,112 @@ describe('EtherscanConnector', () => {
     const conn = new EtherscanConnector({ fetch_impl: makeFetch([]) });
     await expect(
       conn.call('get_tx_by_hash', { chain: 'bitcoin:mainnet', tx_hash: '0xabc' }, null, noCtl),
-    ).rejects.toThrow(/only supports chain 'evm:1'/);
+    ).rejects.toThrow(/does not support chain 'bitcoin:mainnet'/);
+  });
+
+  it('resolves multi-chain via evm:<chainid> notation', async () => {
+    const fetchImpl = makeFetch([
+      { ok: true, json: { result: {
+        blockHash: '0xbh', blockNumber: '0xa', from: '0xfrom', to: '0xto', gas: '0x5208', gasPrice: '0x4a817c800',
+        hash: '0xabc', input: '0x', value: '0x0',
+      } } },
+      { ok: true, json: { result: {
+        blockHash: '0xbh', blockNumber: '0xa', contractAddress: null,
+        gasUsed: '0x5208', status: '0x1', transactionHash: '0xabc',
+      } } },
+      { ok: true, json: { result: { timestamp: '0x65000000', hash: '0xbh' } } },
+    ]);
+    const conn = new EtherscanConnector({ fetch_impl: fetchImpl });
+    const res = await conn.call('get_tx_by_hash', { chain: 'evm:56', tx_hash: '0xabc' }, null, noCtl);
+    const data = res.data as { chain: string };
+    expect(data.chain).toBe('evm:56');
+  });
+
+  it('resolves short-name aliases (e.g. polygon)', async () => {
+    const fetchImpl = makeFetch([
+      { ok: true, json: { result: {
+        blockHash: '0xbh', blockNumber: '0xa', from: '0xfrom', to: '0xto', gas: '0x5208', gasPrice: '0x4a817c800',
+        hash: '0xabc', input: '0x', value: '0x0',
+      } } },
+      { ok: true, json: { result: {
+        blockHash: '0xbh', blockNumber: '0xa', contractAddress: null,
+        gasUsed: '0x5208', status: '0x1', transactionHash: '0xabc',
+      } } },
+      { ok: true, json: { result: { timestamp: '0x65000000', hash: '0xbh' } } },
+    ]);
+    const conn = new EtherscanConnector({ fetch_impl: fetchImpl });
+    const res = await conn.call('get_tx_by_hash', { chain: 'polygon', tx_hash: '0xabc' }, null, noCtl);
+    const data = res.data as { chain: string };
+    expect(data.chain).toBe('evm:137');
+  });
+
+  it('fetches native balance for a supported chain', async () => {
+    const fetchImpl = makeFetch([
+      { ok: true, json: { status: '1', result: '1000000000000000000' } },
+    ]);
+    const conn = new EtherscanConnector({ fetch_impl: fetchImpl });
+    const credential: ResolvedCredential = { credential_ref: 'ES', secret: 'KEY' };
+    const res = await conn.call('get_address_balance', { chain: 'evm:137', address: '0x1111111111111111111111111111111111111111' }, credential, noCtl);
+    const data = res.data as { chain: string; address: string; balance_native_minor: string };
+    expect(data.chain).toBe('evm:137');
+    expect(data.balance_native_minor).toBe('1000000000000000000');
+  });
+
+  it('rejects balance for unsupported chains', async () => {
+    const conn = new EtherscanConnector({ fetch_impl: makeFetch([]) });
+    await expect(
+      conn.call('get_address_balance', { chain: 'solana', address: '0x1111111111111111111111111111111111111111' }, null, noCtl),
+    ).rejects.toThrow(/does not support chain 'solana'/);
+  });
+});
+
+describe('BlockchairConnector', () => {
+  it('fetches Bitcoin balance in satoshis', async () => {
+    const fetchImpl = makeFetch([
+      { ok: true, json: { data: { bc1qtest: { address: { balance: 123456789, received: 987654321, spent: 864197532, transaction_count: 42 } } } } },
+    ]);
+    const conn = new BlockchairConnector({ fetch_impl: fetchImpl });
+    const credential: ResolvedCredential = { credential_ref: 'BC', secret: 'KEY' };
+    const res = await conn.call('get_address_balance', { chain: 'btc', address: 'bc1qtest' }, credential, noCtl);
+    const data = res.data as { chain: string; balance_native_minor: string; received_native_minor: string; spent_native_minor: string; tx_count: number };
+    expect(data.chain).toBe('btc');
+    expect(data.balance_native_minor).toBe('123456789');
+    expect(data.received_native_minor).toBe('987654321');
+    expect(data.spent_native_minor).toBe('864197532');
+    expect(data.tx_count).toBe(42);
+  });
+
+  it('fetches UTXO transaction inputs and outputs', async () => {
+    const fetchImpl = makeFetch([
+      { ok: true, json: { data: { tx1: {
+        transaction: { hash: 'tx1', block_id: 700000, time: '2023-01-01T00:00:00Z', fee: 1000 },
+        inputs: [
+          { recipient: 'bc1qin1', value: 500000, index: 0, transaction_hash: 'prev1' },
+          { recipient: 'bc1qin2', value: 300000, index: 1, transaction_hash: 'prev2' },
+        ],
+        outputs: [
+          { recipient: 'bc1qout1', value: 499000, index: 0, is_spent: true },
+          { recipient: 'bc1qout2', value: 300000, index: 1, is_spent: false },
+        ],
+      } } } },
+    ]);
+    const conn = new BlockchairConnector({ fetch_impl: fetchImpl });
+    const res = await conn.call('get_tx_by_hash', { chain: 'btc', tx_hash: 'tx1' }, null, noCtl);
+    const data = res.data as { tx_hash: string; inputs: Array<{ address: string; value_native_minor: string }>; outputs: Array<{ spent: boolean }>; fee_native_minor: string };
+    expect(data.tx_hash).toBe('tx1');
+    expect(data.inputs).toHaveLength(2);
+    expect(data.inputs[0].address).toBe('bc1qin1');
+    expect(data.inputs[0].value_native_minor).toBe('500000');
+    expect(data.outputs).toHaveLength(2);
+    expect(data.outputs[0].spent).toBe(true);
+    expect(data.fee_native_minor).toBe('1000');
+  });
+
+  it('rejects unsupported chains', async () => {
+    const conn = new BlockchairConnector({ fetch_impl: makeFetch([]) });
+    await expect(
+      conn.call('get_address_balance', { chain: 'sol', address: 'abc' }, null, noCtl),
+    ).rejects.toThrow(/does not support chain 'sol'/);
   });
 });
 

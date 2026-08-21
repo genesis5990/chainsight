@@ -93,7 +93,19 @@ export {
   EtherscanConnector,
   type EtherscanConnectorOptions,
   type EtherscanTxResponse,
+  type EtherscanBalanceResponse,
+  type EtherscanNeighborsResponse,
+  type EtherscanAttributionResponse,
 } from './connectors/etherscan';
+
+export {
+  BlockchairConnector,
+  type BlockchairConnectorOptions,
+  type BlockchairBalanceResponse,
+  type BlockchairTxResponse,
+  type BlockchairUtxoInput,
+  type BlockchairUtxoOutput,
+} from './connectors/blockchair';
 
 export {
   OpenSanctionsConnector,

@@ -1,10 +1,11 @@
 /**
- * EtherscanConnector — implements get_tx_by_hash for evm:1 (Ethereum mainnet)
- * via the public Etherscan v2 API.
+ * EtherscanConnector — implements get_tx_by_hash, get_address_neighbors,
+ * get_address_balance, and get_address_attribution across EVM chains via the
+ * public Etherscan v2 multi-chain API.
  *
- * Returns a normalized ChainTx shape that the inspector pipeline's
- * RouterChainProvider consumes. Etherscan-specific HTTP shape never leaves
- * this file.
+ * Returns normalized ChainTx / neighbors / balance shapes that the inspector
+ * pipeline's RouterChainProvider consumes. Etherscan-specific HTTP shape never
+ * leaves this file.
  *
  * Free tier requires no key but allows up to 5 req/s. With an API key the
  * router can lift the rate limit. We always pass the key when configured.
@@ -18,10 +19,70 @@ import type {
   ResolvedCredential,
 } from '../types';
 
-const ETHERSCAN_BASE = 'https://api.etherscan.io/api';
+const ETHERSCAN_BASE = 'https://api.etherscan.io/v2/api';
+
+/**
+ * Etherscan v2 chainid map. Keyed by ChainSight's canonical `evm:<chainid>`
+ * notation, with common short names (BeliefChainId + aliases) as conveniences.
+ * Mirrors the chain coverage of the legacy Base44 etherscanAPI function.
+ */
+const EVM_CHAIN_IDS: Record<string, string> = {
+  'evm:1': '1',
+  'evm:56': '56',
+  'evm:137': '137',
+  'evm:42161': '42161',
+  'evm:10': '10',
+  'evm:8453': '8453',
+  'evm:43114': '43114',
+  'evm:250': '250',
+  'evm:100': '100',
+  'evm:324': '324',
+  'evm:59144': '59144',
+  'evm:534352': '534352',
+  'evm:5000': '5000',
+  'evm:81457': '81457',
+  'evm:42220': '42220',
+  'evm:25': '25',
+  // Short-name aliases
+  eth: '1',
+  ethereum: '1',
+  bsc: '56',
+  binance_smart_chain: '56',
+  bnb: '56',
+  polygon: '137',
+  matic: '137',
+  arbitrum: '42161',
+  arb: '42161',
+  optimism: '10',
+  op: '10',
+  base: '8453',
+  avalanche: '43114',
+  avax: '43114',
+  fantom: '250',
+  ftm: '250',
+  gnosis: '100',
+  xdai: '100',
+  zksync: '324',
+  linea: '59144',
+  scroll: '534352',
+  mantle: '5000',
+  blast: '81457',
+  celo: '42220',
+  cronos: '25',
+  cro: '25',
+};
+
+/** Resolve a chain argument to an Etherscan v2 chainid, or null if unsupported. */
+function chainIdFor(chain: unknown): string | null {
+  const key = String(chain ?? '').toLowerCase();
+  if (EVM_CHAIN_IDS[key]) return EVM_CHAIN_IDS[key];
+  // Accept bare chainid numbers (e.g. '1', '56') for forward-compat.
+  if (/^\d+$/.test(key)) return key;
+  return null;
+}
 
 export interface EtherscanTxResponse {
-  chain: 'evm:1';
+  chain: `evm:${string}`;
   tx_hash: string;
   block_hash: string;
   block_height: number;
@@ -48,11 +109,11 @@ export interface EtherscanConnectorOptions {
 }
 
 export interface EtherscanNeighborsResponse {
-  chain: 'evm:1';
+  chain: `evm:${string}`;
   address: string;
   direction: 'inflow' | 'outflow' | 'both';
   edges: Array<{
-    chain: 'evm:1';
+    chain: `evm:${string}`;
     tx_hash: string;
     edge_index: number;
     block_height: number;
@@ -69,11 +130,18 @@ export interface EtherscanNeighborsResponse {
 }
 
 export interface EtherscanAttributionResponse {
-  chain: 'evm:1';
+  chain: `evm:${string}`;
   address: string;
   attribution_kind: string | null;
   label: string | null;
   source: 'etherscan_label' | 'unknown';
+  raw_provider_id: 'etherscan';
+}
+
+export interface EtherscanBalanceResponse {
+  chain: `evm:${string}`;
+  address: string;
+  balance_native_minor: string;
   raw_provider_id: 'etherscan';
 }
 
@@ -83,6 +151,7 @@ export class EtherscanConnector implements ProviderConnector {
     'get_tx_by_hash',
     'get_address_neighbors',
     'get_address_attribution',
+    'get_address_balance',
   ];
 
   constructor(private readonly opts: EtherscanConnectorOptions = {}) {}
@@ -99,23 +168,27 @@ export class EtherscanConnector implements ProviderConnector {
     if (capability === 'get_address_attribution') {
       return this.getAttribution(args, credential, options) as Promise<ConnectorResponse<TPayload>>;
     }
+    if (capability === 'get_address_balance') {
+      return this.getBalance(args, credential, options) as Promise<ConnectorResponse<TPayload>>;
+    }
     if (capability !== 'get_tx_by_hash') {
       throw new Error(`EtherscanConnector does not support capability '${capability}'`);
     }
-    const chain = String(args.chain ?? '');
-    const txHash = String(args.tx_hash ?? '');
-    if (chain !== 'evm:1') {
-      throw new Error(`EtherscanConnector only supports chain 'evm:1', got '${chain}'`);
+    const chainId = chainIdFor(args.chain);
+    if (!chainId) {
+      throw new Error(`EtherscanConnector does not support chain '${String(args.chain)}'`);
     }
+    const txHash = String(args.tx_hash ?? '');
     if (!txHash.startsWith('0x')) {
       throw new Error(`tx_hash must start with 0x: '${txHash}'`);
     }
 
     const fetchImpl = this.opts.fetch_impl ?? fetch;
     const base = this.opts.base_url ?? ETHERSCAN_BASE;
+    const apiKey = credential ? `&apikey=${encodeURIComponent(credential.secret)}` : '';
 
     // 1) eth_getTransactionByHash
-    const txUrl = `${base}?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}${credential ? `&apikey=${encodeURIComponent(credential.secret)}` : ''}`;
+    const txUrl = `${base}?chainid=${chainId}&module=proxy&action=eth_getTransactionByHash&txhash=${txHash}${apiKey}`;
     const txRes = await fetchImpl(txUrl, { signal: options.signal });
     if (!txRes.ok) throw new Error(`etherscan tx HTTP ${txRes.status}`);
     const txBody = await txRes.json() as { result?: EtherscanRawTx | null; error?: { message: string } };
@@ -124,7 +197,7 @@ export class EtherscanConnector implements ProviderConnector {
     const rawTx = txBody.result;
 
     // 2) eth_getTransactionReceipt
-    const rcUrl = `${base}?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}${credential ? `&apikey=${encodeURIComponent(credential.secret)}` : ''}`;
+    const rcUrl = `${base}?chainid=${chainId}&module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}${apiKey}`;
     const rcRes = await fetchImpl(rcUrl, { signal: options.signal });
     if (!rcRes.ok) throw new Error(`etherscan receipt HTTP ${rcRes.status}`);
     const rcBody = await rcRes.json() as { result?: EtherscanRawReceipt | null; error?: { message: string } };
@@ -134,7 +207,7 @@ export class EtherscanConnector implements ProviderConnector {
 
     // 3) eth_getBlockByNumber to fetch block_time_utc
     const blockHex = rawTx.blockNumber;
-    const blkUrl = `${base}?module=proxy&action=eth_getBlockByNumber&tag=${blockHex}&boolean=false${credential ? `&apikey=${encodeURIComponent(credential.secret)}` : ''}`;
+    const blkUrl = `${base}?chainid=${chainId}&module=proxy&action=eth_getBlockByNumber&tag=${blockHex}&boolean=false${apiKey}`;
     const blkRes = await fetchImpl(blkUrl, { signal: options.signal });
     if (!blkRes.ok) throw new Error(`etherscan block HTTP ${blkRes.status}`);
     const blkBody = await blkRes.json() as { result?: { timestamp: string; hash: string } | null };
@@ -152,7 +225,7 @@ export class EtherscanConnector implements ProviderConnector {
     const selector = inputData.length >= 10 ? inputData.slice(0, 10) : null;
 
     const data: EtherscanTxResponse = {
-      chain: 'evm:1',
+      chain: `evm:${chainId}`,
       tx_hash: txHash,
       block_hash: blockHash,
       block_height: Number(BigInt(blockHex)),
@@ -173,8 +246,51 @@ export class EtherscanConnector implements ProviderConnector {
     return {
       data: data as unknown as TPayload,
       metadata: {
-        request_id: `etherscan:${txHash}`,
+        request_id: `etherscan:${chainId}:${txHash}`,
       },
+    };
+  }
+
+  /**
+   * get_address_balance — native balance for an address on any supported EVM
+   * chain. Returns the raw minor-unit balance (wei) as a string, matching the
+   * `IntegerAmount` convention used across shared-types.
+   */
+  private async getBalance(
+    args: Record<string, unknown>,
+    credential: ResolvedCredential | null,
+    options: ConnectorCallOptions,
+  ): Promise<ConnectorResponse<EtherscanBalanceResponse>> {
+    const chainId = chainIdFor(args.chain);
+    if (!chainId) {
+      throw new Error(`EtherscanConnector.get_address_balance does not support chain '${String(args.chain)}'`);
+    }
+    const address = String(args.address ?? '').toLowerCase();
+    if (!address.startsWith('0x')) {
+      throw new Error(`address must start with 0x: '${address}'`);
+    }
+
+    const fetchImpl = this.opts.fetch_impl ?? fetch;
+    const base = this.opts.base_url ?? ETHERSCAN_BASE;
+    const apiKey = credential ? `&apikey=${encodeURIComponent(credential.secret)}` : '';
+
+    const url = `${base}?chainid=${chainId}&module=account&action=balance&address=${address}&tag=latest${apiKey}`;
+    const res = await fetchImpl(url, { signal: options.signal });
+    if (!res.ok) throw new Error(`etherscan balance HTTP ${res.status}`);
+    const body = await res.json() as { status?: string; message?: string; result?: string };
+    if (body.status !== '1' || body.result === undefined) {
+      throw new Error(`etherscan balance error: ${body.message ?? 'no result'}`);
+    }
+
+    const data: EtherscanBalanceResponse = {
+      chain: `evm:${chainId}`,
+      address,
+      balance_native_minor: body.result,
+      raw_provider_id: 'etherscan',
+    };
+    return {
+      data,
+      metadata: { request_id: `etherscan-balance:${chainId}:${address}` },
     };
   }
 
@@ -188,9 +304,9 @@ export class EtherscanConnector implements ProviderConnector {
     credential: ResolvedCredential | null,
     options: ConnectorCallOptions,
   ): Promise<ConnectorResponse<EtherscanNeighborsResponse>> {
-    const chain = String(args.chain ?? '');
-    if (chain !== 'evm:1') {
-      throw new Error(`EtherscanConnector.get_address_neighbors only supports 'evm:1', got '${chain}'`);
+    const chainId = chainIdFor(args.chain);
+    if (!chainId) {
+      throw new Error(`EtherscanConnector.get_address_neighbors does not support chain '${String(args.chain)}'`);
     }
     const address = String(args.address ?? '').toLowerCase();
     if (!address.startsWith('0x')) {
@@ -206,8 +322,8 @@ export class EtherscanConnector implements ProviderConnector {
     const base = this.opts.base_url ?? ETHERSCAN_BASE;
     const apiKey = credential ? `&apikey=${encodeURIComponent(credential.secret)}` : '';
 
-    const txUrl = `${base}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
-    const ttUrl = `${base}?module=account&action=tokentx&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
+    const txUrl = `${base}?chainid=${chainId}&module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
+    const ttUrl = `${base}?chainid=${chainId}&module=account&action=tokentx&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc&page=1&offset=${pageSize}${apiKey}`;
 
     const [txRes, ttRes] = await Promise.all([
       fetchImpl(txUrl, { signal: options.signal }),
@@ -227,13 +343,13 @@ export class EtherscanConnector implements ProviderConnector {
       if (!matchesDirection(address, t.from, t.to, direction)) continue;
       if (BigInt(t.value || '0') === 0n) continue;
       edges.push({
-        chain: 'evm:1',
+        chain: `evm:${chainId}`,
         tx_hash: t.hash,
         edge_index: 0,
         block_height: Number(t.blockNumber),
         block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
-        from_subject: `evm:1_addr:${t.from.toLowerCase()}`,
-        to_subject: `evm:1_addr:${t.to.toLowerCase()}`,
+        from_subject: `evm:${chainId}_addr:${t.from.toLowerCase()}`,
+        to_subject: `evm:${chainId}_addr:${t.to.toLowerCase()}`,
         value_native_minor: t.value,
         edge_kind: 'tx_native',
         cost_usd: 0.0001,
@@ -243,13 +359,13 @@ export class EtherscanConnector implements ProviderConnector {
       if (!matchesDirection(address, t.from, t.to, direction)) continue;
       if (BigInt(t.value || '0') === 0n) continue;
       edges.push({
-        chain: 'evm:1',
+        chain: `evm:${chainId}`,
         tx_hash: t.hash,
         edge_index: Number(t.transactionIndex ?? 0),
         block_height: Number(t.blockNumber),
         block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
-        from_subject: `evm:1_addr:${t.from.toLowerCase()}`,
-        to_subject: `evm:1_addr:${t.to.toLowerCase()}`,
+        from_subject: `evm:${chainId}_addr:${t.from.toLowerCase()}`,
+        to_subject: `evm:${chainId}_addr:${t.to.toLowerCase()}`,
         value_native_minor: t.value,
         edge_kind: 'token_transfer',
         cost_usd: 0.0001,
@@ -270,7 +386,7 @@ export class EtherscanConnector implements ProviderConnector {
     });
 
     const data: EtherscanNeighborsResponse = {
-      chain: 'evm:1',
+      chain: `evm:${chainId}`,
       address,
       direction,
       edges: deduped,
@@ -280,7 +396,7 @@ export class EtherscanConnector implements ProviderConnector {
     };
     return {
       data,
-      metadata: { request_id: `etherscan-neighbors:${address}:${direction}:${startBlock}-${endBlock}` },
+      metadata: { request_id: `etherscan-neighbors:${chainId}:${address}:${direction}:${startBlock}-${endBlock}` },
     };
   }
 
@@ -294,16 +410,16 @@ export class EtherscanConnector implements ProviderConnector {
     _credential: ResolvedCredential | null,
     _options: ConnectorCallOptions,
   ): Promise<ConnectorResponse<EtherscanAttributionResponse>> {
-    const chain = String(args.chain ?? '');
-    if (chain !== 'evm:1') {
-      throw new Error(`EtherscanConnector.get_address_attribution only supports 'evm:1', got '${chain}'`);
+    const chainId = chainIdFor(args.chain);
+    if (!chainId) {
+      throw new Error(`EtherscanConnector.get_address_attribution does not support chain '${String(args.chain)}'`);
     }
     const address = String(args.address ?? '').toLowerCase();
     if (!address.startsWith('0x')) {
       throw new Error(`address must start with 0x: '${address}'`);
     }
     const data: EtherscanAttributionResponse = {
-      chain: 'evm:1',
+      chain: `evm:${chainId}`,
       address,
       attribution_kind: null,
       label: null,
@@ -312,7 +428,7 @@ export class EtherscanConnector implements ProviderConnector {
     };
     return {
       data,
-      metadata: { request_id: `etherscan-attr:${address}` },
+      metadata: { request_id: `etherscan-attr:${chainId}:${address}` },
     };
   }
 }
