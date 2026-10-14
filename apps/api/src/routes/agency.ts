@@ -21,6 +21,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { envelopeCipherFromEnv } from '@chainsight/capability-router';
 import { env } from '../env.js';
 import { randomBytes } from 'node:crypto';
 
@@ -81,6 +82,16 @@ function freshToken(): string {
 
 export async function agencyRoutes(fastify: FastifyInstance) {
   const supabase = getServiceClient();
+
+  // App-layer envelope cipher for BYOK secrets. A malformed
+  // CHAINSIGHT_MASTER_KEY falls back to PassThrough so the API still boots
+  // for ops diagnosis (see /v1/health/envelope), but the credentials route
+  // below refuses to store secrets in that state.
+  const envelopeCipher = envelopeCipherFromEnv(process.env, {
+    onInvalid: 'fallback',
+    log: (msg, ctx) => fastify.log.error(ctx, 'envelope cipher init: ' + msg + ' (credential storage disabled)'),
+  });
+  const masterKeyMisconfigured = Boolean(process.env.CHAINSIGHT_MASTER_KEY) && !envelopeCipher.active;
 
   /* ── create agency ───────────────────────────────────────────────────── */
   fastify.post('/agency', async (request, reply) => {
@@ -213,6 +224,11 @@ export async function agencyRoutes(fastify: FastifyInstance) {
     const id = request.params.id;
     if (!await assertAdmin(supabase, id, request.auth.userId)) return reply.forbidden();
     const body = credentialSchema.parse(request.body);
+
+    // Never store a secret un-enveloped because of a bad master key.
+    if (masterKeyMisconfigured) {
+      return reply.code(503).send({ error: 'Credential storage unavailable: CHAINSIGHT_MASTER_KEY is misconfigured' });
+    }
 
     // App-layer envelope (AES-256-GCM with CHAINSIGHT_MASTER_KEY) BEFORE the
     // blob enters Vault. Vault then encrypts again at rest. A reader with
