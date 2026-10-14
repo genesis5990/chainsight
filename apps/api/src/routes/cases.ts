@@ -7,6 +7,7 @@
  * See: backend_architecture.md §2, data_engineering.md §4–5.
  */
 import type { FastifyInstance } from 'fastify';
+import { requireAgency } from '../plugins/auth.js';
 import { z } from 'zod';
 
 const createCaseSchema = z.object({
@@ -18,6 +19,8 @@ const createCaseSchema = z.object({
 });
 
 export async function caseRoutes(fastify: FastifyInstance) {
+  fastify.addHook('preHandler', requireAgency);
+
   fastify.get('/cases', async (request, reply) => {
     if (!request.auth) return reply.unauthorized();
     // TODO Phase 0 Week 2: query Supabase cases table with RLS enforced.
@@ -33,7 +36,7 @@ export async function caseRoutes(fastify: FastifyInstance) {
         id: crypto.randomUUID(),
         codename: body.codename,
         classification: body.classification,
-        agency_id: request.auth.agencyId,
+        agency_id: request.auth.agencyId!,
         created_by: request.auth.userId,
         created_at: new Date().toISOString(),
       },

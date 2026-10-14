@@ -15,6 +15,7 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { requireAgency } from '../plugins/auth.js';
 import { z } from 'zod';
 import IORedis from 'ioredis';
 
@@ -26,6 +27,8 @@ export interface EventsRouteOptions {
 const paramsSchema = z.object({ case_id: z.string().uuid() });
 
 export async function eventsRoutes(fastify: FastifyInstance, opts: EventsRouteOptions) {
+  fastify.addHook('preHandler', requireAgency);
+
   fastify.get<{ Params: { case_id: string } }>('/events/case/:case_id', async (request: FastifyRequest<{ Params: { case_id: string } }>, reply: FastifyReply) => {
     if (!request.auth) return reply.unauthorized();
     const { case_id } = paramsSchema.parse(request.params);

@@ -9,6 +9,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { requireAgency } from '../plugins/auth.js';
 import { z } from 'zod';
 import type { CaseId } from '@chainsight/shared-types';
 import type { ReproPackService } from '@chainsight/reproducibility';
@@ -26,13 +27,15 @@ export interface ReproPackRouteOptions {
 }
 
 export async function reproPackRoutes(fastify: FastifyInstance, opts: ReproPackRouteOptions) {
+  fastify.addHook('preHandler', requireAgency);
+
   fastify.post<{ Params: { case_id: string } }>('/cases/:case_id/repro-pack', async (request, reply) => {
     if (!request.auth) return reply.unauthorized();
     const case_id = caseId.parse(request.params.case_id);
     const body = buildSchema.parse(request.body ?? {});
     const result = await opts.service.build({
       case_id: case_id as CaseId,
-      agency_id: request.auth.agencyId,
+      agency_id: request.auth.agencyId!,
       built_by_id: request.auth.userId,
       finalize: body.finalize,
       label: body.label,
