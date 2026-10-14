@@ -7,7 +7,8 @@
  *   GET    /v1/cases/:case_id/traces     — list traces for a case
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { requireAgency } from '../plugins/auth.js';
 import { z } from 'zod';
 import type {
   AgencyContext,
@@ -42,11 +43,14 @@ export interface TracerRouteOptions {
 }
 
 export async function tracerRoutes(fastify: FastifyInstance, opts: TracerRouteOptions) {
-  const buildCtx = (request: { auth?: { userId: string; agencyId: string; role: string } }): AgencyContext => ({
-    user_id: request.auth?.userId ?? '00000000-0000-0000-0000-000000000000',
-    agency_id: request.auth?.agencyId ?? '*',
+  fastify.addHook('preHandler', requireAgency);
+
+  // requireAgency (preHandler below) guarantees auth and agencyId are set.
+  const buildCtx = (request: FastifyRequest): AgencyContext => ({
+    user_id: request.auth!.userId,
+    agency_id: request.auth!.agencyId!,
     active_case_id: null,
-    roles: [(request.auth?.role ?? 'investigator') as AgencyContext['roles'][number]],
+    roles: [request.auth!.role as AgencyContext['roles'][number]],
     supervisory_scope_id: null,
     available_capabilities: [],
   });
