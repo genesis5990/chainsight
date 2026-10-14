@@ -66,13 +66,22 @@ export interface VaultStoreClient {
   schema(name: string): {
     from(table: string): {
       select(cols: string): {
-        eq(col: string, val: unknown): {
-          maybeSingle(): Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+        eq(
+          col: string,
+          val: unknown,
+        ): {
+          maybeSingle(): Promise<{
+            data: Record<string, unknown> | null;
+            error: { message: string } | null;
+          }>;
         };
       };
     };
+    rpc<T = unknown>(
+      fn: string,
+      args: Record<string, unknown>,
+    ): Promise<{ data: T | null; error: { message: string } | null }>;
   };
-  rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<{ data: T | null; error: { message: string } | null }>;
 }
 
 import type { EnvelopeCipher } from './envelope_cipher';
@@ -87,15 +96,29 @@ export class VaultCredentialStore implements CredentialStore {
     if (!credential_ref?.startsWith('vault:')) return null;
     const credential_id = credential_ref.slice('vault:'.length);
     try {
-      const { data, error } = await this.client.schema('belief').from('agency_credentials')
+      const { data, error } = await this.client
+        .schema('belief')
+        .from('agency_credentials')
         .select('id, agency_id, provider_id, label, secret_cipher, cipher_algo')
-        .eq('id', credential_id).maybeSingle();
+        .eq('id', credential_id)
+        .maybeSingle();
       if (error || !data) return null;
-      const row = data as { secret_cipher: string; cipher_algo: string; agency_id: string; provider_id: string; label: string };
+      const row = data as {
+        secret_cipher: string;
+        cipher_algo: string;
+        agency_id: string;
+        provider_id: string;
+        label: string;
+      };
       let storedSecret: string | null = null;
       if (row.cipher_algo === 'vault' || row.cipher_algo === 'pgsodium') {
         // Vault path: call the controlled RPC to fetch the wrapped blob.
-        const { data: decrypted, error: rpcErr } = await this.client.rpc<string>('decrypt_agency_credential', { p_credential_id: credential_id });
+        // The RPC lives in the belief schema. Calling it on the root client
+        // targets public.decrypt_agency_credential, which does not exist, so
+        // every Vault credential silently resolved to null.
+        const { data: decrypted, error: rpcErr } = await this.client
+          .schema('belief')
+          .rpc<string>('decrypt_agency_credential', { p_credential_id: credential_id });
         if (rpcErr || !decrypted) return null;
         storedSecret = decrypted;
       } else if (row.cipher_algo === 'plain_b64') {
@@ -103,13 +126,15 @@ export class VaultCredentialStore implements CredentialStore {
       }
       if (!storedSecret) return null;
 
-      // App-layer envelope: unwrap with CHAINSIGHT_MASTER_KEY if the blob
-      // is wrapped. If unwrap returns null, fall back to storedSecret — we
-      // tolerate legacy unwrapped rows so an in-place upgrade works.
+      // App-layer envelope: unwrap with CHAINSIGHT_MASTER_KEY. Fail closed
+      // when the cipher is active and the blob will not open (wrong key,
+      // tampering, or a legacy unwrapped row): returning storedSecret here
+      // would send ciphertext to the provider as if it were the API key.
       let secret = storedSecret;
       if (this.cipher?.active) {
         const unwrapped = this.cipher.unwrap(storedSecret);
-        if (unwrapped !== null) secret = unwrapped;
+        if (unwrapped === null) return null;
+        secret = unwrapped;
       }
 
       return {

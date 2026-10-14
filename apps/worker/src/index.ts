@@ -8,11 +8,7 @@ import { Worker, Queue, type ConnectionOptions } from 'bullmq';
 import IORedis from 'ioredis';
 import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
-import {
-  BeliefPubSub,
-  RedisL2Cache,
-  SupabaseBeliefStateService,
-} from '@chainsight/belief-state';
+import { BeliefPubSub, RedisL2Cache, SupabaseBeliefStateService } from '@chainsight/belief-state';
 import { MathClient } from '@chainsight/math-client';
 import {
   FixtureChainProvider,
@@ -31,6 +27,7 @@ import {
   VaultCredentialStore,
   FallbackCredentialStore,
   envelopeCipherFromEnv,
+  BlockchairConnector,
   EtherscanConnector,
   OpenSanctionsConnector,
   RedisL1Cache,
@@ -111,6 +108,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   const router = new CapabilityRouter({
     connectors: [
       new EtherscanConnector(),
+      new BlockchairConnector(),
       new OpenSanctionsConnector(),
       new AnthropicConnector(),
     ],
@@ -124,7 +122,8 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
         supabase as unknown as ConstructorParameters<typeof VaultCredentialStore>[0],
         envelopeCipherFromEnv(process.env, {
           onInvalid: 'fallback',
-          log: (msg, ctx) => log.error(ctx, 'envelope cipher init: ' + msg + ' — falling back to PassThrough'),
+          log: (msg, ctx) =>
+            log.error(ctx, 'envelope cipher init: ' + msg + ' — falling back to PassThrough'),
         }),
       ),
       new EnvCredentialStore(),
@@ -185,7 +184,10 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     lookup,
   });
   inspectorWorker.on('completed', (job, result) => {
-    log.info({ id: job.id, run_id: result.run_id, emitted: result.emitted_atom_ids.length }, 'inspector job completed');
+    log.info(
+      { id: job.id, run_id: result.run_id, emitted: result.emitted_atom_ids.length },
+      'inspector job completed',
+    );
   });
   inspectorWorker.on('failed', (job, err) => {
     log.error({ id: job?.id, err }, 'inspector job failed');
@@ -227,18 +229,27 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     }),
     log: { error: (obj, msg) => log.error(obj, msg) },
   });
+  // Stub fixtures are demo data. They must never be mixed into a real
+  // agency's trace: an empty or failed provider lookup has to stay empty, or
+  // fabricated edges end up in the evidence graph. Only enable the fallback
+  // explicitly (TRACER_STUB_FALLBACK=true) for local demos with no keys.
+  const stubFallback = process.env.TRACER_STUB_FALLBACK === 'true';
+  if (stubFallback) {
+    log.warn(
+      'TRACER_STUB_FALLBACK=true: empty provider results will be replaced with DEMO fixture data',
+    );
+  }
   const fallbackNeighbors = {
-    async fetchNeighbors(query: Parameters<typeof routerNeighbors.fetchNeighbors>[0], ctx: NeighborsCtx) {
+    async fetchNeighbors(
+      query: Parameters<typeof routerNeighbors.fetchNeighbors>[0],
+      ctx: NeighborsCtx,
+    ) {
       const r = await routerNeighbors.fetchNeighbors(query, ctx);
-      if (r.edges.length > 0) return r;
-      // No edges from router (no install OR genuinely empty) → fall back to stub
+      if (r.edges.length > 0 || !stubFallback) return r;
       return stubNeighbors.fetchNeighbors(query, ctx);
     },
   };
-  const tracerNeighbors = new CachedNeighborsProvider(
-    fallbackNeighbors,
-    pubsubConn,
-  );
+  const tracerNeighbors = new CachedNeighborsProvider(fallbackNeighbors, pubsubConn);
   const traceJobStore = new SupabaseTraceJobStore(
     supabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
   );
@@ -251,7 +262,15 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     namespace: NAMESPACE,
   });
   traceConsumers.trace.on('completed', (job, result) => {
-    log.info({ id: job.id, job_id: result.job_id, hops: result.summary.total_hops, atoms: result.emitted_atom_ids.length }, 'trace job completed');
+    log.info(
+      {
+        id: job.id,
+        job_id: result.job_id,
+        hops: result.summary.total_hops,
+        atoms: result.emitted_atom_ids.length,
+      },
+      'trace job completed',
+    );
   });
   traceConsumers.trace.on('failed', (job, err) => {
     log.error({ id: job?.id, err }, 'trace job failed');
@@ -274,22 +293,30 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const roundtrip_ok = cipher.unwrap(wrapped) === probe;
       const keyMaterial = process.env.CHAINSIGHT_MASTER_KEY ?? '';
       const key_fp = keyMaterial
-        ? createHash('sha256').update('chainsight-fp-v1:' + keyMaterial).digest('hex').slice(0, 16)
+        ? createHash('sha256')
+            .update('chainsight-fp-v1:' + keyMaterial)
+            .digest('hex')
+            .slice(0, 16)
         : null;
       log.info({ active: cipher.active, key_fp, roundtrip_ok }, 'envelope cipher status');
-      await supabase.schema('belief').from('envelope_health_probe').upsert({
-        service: 'chainsight-worker',
-        active: cipher.active,
-        key_fp,
-        roundtrip_ok,
-        recorded_at: new Date().toISOString(),
-      }, { onConflict: 'service' });
+      await supabase.schema('belief').from('envelope_health_probe').upsert(
+        {
+          service: 'chainsight-worker',
+          active: cipher.active,
+          key_fp,
+          roundtrip_ok,
+          recorded_at: new Date().toISOString(),
+        },
+        { onConflict: 'service' },
+      );
     } catch (err) {
       log.error({ err }, 'envelope health probe write failed');
     }
   })();
 } else {
-  log.warn('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled');
+  log.warn(
+    'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled',
+  );
 }
 
 // Eagerly verify the broker is reachable so a misconfigured REDIS_URL
@@ -304,7 +331,11 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     await pingClient.connect();
     const pong = await pingClient.ping();
     const host = (() => {
-      try { return new URL(REDIS_URL).host; } catch { return 'unknown'; }
+      try {
+        return new URL(REDIS_URL).host;
+      } catch {
+        return 'unknown';
+      }
     })();
     log.info({ host, pong }, 'redis broker reachable');
     await pingClient.quit();

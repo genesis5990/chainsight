@@ -6,6 +6,9 @@ import { createClient } from '../../lib/supabase/client';
 
 type Mode = 'signin' | 'signup';
 
+/** Public sign-up is off by default (invite-only). Set NEXT_PUBLIC_ALLOW_SIGNUP=true to show it. */
+const ALLOW_SIGNUP = process.env.NEXT_PUBLIC_ALLOW_SIGNUP === 'true';
+
 /** Only allow same-origin relative paths as post-login destinations. */
 function safeNext(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/agency';
@@ -129,17 +132,23 @@ export function LoginClient() {
           {busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === 'signin' ? 'signup' : 'signin');
-            setError(null);
-            setNotice(null);
-          }}
-          className="w-full text-xs text-context-600 hover:text-context-900"
-        >
-          {mode === 'signin' ? 'Need an account? Create one' : 'Have an account? Sign in'}
-        </button>
+        {ALLOW_SIGNUP ? (
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setError(null);
+              setNotice(null);
+            }}
+            className="w-full text-xs text-context-600 hover:text-context-900"
+          >
+            {mode === 'signin' ? 'Need an account? Create one' : 'Have an account? Sign in'}
+          </button>
+        ) : (
+          <p className="text-xs text-context-500 text-center">
+            Accounts are created by your agency administrator.
+          </p>
+        )}
       </form>
     </main>
   );
