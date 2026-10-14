@@ -7,6 +7,7 @@
  * See: /docs/chainsight_v1_0_backend_architecture.md §0.4 (auth) and §1 (services).
  */
 
+import { ZodError } from 'zod';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -58,6 +59,20 @@ await fastify.register(cors, {
   credentials: true,
 });
 await fastify.register(sensible);
+
+// Validation errors are client errors. Zod's .parse() throws, and without
+// this handler Fastify reported every bad request body as a 500.
+fastify.setErrorHandler((err, request, reply) => {
+  if (err instanceof ZodError) {
+    const message = err.issues
+      .map((i) => (i.path.length ? `${i.path.join('.')}: ${i.message}` : i.message))
+      .join('; ');
+    return reply.code(400).send({ statusCode: 400, error: 'Bad Request', message });
+  }
+  const status = (err as { statusCode?: number }).statusCode ?? 500;
+  if (status >= 500) request.log.error({ err }, 'unhandled error');
+  return reply.send(err);
+});
 await fastify.register(rateLimit, {
   max: 1000,
   timeWindow: '1 minute',

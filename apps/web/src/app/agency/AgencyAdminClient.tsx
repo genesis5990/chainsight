@@ -42,7 +42,9 @@ export function AgencyAdminClient() {
     <main className="min-h-screen px-6 py-8 max-w-6xl mx-auto">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-context-900">Agency admin</h1>
-        <p className="text-sm text-context-500">SaaS Blind onboarding: create your agency, invite teammates, plug in your BYOK providers.</p>
+        <p className="text-sm text-context-500">
+          SaaS Blind onboarding: create your agency, invite teammates, plug in your BYOK providers.
+        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -58,7 +60,10 @@ export function AgencyAdminClient() {
                     className={`block w-full text-left px-2 py-1 rounded ${activeId === a.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-context-100'}`}
                   >
                     <div className="font-medium">{a.name}</div>
-                    <div className="text-xs text-context-500">{a.slug} · {a.tier}{a.role ? ` · ${a.role}` : ''}</div>
+                    <div className="text-xs text-context-500">
+                      {a.slug} · {a.tier}
+                      {a.role ? ` · ${a.role}` : ''}
+                    </div>
                   </button>
                 </li>
               ))}
@@ -85,11 +90,17 @@ export function AgencyAdminClient() {
                 <ul className="divide-y divide-context-200 text-sm">
                   {(detail.data?.members ?? []).map((m) => (
                     <li key={m.user_id} className="py-1.5 flex items-center justify-between">
-                      <code className="text-xs text-context-700">{m.user_id.slice(0, 8)}…{m.user_id.slice(-4)}</code>
-                      <span className="text-xs text-context-600">{m.role} · joined {new Date(m.added_at).toLocaleDateString()}</span>
+                      <code className="text-xs text-context-700">
+                        {m.user_id.slice(0, 8)}…{m.user_id.slice(-4)}
+                      </code>
+                      <span className="text-xs text-context-600">
+                        {m.role} · joined {new Date(m.added_at).toLocaleDateString()}
+                      </span>
                     </li>
                   ))}
-                  {(detail.data?.members ?? []).length === 0 && <li className="text-context-500 text-xs py-2">No members yet.</li>}
+                  {(detail.data?.members ?? []).length === 0 && (
+                    <li className="text-context-500 text-xs py-2">No members yet.</li>
+                  )}
                 </ul>
               </div>
 
@@ -103,10 +114,23 @@ export function AgencyAdminClient() {
   );
 }
 
+/** Lowercase, and turn anything outside a-z, 0-9 and hyphen into a hyphen. */
+function toSlug(v: string): string {
+  return v
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-{2,}/g, '-');
+}
+
+function trimSlug(v: string): string {
+  return v.replace(/^-+|-+$/g, '').slice(0, 64);
+}
+
 function CreateAgencyForm({ onCreated }: { onCreated: (id: string) => void }) {
   const create = useCreateAgency();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [slugEdited, setSlugEdited] = useState(false);
   const [tier, setTier] = useState<'investigator' | 'team' | 'enterprise'>('investigator');
 
   return (
@@ -114,37 +138,95 @@ function CreateAgencyForm({ onCreated }: { onCreated: (id: string) => void }) {
       className="border border-context-300 bg-white rounded-lg p-4 shadow-sm space-y-2 text-sm"
       onSubmit={async (e) => {
         e.preventDefault();
-        const r = await create.mutateAsync({ name, slug, tier });
-        onCreated(r.agency_id);
-        setName(''); setSlug('');
+        const finalSlug = trimSlug(slug);
+        setSlug(finalSlug);
+        try {
+          const r = await create.mutateAsync({ name: name.trim(), slug: finalSlug, tier });
+          onCreated(r.agency_id);
+          setName('');
+          setSlug('');
+          setSlugEdited(false);
+        } catch {
+          // Shown below via create.error.
+        }
       }}
     >
       <h2 className="text-sm font-semibold text-context-700">Create agency</h2>
       <label className="block">
         <span className="text-context-600">Name</span>
-        <input required value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full border border-context-300 rounded px-2 py-1" />
+        <input
+          required
+          maxLength={200}
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (!slugEdited) setSlug(trimSlug(toSlug(e.target.value)));
+          }}
+          className="mt-1 w-full border border-context-300 rounded px-2 py-1"
+        />
       </label>
       <label className="block">
         <span className="text-context-600">Slug</span>
-        <input required pattern="[a-z0-9][a-z0-9-]+[a-z0-9]" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs" />
+        <input
+          required
+          minLength={2}
+          maxLength={64}
+          pattern="[a-z0-9][a-z0-9\-]*[a-z0-9]"
+          title="Lowercase letters, numbers and hyphens; must start and end with a letter or number"
+          value={slug}
+          onChange={(e) => {
+            setSlugEdited(true);
+            setSlug(toSlug(e.target.value));
+          }}
+          className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs"
+        />
+        <span className="text-xs text-context-500">
+          Short ID, e.g. dallas-pd-cyber. Filled in from the name.
+        </span>
       </label>
       <label className="block">
         <span className="text-context-600">Tier</span>
-        <select value={tier} onChange={(e) => setTier(e.target.value as 'investigator' | 'team' | 'enterprise')} className="mt-1 w-full border border-context-300 rounded px-2 py-1">
-          <option value="investigator">Investigator ($49/mo)</option>
-          <option value="team">Team ($98/mo min)</option>
+        <select
+          value={tier}
+          onChange={(e) => setTier(e.target.value as 'investigator' | 'team' | 'enterprise')}
+          className="mt-1 w-full border border-context-300 rounded px-2 py-1"
+        >
+          <option value="investigator">Investigator</option>
+          <option value="team">Team</option>
           <option value="enterprise">Enterprise</option>
         </select>
+        <span className="text-xs text-context-500">Label only. There is no billing.</span>
       </label>
-      <button type="submit" disabled={create.isPending} className="w-full py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300">
+      <button
+        type="submit"
+        disabled={create.isPending}
+        className="w-full py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300"
+      >
         {create.isPending ? 'Creating…' : 'Create agency'}
       </button>
-      {create.error && <p className="text-xs text-red-700">{(create.error as Error).message}</p>}
+      {create.error && (
+        <p role="alert" className="text-xs text-red-700">
+          {(create.error as Error).message}
+        </p>
+      )}
     </form>
   );
 }
 
-function InvitePanel({ agency_id, pending }: { agency_id: string; pending: Array<{ id: string; email: string; role: string; invited_at: string; accepted_at?: string | null; revoked_at?: string | null }> }) {
+function InvitePanel({
+  agency_id,
+  pending,
+}: {
+  agency_id: string;
+  pending: Array<{
+    id: string;
+    email: string;
+    role: string;
+    invited_at: string;
+    accepted_at?: string | null;
+    revoked_at?: string | null;
+  }>;
+}) {
   const invite = useInvite(agency_id);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'admin' | 'supervisor' | 'investigator'>('investigator');
@@ -162,25 +244,44 @@ function InvitePanel({ agency_id, pending }: { agency_id: string; pending: Array
       >
         <label className="flex-1 min-w-[200px]">
           <span className="text-context-600">Email</span>
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full border border-context-300 rounded px-2 py-1" />
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full border border-context-300 rounded px-2 py-1"
+          />
         </label>
         <label>
           <span className="text-context-600">Role</span>
-          <select value={role} onChange={(e) => setRole(e.target.value as 'admin' | 'supervisor' | 'investigator')} className="mt-1 border border-context-300 rounded px-2 py-1">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'admin' | 'supervisor' | 'investigator')}
+            className="mt-1 border border-context-300 rounded px-2 py-1"
+          >
             <option value="investigator">investigator</option>
             <option value="supervisor">supervisor</option>
             <option value="admin">admin</option>
           </select>
         </label>
-        <button type="submit" disabled={invite.isPending} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300">
+        <button
+          type="submit"
+          disabled={invite.isPending}
+          className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300"
+        >
           {invite.isPending ? 'Sending…' : 'Invite'}
         </button>
       </form>
       <ul className="mt-3 divide-y divide-context-200 text-sm">
         {pending.map((p) => (
           <li key={p.id} className="py-1.5 flex items-center justify-between">
-            <span>{p.email} <span className="text-xs text-context-500">({p.role})</span></span>
-            <span className="text-xs text-context-500">{p.accepted_at ? 'accepted' : p.revoked_at ? 'revoked' : 'pending'} · {new Date(p.invited_at).toLocaleDateString()}</span>
+            <span>
+              {p.email} <span className="text-xs text-context-500">({p.role})</span>
+            </span>
+            <span className="text-xs text-context-500">
+              {p.accepted_at ? 'accepted' : p.revoked_at ? 'revoked' : 'pending'} ·{' '}
+              {new Date(p.invited_at).toLocaleDateString()}
+            </span>
           </li>
         ))}
         {pending.length === 0 && <li className="text-context-500 text-xs py-2">No invitations.</li>}
@@ -189,7 +290,21 @@ function InvitePanel({ agency_id, pending }: { agency_id: string; pending: Array
   );
 }
 
-function InstallsPanel({ agency_id, installs }: { agency_id: string; installs: Array<{ id: string; provider_id: string; enabled_capabilities: string[]; priority: number; credential_ref: string | null; enabled: boolean; budget_usd_per_month: number | null }> }) {
+function InstallsPanel({
+  agency_id,
+  installs,
+}: {
+  agency_id: string;
+  installs: Array<{
+    id: string;
+    provider_id: string;
+    enabled_capabilities: string[];
+    priority: number;
+    credential_ref: string | null;
+    enabled: boolean;
+    budget_usd_per_month: number | null;
+  }>;
+}) {
   const upsert = useUpsertInstall(agency_id);
   const storeCred = useStoreCredential(agency_id);
   const [providerId, setProviderId] = useState('etherscan');
@@ -215,22 +330,43 @@ function InstallsPanel({ agency_id, installs }: { agency_id: string; installs: A
             const cred = await storeCred.mutateAsync({ provider_id: providerId, label, secret });
             credential_ref = `vault:${cred.credential.id}`;
           }
-          await upsert.mutateAsync({ provider_id: providerId, enabled_capabilities: capabilities, priority, credential_ref });
+          await upsert.mutateAsync({
+            provider_id: providerId,
+            enabled_capabilities: capabilities,
+            priority,
+            credential_ref,
+          });
           setSecret('');
         }}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="block">
             <span className="text-context-600">Provider id</span>
-            <input required value={providerId} onChange={(e) => setProviderId(e.target.value)} className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs" />
+            <input
+              required
+              value={providerId}
+              onChange={(e) => setProviderId(e.target.value)}
+              className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs"
+            />
           </label>
           <label className="block">
             <span className="text-context-600">Priority (low wins)</span>
-            <input type="number" min={1} max={1000} value={priority} onChange={(e) => setPriority(Number(e.target.value))} className="mt-1 w-full border border-context-300 rounded px-2 py-1" />
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={priority}
+              onChange={(e) => setPriority(Number(e.target.value))}
+              className="mt-1 w-full border border-context-300 rounded px-2 py-1"
+            />
           </label>
           <label className="block">
             <span className="text-context-600">Credential label</span>
-            <input value={label} onChange={(e) => setLabel(e.target.value)} className="mt-1 w-full border border-context-300 rounded px-2 py-1" />
+            <input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              className="mt-1 w-full border border-context-300 rounded px-2 py-1"
+            />
           </label>
         </div>
 
@@ -238,8 +374,16 @@ function InstallsPanel({ agency_id, installs }: { agency_id: string; installs: A
           <span className="text-context-600 text-xs">Capabilities</span>
           <div className="flex flex-wrap gap-2 mt-1">
             {ALL_CAPS.map((c) => (
-              <label key={c} className={`text-xs px-2 py-1 rounded border cursor-pointer ${capabilities.includes(c) ? 'bg-blue-50 border-blue-400 text-blue-800' : 'border-context-300 text-context-700'}`}>
-                <input type="checkbox" checked={capabilities.includes(c)} onChange={() => toggleCap(c)} className="hidden" />
+              <label
+                key={c}
+                className={`text-xs px-2 py-1 rounded border cursor-pointer ${capabilities.includes(c) ? 'bg-blue-50 border-blue-400 text-blue-800' : 'border-context-300 text-context-700'}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={capabilities.includes(c)}
+                  onChange={() => toggleCap(c)}
+                  className="hidden"
+                />
                 {c}
               </label>
             ))}
@@ -247,11 +391,23 @@ function InstallsPanel({ agency_id, installs }: { agency_id: string; installs: A
         </div>
 
         <label className="block">
-          <span className="text-context-600">API key / secret (stored encrypted, never leaves your install)</span>
-          <input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="leave empty if provider is keyless" className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs" />
+          <span className="text-context-600">
+            API key / secret (stored encrypted, never leaves your install)
+          </span>
+          <input
+            type="password"
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder="leave empty if provider is keyless"
+            className="mt-1 w-full border border-context-300 rounded px-2 py-1 font-mono text-xs"
+          />
         </label>
 
-        <button type="submit" disabled={upsert.isPending || storeCred.isPending} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300">
+        <button
+          type="submit"
+          disabled={upsert.isPending || storeCred.isPending}
+          className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300"
+        >
           {upsert.isPending || storeCred.isPending ? 'Saving…' : 'Save install'}
         </button>
       </form>
@@ -261,19 +417,28 @@ function InstallsPanel({ agency_id, installs }: { agency_id: string; installs: A
           <li key={i.id} className="py-2">
             <div className="flex items-center justify-between">
               <span className="font-mono">{i.provider_id}</span>
-              <span className="text-xs text-context-500">priority {i.priority}{i.enabled ? '' : ' · disabled'}</span>
+              <span className="text-xs text-context-500">
+                priority {i.priority}
+                {i.enabled ? '' : ' · disabled'}
+              </span>
             </div>
             <div className="flex flex-wrap gap-1 mt-1">
               {i.enabled_capabilities.map((c) => (
-                <span key={c} className="text-[10px] bg-context-200 px-1.5 py-0.5 rounded">{c}</span>
+                <span key={c} className="text-[10px] bg-context-200 px-1.5 py-0.5 rounded">
+                  {c}
+                </span>
               ))}
             </div>
             {i.credential_ref && (
-              <div className="text-xs text-context-500 mt-1">credential <code>{i.credential_ref.slice(0, 16)}…</code></div>
+              <div className="text-xs text-context-500 mt-1">
+                credential <code>{i.credential_ref.slice(0, 16)}…</code>
+              </div>
             )}
           </li>
         ))}
-        {installs.length === 0 && <li className="text-context-500 text-xs py-2">No installs yet.</li>}
+        {installs.length === 0 && (
+          <li className="text-context-500 text-xs py-2">No installs yet.</li>
+        )}
       </ul>
     </div>
   );

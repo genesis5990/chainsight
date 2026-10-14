@@ -104,7 +104,12 @@ export async function agencyRoutes(fastify: FastifyInstance) {
       p_tier: body.tier,
       p_creator: request.auth.userId,
     });
-    if (error) return reply.code(400).send({ error: 'create_agency_failed', detail: error.message });
+    if (error) {
+      if (error.code === '23505') {
+        return reply.code(409).send({ error: 'slug_taken', detail: `The slug "${body.slug}" is already in use. Choose another.` });
+      }
+      return reply.code(400).send({ error: 'create_agency_failed', detail: error.message });
+    }
     return reply.code(201).send({ agency_id: data, slug: body.slug, name: body.name, tier: body.tier });
   });
 
