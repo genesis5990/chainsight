@@ -21,16 +21,30 @@ export interface TracerServiceOptions {
   connection: ConnectionOptions;
 }
 
+/** Thrown when a trace job cannot be handed to the queue. Maps to HTTP 503. */
+export class TraceQueueUnavailableError extends Error {
+  readonly statusCode = 503;
+  constructor(reason: string) {
+    super(`Trace queue unavailable: ${reason}`);
+    this.name = 'TraceQueueUnavailableError';
+  }
+}
+
 export class TracerService implements TracerAgentService {
   private readonly analyzeQueue: Queue<TraceJob>;
   private readonly cancelQueue: Queue<{ job_id: string }>;
 
   constructor(private readonly opts: TracerServiceOptions) {
     this.analyzeQueue = new Queue<TraceJob>(TRACER_QUEUE_NAME, { connection: opts.connection });
-    this.cancelQueue = new Queue<{ job_id: string }>(TRACER_CANCEL_QUEUE_NAME, { connection: opts.connection });
+    this.cancelQueue = new Queue<{ job_id: string }>(TRACER_CANCEL_QUEUE_NAME, {
+      connection: opts.connection,
+    });
   }
 
-  async start(req: TraceJobRequest, ctx: AgencyContext): Promise<{ job_id: string; idempotency_key: string; deduplicated: boolean }> {
+  async start(
+    req: TraceJobRequest,
+    ctx: AgencyContext,
+  ): Promise<{ job_id: string; idempotency_key: string; deduplicated: boolean }> {
     const resolved = withTraceDefaults(req);
     const idempotency_key = traceIdempotencyKey({
       case_id: resolved.case_id,
@@ -90,11 +104,22 @@ export class TracerService implements TracerAgentService {
       emit_progress_every_n_hops: resolved.emit_progress_every_n_hops,
     });
 
-    await this.analyzeQueue.add('trace', traceJob, {
-      jobId: insert.job_id,
-      removeOnComplete: { age: 24 * 60 * 60, count: 100 },
-      removeOnFail: { age: 24 * 60 * 60 },
-    });
+    try {
+      await this.analyzeQueue.add('trace', traceJob, {
+        jobId: insert.job_id,
+        removeOnComplete: { age: 24 * 60 * 60, count: 100 },
+        removeOnFail: { age: 24 * 60 * 60 },
+      });
+    } catch (err) {
+      // The row is already inserted as 'queued'. If the queue rejects the
+      // job (Redis down, quota exceeded), mark it failed so it does not sit
+      // in 'queued' forever, and surface a clear error to the caller.
+      const reason = err instanceof Error ? err.message : String(err);
+      await this.opts.store
+        .markFailed(insert.job_id, `enqueue failed: ${reason}`)
+        .catch(() => undefined);
+      throw new TraceQueueUnavailableError(reason);
+    }
 
     return { job_id: insert.job_id, idempotency_key, deduplicated: false };
   }

@@ -15,15 +15,8 @@ import sensible from '@fastify/sensible';
 import rateLimit from '@fastify/rate-limit';
 import IORedis from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
-import {
-  Pathfinder,
-  RedisPathResultCache,
-  SupabaseGraphLoader,
-} from '@chainsight/pathfinder';
-import {
-  SupabaseTraceJobStore,
-  TracerService,
-} from '@chainsight/tracer-agent';
+import { Pathfinder, RedisPathResultCache, SupabaseGraphLoader } from '@chainsight/pathfinder';
+import { SupabaseTraceJobStore, TracerService } from '@chainsight/tracer-agent';
 import {
   Ed25519PackSigner,
   ReproPackService,
@@ -44,6 +37,18 @@ import { agencyRoutes } from './routes/agency.js';
 const fastify = Fastify({
   logger: {
     level: env.LOG_LEVEL,
+    // The SSE route takes the JWT as ?access_token= (EventSource cannot send
+    // headers). Never write it to logs.
+    serializers: {
+      req(req) {
+        return {
+          method: req.method,
+          url: req.url.replace(/([?&]access_token=)[^&]*/g, '$1[redacted]'),
+          host: req.host,
+          remoteAddress: req.ip,
+        };
+      },
+    },
     transport:
       env.NODE_ENV === 'development'
         ? { target: 'pino-pretty', options: { colorize: true } }
@@ -90,9 +95,14 @@ const pfSupabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY,
   auth: { persistSession: false, autoRefreshToken: false },
 });
 const pfRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null, lazyConnect: true });
-const pfRedisSubscriber = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null, lazyConnect: true });
+const pfRedisSubscriber = new IORedis(env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  lazyConnect: true,
+});
 await pfRedis.connect().catch((e) => fastify.log.warn({ e }, 'pathfinder redis L1 unavailable'));
-await pfRedisSubscriber.connect().catch((e) => fastify.log.warn({ e }, 'pathfinder redis subscriber unavailable'));
+await pfRedisSubscriber
+  .connect()
+  .catch((e) => fastify.log.warn({ e }, 'pathfinder redis subscriber unavailable'));
 
 const pathfinder = new Pathfinder({
   loader: new SupabaseGraphLoader(
@@ -112,7 +122,9 @@ const tracerStore = new SupabaseTraceJobStore(
 const tracerQueueRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
 const tracer = new TracerService({
   store: tracerStore,
-  connection: tracerQueueRedis as unknown as ConstructorParameters<typeof TracerService>[0]['connection'],
+  connection: tracerQueueRedis as unknown as ConstructorParameters<
+    typeof TracerService
+  >[0]['connection'],
 });
 await fastify.register(tracerRoutes, { prefix: '/v1', tracer });
 
@@ -124,16 +136,28 @@ await fastify.register(eventsRoutes, {
 });
 
 // ─── Reproducibility Pack ───────────────────────────────────────────────────────────────────────────────────
-const packSigner = env.PACK_SIGNER_ID && env.PACK_SIGNER_PRIVATE_KEY_B64 && env.PACK_SIGNER_PUBLIC_KEY_B64
-  ? new Ed25519PackSigner(env.PACK_SIGNER_ID, env.PACK_SIGNER_PRIVATE_KEY_B64, env.PACK_SIGNER_PUBLIC_KEY_B64)
-  : null;
+const packSigner =
+  env.PACK_SIGNER_ID && env.PACK_SIGNER_PRIVATE_KEY_B64 && env.PACK_SIGNER_PUBLIC_KEY_B64
+    ? new Ed25519PackSigner(
+        env.PACK_SIGNER_ID,
+        env.PACK_SIGNER_PRIVATE_KEY_B64,
+        env.PACK_SIGNER_PUBLIC_KEY_B64,
+      )
+    : null;
 if (packSigner) {
   fastify.log.info({ signer_id: packSigner.signer_id }, 'pack signer configured (ed25519)');
 } else {
   fastify.log.warn('PACK_SIGNER_* env vars unset — packs will be persisted unsigned');
 }
 const verifierKeys = packSigner
-  ? { byId: { [packSigner.signer_id]: { algo: 'ed25519' as const, public_key_b64: packSigner.public_key_b64 } } }
+  ? {
+      byId: {
+        [packSigner.signer_id]: {
+          algo: 'ed25519' as const,
+          public_key_b64: packSigner.public_key_b64,
+        },
+      },
+    }
   : null;
 
 const reproService = new ReproPackService({
