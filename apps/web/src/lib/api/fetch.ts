@@ -57,10 +57,16 @@ export async function apiFetch<T = unknown>(path: string, init: ApiFetchOptions 
 
   if (!res.ok) {
     let detail: unknown = null;
-    try { detail = await res.json(); } catch { /* swallow */ }
-    const message = (detail as { error?: string; detail?: string } | null)?.error
-      ?? (detail as { detail?: string } | null)?.detail
-      ?? `HTTP ${res.status} ${res.statusText}`;
+    try {
+      detail = await res.json();
+    } catch {
+      /* swallow */
+    }
+    // Prefer the human-readable text: our routes put it in `detail`,
+    // Fastify's built-in errors put it in `message`. `error` is a code or
+    // the generic status text, so it comes last.
+    const d = (detail ?? {}) as { error?: string; detail?: string; message?: string };
+    const message = d.detail ?? d.message ?? d.error ?? `HTTP ${res.status} ${res.statusText}`;
     throw new ApiError(message, res.status, detail);
   }
 

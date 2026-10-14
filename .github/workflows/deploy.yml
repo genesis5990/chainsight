@@ -95,12 +95,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
         run: |
+          # REDIS_URL: the API needs the same Upstash Redis as the worker for
+          # the trace queue, SSE event bridge and pathfinder cache. Without it
+          # ioredis falls back to localhost:6379 and fails on Fly.
           flyctl secrets set --app chainsight-api-dev --stage \
             SUPABASE_URL="$SUPABASE_URL" \
             SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
             SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
-            SUPABASE_JWKS_URL="${SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+            SUPABASE_JWKS_URL="${SUPABASE_URL}/auth/v1/.well-known/jwks.json" \
+            REDIS_URL="$REDIS_URL"
 
       - name: Deploy chainsight-api-dev
         # Run from repo root so Dockerfile COPY paths resolve correctly.
