@@ -18,6 +18,13 @@ COPY apps/math/package.json ./apps/math/
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
+# NEXT_PUBLIC_* values are inlined into the client bundle at build time, so
+# they must be present here, not only as runtime secrets. Both are public by
+# design (the anon key is safe to ship to browsers; RLS enforces access).
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 COPY . .
 RUN pnpm --filter @chainsight/web build
 

@@ -147,7 +147,14 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 
       - name: Deploy chainsight-web-dev
-        run: flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600 --ha=false
+        # NEXT_PUBLIC_* must be build args: Next.js inlines them at build time.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          flyctl deploy . --config infra/fly/fly.web.toml --dockerfile apps/web/Dockerfile --remote-only --wait-timeout=600 --ha=false \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 
       - name: Dump Web logs on failure
         if: failure()
