@@ -21,9 +21,49 @@ env:
   FLY_ORG: personal
 
 jobs:
+  # ─── Type-check gate ─────────────────────────────────────────────────────
+  # Every deploy job below depends on these. The production builds (tsup,
+  # next build, docker) do not type-check on their own, so without this gate
+  # code that fails `tsc` can ship. If either job fails, nothing deploys.
+  typecheck:
+    name: Typecheck (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck all TypeScript workspaces
+        run: pnpm turbo run typecheck --filter='!@chainsight/math'
+
+  typecheck-math:
+    name: Typecheck (math service, mypy)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/math
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: uv pip install --system --no-cache ".[dev]"
+      - name: Mypy
+        run: mypy src
+
   # Each service deploys independently. Failures in one don't block others.
   deploy-api:
     name: Deploy API
+    needs: [typecheck, typecheck-math]
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'api' }}
     steps:
@@ -77,6 +117,7 @@ jobs:
 
   deploy-web:
     name: Deploy Web
+    needs: [typecheck, typecheck-math]
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'web' }}
     steps:
@@ -119,6 +160,7 @@ jobs:
 
   deploy-worker:
     name: Deploy Worker
+    needs: [typecheck, typecheck-math]
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'worker' }}
     steps:
@@ -157,6 +199,7 @@ jobs:
 
   deploy-math:
     name: Deploy Math Service
+    needs: [typecheck, typecheck-math]
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || github.event.inputs.service == 'all' || github.event.inputs.service == 'math' }}
     steps:

@@ -24,6 +24,7 @@ import {
   TracerService,
 } from '@chainsight/tracer-agent';
 import {
+  Ed25519PackSigner,
   ReproPackService,
   SupabaseCaseSource,
   SupabasePackRepository,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Literal
+from typing import Literal, TypedDict
 
 from .recipe import compute_recipe_hash
 
@@ -52,7 +52,16 @@ class ConfidenceResult:
 
 # Weights mirror packages/belief-state/src/math-stub.ts exactly.
 # Any change here must bump CODE_VERSION.
-_WEIGHTS = {
+class _Weights(TypedDict):
+    basis: dict[str, Decimal]
+    corroboration_step: Decimal
+    corroboration_cap: Decimal
+    sanctions: Decimal
+    obfuscation: Decimal
+    age_decay: Decimal
+
+
+_WEIGHTS: _Weights = {
     "basis": {"T0": Decimal("0.50"), "T2": Decimal("0.30"), "T3": Decimal("0.10")},
     "corroboration_step": Decimal("0.02"),
     "corroboration_cap": Decimal("0.10"),

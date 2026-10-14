@@ -65,8 +65,8 @@ jobs:
       - name: Ruff lint (placeholder)
         run: ruff check src || true # tighten Week 2
 
-      - name: Mypy (placeholder)
-        run: mypy src || true # tighten Week 4
+      - name: Mypy
+        run: mypy src
 
       - name: Pytest (placeholder)
         run: pytest tests || true # tests land Week 2
