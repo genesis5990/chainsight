@@ -256,7 +256,14 @@ export class TracerRunner {
 
     const totalCarriedTaint = entry.carried_lots.reduce((s, l) => s + safeBigInt(l.amount_minor), 0n);
 
+    const self = String(entry.node).toLowerCase();
     for (const edge of response.edges) {
+      // Follow only edges that leave this node (forward) or enter it
+      // (backward), whatever the provider returned. Self-transfers are skipped.
+      const from = String(edge.from_subject).toLowerCase();
+      const to = String(edge.to_subject).toLowerCase();
+      if (from === to) continue;
+      if (direction === 'forward' ? from !== self : to !== self) continue;
       const counterparty: SubjectRef = direction === 'forward' ? edge.to_subject : edge.from_subject;
       const edgeValue = safeBigInt(edge.value_native_minor);
 

@@ -156,7 +156,7 @@ export class CapabilityRouter {
 
     /* ─── 3. iterate installs ────────────────────────────────────────── */
     const attempts: Array<{ provider_id: string; error: string }> = [];
-    const ttlTier = options.ttl_override ?? deriveTtlTier(capability);
+    const ttlTier = options.ttl_override ?? deriveTtlTier(capability, args);
     const deadlineMs = options.deadline_ms ?? this.defaultDeadlineMs;
 
     for (const install of installs) {

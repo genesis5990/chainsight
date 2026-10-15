@@ -46,8 +46,15 @@ export function computeCacheKey(
   args: Record<string, unknown>,
   scope: CacheScope,
 ): string {
-  return `cap:${capability}:${computeArgsHash(args)}:${scope.scope}:${scope.scope_ref ?? '_'}`;
+  return `cap:${CACHE_KEY_VERSION}:${capability}:${computeArgsHash(args)}:${scope.scope}:${scope.scope_ref ?? '_'}`;
 }
+
+/**
+ * Bump when a connector's payload shape changes, so entries written in the
+ * old shape are never served again (they simply stop matching and expire).
+ *   v2: neighbor edges carry block_hash (tx_exists atoms require it).
+ */
+export const CACHE_KEY_VERSION = 'v2';
 
 export function ttlSeconds(tier: CacheTtlTier): number {
   switch (tier) {
@@ -82,7 +89,7 @@ export function deriveScope(capability: Capability, ctx: { agency_id: string; ac
   }
 }
 
-export function deriveTtlTier(capability: Capability): CacheTtlTier {
+export function deriveTtlTier(capability: Capability, args: Record<string, unknown> = {}): CacheTtlTier {
   switch (capability) {
     case 'get_tx_by_hash':
     case 'decode_router_swap':
@@ -90,10 +97,14 @@ export function deriveTtlTier(capability: Capability): CacheTtlTier {
       return 'permanent';
     case 'get_address_balance':
       return 'short_5m';
-    case 'get_address_neighbors':
-      // Neighbors over confirmed blocks are immutable; new pages over recent
-      // blocks would require re-fetch but the tracer pins block_window per call.
-      return 'permanent';
+    case 'get_address_neighbors': {
+      // An address keeps receiving transactions, so an open-ended lookup
+      // (no fixed end block) must not be cached for long or a trace silently
+      // misses newer activity. Only a lookup pinned to a closed block range
+      // is immutable and safe to keep.
+      const window = args.block_window as { to?: unknown } | undefined;
+      return Number.isFinite(Number(window?.to)) && window?.to !== undefined ? 'permanent' : 'short_5m';
+    }
     case 'get_address_attribution':
     case 'get_sanctions_status':
       return 'medium_1h';
