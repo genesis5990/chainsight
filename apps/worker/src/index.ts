@@ -123,6 +123,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   const materializer = new GraphMaterializer({
     feed: new SupabaseAtomFeed(
       supabase as unknown as ConstructorParameters<typeof SupabaseAtomFeed>[0],
+      { onError: (m) => log.error({ component: 'atom-feed' }, m) },
     ),
     sink: new SupabaseMaterializerSink(
       supabase as unknown as ConstructorParameters<typeof SupabaseMaterializerSink>[0],

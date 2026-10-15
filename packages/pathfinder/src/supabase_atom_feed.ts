@@ -1,60 +1,95 @@
 /**
- * SupabaseAtomFeed — pulls structural belief atoms from belief.atoms by
- * event_seq cursor for the GraphMaterializer.
+ * SupabaseAtomFeed: pulls structural belief atoms (tx_exists, address_sent,
+ * address_received) from belief.atoms for the GraphMaterializer.
+ *
+ * Cursor: keyset on (emitted_at, id). belief.atoms has no global sequence
+ * column (the old event_seq cursor queried a column that does not exist, so
+ * every fetch errored, the error was swallowed, and nothing was ever
+ * materialized). emitted_at is kept as the exact string Postgres returns, so
+ * microsecond precision survives. Re-reading an atom is harmless: the sink's
+ * upsert is idempotent on (case_id, tx_ref, edge_index).
+ *
+ * On process restart the cursor starts from the beginning and re-materializes
+ * idempotently. Persist the cursor before atom volume makes that slow.
  */
 
 import type { BeliefAtom } from '@chainsight/shared-types';
 import type { AtomFeed } from './materializer';
 
+type Result = Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
+
+interface FeedQuery {
+  in(col: string, vals: unknown[]): FeedQuery;
+  or(filter: string): FeedQuery;
+  order(col: string, opts?: { ascending?: boolean }): FeedQuery;
+  limit(n: number): Result;
+}
+
 export interface SupabaseFeedClient {
   schema(name: string): {
     from(table: string): {
-      select(cols: string): {
-        in(col: string, vals: unknown[]): {
-          gt(col: string, val: unknown): {
-            order(col: string, opts?: { ascending?: boolean }): {
-              limit(n: number): Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
-            };
-          };
-        };
-      };
+      select(cols: string): FeedQuery;
     };
   };
 }
 
 const STRUCTURAL_PREDICATES = ['tx_exists', 'address_sent', 'address_received'];
 
+export interface SupabaseAtomFeedOptions {
+  /** Called when a fetch fails. Default: console.error. Errors are never silent. */
+  onError?: (message: string) => void;
+}
+
 export class SupabaseAtomFeed implements AtomFeed {
-  private highWater = 0;
+  private lastEmittedAt: string | null = null;
+  private lastId: string | null = null;
+  private seen = 0;
+  private readonly onError: (message: string) => void;
 
-  constructor(private readonly client: SupabaseFeedClient) {}
+  constructor(
+    private readonly client: SupabaseFeedClient,
+    opts: SupabaseAtomFeedOptions = {},
+  ) {
+    this.onError = opts.onError ?? ((m) => console.error(`[atom-feed] ${m}`));
+  }
 
-  async fetchSince(sinceSeq: number, limit: number): Promise<BeliefAtom[]> {
+  /** `sinceSeq` is ignored: the feed keeps its own (emitted_at, id) cursor. */
+  async fetchSince(_sinceSeq: number, limit: number): Promise<BeliefAtom[]> {
     try {
-      const res = await this.client
+      let q = this.client
         .schema('belief')
         .from('atoms')
-        .select('id, case_id, subject_ref, subject_kind, predicate, object_payload, basis, basis_detail, emitted_at, emitted_by_id, emitted_by_kind, event_seq, parent_atom_id, reproducibility_inputs, confidence')
-        .in('predicate', STRUCTURAL_PREDICATES)
-        .gt('event_seq', sinceSeq)
-        .order('event_seq', { ascending: true })
-        .limit(limit);
-      const { data, error } = res;
-      if (error || !data) return [];
-      const atoms: BeliefAtom[] = [];
-      for (const row of data) {
-        const seq = Number(row.event_seq ?? 0);
-        if (seq > this.highWater) this.highWater = seq;
-        atoms.push(mapAtom(row));
+        .select('id, case_id, subject_ref, subject_kind, predicate, object_payload, basis, basis_detail, emitted_at, emitted_by_id, emitted_by_kind, parent_atom_id, reproducibility_inputs, confidence, status, payload_hash')
+        .in('predicate', STRUCTURAL_PREDICATES);
+      if (this.lastEmittedAt && this.lastId) {
+        const ts = `"${this.lastEmittedAt}"`;
+        q = q.or(`emitted_at.gt.${ts},and(emitted_at.eq.${ts},id.gt.${this.lastId})`);
       }
-      return atoms;
-    } catch {
+      const { data, error } = await q
+        .order('emitted_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(limit);
+      if (error) {
+        this.onError(`fetch failed: ${error.message}`);
+        return [];
+      }
+      const rows = data ?? [];
+      const last = rows[rows.length - 1];
+      if (last) {
+        this.lastEmittedAt = String(last.emitted_at);
+        this.lastId = String(last.id);
+        this.seen += rows.length;
+      }
+      return rows.map(mapAtom);
+    } catch (e) {
+      this.onError(`fetch threw: ${(e as Error).message}`);
       return [];
     }
   }
 
+  /** Monotonic count of atoms read (the materializer only needs it to move). */
   highWaterMark(): number {
-    return this.highWater;
+    return this.seen;
   }
 }
 

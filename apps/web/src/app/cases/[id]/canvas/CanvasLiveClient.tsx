@@ -103,6 +103,12 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
   const pathsQuery = usePaths(req);
   const traceJobs = useTraceJobs(case_id);
   const tracing = hasActiveTrace(traceJobs.data);
+  const latestTrace = (
+    (traceJobs.data as { traces?: Array<{ status: string; total_atoms_emitted: number; total_hops: number }> } | undefined)
+      ?.traces ?? []
+  )[0];
+  const finishedEmpty =
+    !tracing && latestTrace?.status === 'completed' && latestTrace.total_atoms_emitted === 0;
   const graphQuery = useCaseGraph(case_id, tracing);
   const graph = (graphQuery.data as LiveGraph | undefined) ?? null;
   const startTrace = useStartTrace();
@@ -307,7 +313,9 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
               <p className="text-sm text-context-500">
                 {tracing
                   ? 'Waiting for the first transfers. The graph fills in as the trace runs.'
-                  : 'No transfers yet. Start a trace to build the graph.'}
+                  : finishedEmpty
+                    ? 'The last trace finished with nothing to follow: the provider returned no value-carrying transfers in the traced direction for this address. Zero-value contract calls are not followed, and only the 100 oldest native and 100 oldest token transfers per address are read.'
+                    : 'No transfers yet. Start a trace to build the graph.'}
               </p>
             )}
           </div>
