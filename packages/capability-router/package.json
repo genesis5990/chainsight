@@ -17,8 +17,7 @@
   },
   "dependencies": {
     "@chainsight/shared-types": "workspace:*",
-    "@noble/hashes": "^1.6.1",
-    "ioredis": "5.11.1"
+    "@noble/hashes": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

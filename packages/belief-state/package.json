@@ -20,7 +20,6 @@
     "@chainsight/shared-types": "workspace:*",
     "@noble/hashes": "^1.6.1",
     "@supabase/supabase-js": "^2.47.10",
-    "ioredis": "5.11.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
