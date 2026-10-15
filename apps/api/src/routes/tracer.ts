@@ -17,6 +17,7 @@ import type {
   TraceJobRequest,
 } from '@chainsight/shared-types';
 import type { TracerService } from '@chainsight/tracer-agent';
+import { ensureCaseWriteAccess, type CaseAclClient } from '../lib/case_access.js';
 
 const subjectRef = z.string().min(3).max(256);
 const caseId = z.string().uuid();
@@ -40,6 +41,8 @@ const startSchema = z.object({
 
 export interface TracerRouteOptions {
   tracer: TracerService;
+  /** Service-role client for belief.case_acl (write access is required to record evidence). */
+  acl: CaseAclClient;
 }
 
 export async function tracerRoutes(fastify: FastifyInstance, opts: TracerRouteOptions) {
@@ -59,6 +62,9 @@ export async function tracerRoutes(fastify: FastifyInstance, opts: TracerRouteOp
     if (!request.auth) return reply.unauthorized();
     const body = startSchema.parse(request.body);
     const ctx = { ...buildCtx(request), active_case_id: body.case_id as CaseId };
+    // The worker records evidence as this user; make sure that will be allowed
+    // before queueing, instead of failing at the first atom.
+    await ensureCaseWriteAccess(opts.acl, body.case_id, ctx.user_id);
     const req: TraceJobRequest = {
       ...body,
       case_id: body.case_id as CaseId,
