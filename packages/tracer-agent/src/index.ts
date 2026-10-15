@@ -6,16 +6,9 @@
  */
 
 export { TracerRunner, StaticCancellationToken } from './runner';
-export type {
-  CancellationToken,
-  TracerRunnerOptions,
-  TracerRunResult,
-} from './runner';
+export type { CancellationToken, TracerRunnerOptions, TracerRunResult } from './runner';
 
-export {
-  FrontierQueue,
-  frontierPriority,
-} from './priority_queue';
+export { FrontierQueue, frontierPriority } from './priority_queue';
 
 export {
   CachedNeighborsProvider,
@@ -34,10 +27,7 @@ export {
   type RouterLike,
 } from './router_neighbors_provider';
 
-export {
-  traceIdempotencyKey,
-  withTraceDefaults,
-} from './idempotency';
+export { traceIdempotencyKey, withTraceDefaults } from './idempotency';
 
 export {
   SupabaseTraceJobStore,
@@ -51,12 +41,10 @@ export {
 } from './job_store';
 
 export {
-  makeTraceConsumers,
-  type TraceConsumerOptions,
-  type TraceConsumers,
-} from './bullmq_consumer';
+  startPgTraceConsumer,
+  processTraceJob,
+  type PgTraceConsumer,
+  type PgTraceConsumerOptions,
+} from './pg_consumer';
 
-export {
-  TracerService,
-  type TracerServiceOptions,
-} from './service';
+export { TracerService, type TracerServiceOptions } from './service';

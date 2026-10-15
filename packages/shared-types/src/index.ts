@@ -54,6 +54,8 @@ export * from './pathfinder';
 export * from './tracer';
 
 export * from './reproducibility';
+export * from './case_stream';
+export * from './memory_kv';
 
 // Belief Atom — the foundational unit. Full type fills in Week 2.
 export interface BeliefAtomLite {

@@ -20,9 +20,7 @@
     "@chainsight/capability-router": "workspace:*",
     "@chainsight/math-client": "workspace:*",
     "@chainsight/shared-types": "workspace:*",
-    "@noble/hashes": "^1.6.1",
-    "bullmq": "^5.34.0",
-    "ioredis": "5.11.1"
+    "@noble/hashes": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

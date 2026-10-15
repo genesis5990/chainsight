@@ -80,13 +80,23 @@ export const authPlugin = fp(async (fastify) => {
     if (request.url.startsWith('/v1/health')) return;
 
     const header = request.headers.authorization;
-    if (!header || !header.startsWith('Bearer ')) {
+    let token: string | null = header?.startsWith('Bearer ')
+      ? header.slice('Bearer '.length)
+      : null;
+
+    // EventSource cannot set headers, so the SSE route alone accepts the JWT
+    // as ?access_token=. Scoped to /v1/events/ so tokens are not accepted in
+    // URLs anywhere else. The logger redacts it.
+    if (!token && request.method === 'GET' && request.url.startsWith('/v1/events/')) {
+      const q = (request.query ?? {}) as Record<string, unknown>;
+      if (typeof q.access_token === 'string' && q.access_token) token = q.access_token;
+    }
+
+    if (!token) {
       // Unauthenticated requests pass through; every non-health route rejects
       // them with 401 (agency routes inline, the rest via requireAgency).
       return;
     }
-
-    const token = header.slice('Bearer '.length);
 
     let payload;
     try {

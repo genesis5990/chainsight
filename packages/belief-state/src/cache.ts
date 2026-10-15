@@ -8,7 +8,7 @@
  * stale rows into another tenant's read).
  */
 
-import type Redis from 'ioredis';
+import type { KvStore } from '@chainsight/shared-types';
 import type { BeliefAtom, BeliefAtomId, CaseId, SubjectRef } from '@chainsight/shared-types';
 
 const L2_TTL_SECONDS = 60;
@@ -23,7 +23,7 @@ export interface BeliefCache {
 }
 
 export interface CacheOptions {
-  redis: Redis;
+  redis: KvStore;
   /** A short string namespacing this deployment, e.g. 'dev' or 'prod'. */
   namespace?: string;
 }
@@ -41,7 +41,7 @@ export class L1Cache {
 }
 
 export class RedisL2Cache implements BeliefCache {
-  private readonly redis: Redis;
+  private readonly redis: KvStore;
   private readonly ns: string;
 
   constructor(opts: CacheOptions) {

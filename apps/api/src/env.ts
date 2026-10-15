@@ -16,9 +16,6 @@ const schema = z.object({
   SUPABASE_JWT_SECRET: z.string().optional(), // for legacy JWT verification
   SUPABASE_JWKS_URL: z.string().url().optional(), // preferred path
 
-  // Redis (Upstash or local)
-  REDIS_URL: z.string().default('redis://localhost:6379'),
-
   // KMS (AWS)
   AWS_REGION: z.string().default('us-east-2'),
   AWS_KMS_KEY_ID: z.string().optional(), // not needed in dev; required in prod

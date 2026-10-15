@@ -11,7 +11,7 @@
  * with a per-agency DEK; the surface here doesn't change.
  */
 
-import type Redis from 'ioredis';
+import type { KvStore } from '@chainsight/shared-types';
 import { blake3 } from '@noble/hashes/blake3';
 import type {
   CacheScope,
@@ -108,7 +108,7 @@ export function deriveTtlTier(capability: Capability): CacheTtlTier {
 /* ─── L1 (Redis) backend ───────────────────────────────────────────────── */
 
 export class RedisL1Cache implements CacheBackend {
-  constructor(private readonly redis: Redis | null) {}
+  constructor(private readonly redis: KvStore | null) {}
 
   async get<TPayload>(key: string): Promise<CacheEntry<TPayload> | null> {
     if (!this.redis) return null;

@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "files": ["dist", "package.json"],
+  "files": [
+    "dist",
+    "package.json"
+  ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsup",
@@ -24,8 +27,6 @@
     "@chainsight/tracer-agent": "workspace:*",
     "@noble/hashes": "^1.6.1",
     "@supabase/supabase-js": "^2.47.10",
-    "bullmq": "^5.34.0",
-    "ioredis": "5.11.1",
     "pino": "^9.5.0",
     "zod": "^3.24.1"
   },

@@ -1,99 +1,107 @@
 /**
- * Server-Sent Events bridge from Redis pub/sub → authenticated clients.
+ * Server-Sent Events bridge from belief.case_stream to authenticated clients.
  *
  * GET /v1/events/case/:case_id
  *
- * Subscribes to two pattern channels:
- *   - case:{case_id}:inspector:*:{ns}    (inspector pipeline progress)
- *   - case:{case_id}:trace:*:{ns}        (tracer agent progress)
- *   - case:{case_id}:graph-updated:{ns}  (materializer graph commits)
+ * Streams live rows for the case with topic 'trace' (tracer progress),
+ * 'graph-updated' (materializer commits) or 'inspector'. Postgres-backed
+ * (migration 0014); no Redis.
  *
- * Re-broadcasts every message as an SSE `event:` frame so the Web client
- * sees one unified stream per case. Authentication via the existing
- * authPlugin; access is gated by membership (Phase-1 keeps the check at the
- * auth layer; Phase-2 will add case_acl enforcement).
+ * Frames are unnamed (`data:` only) so EventSource.onmessage receives them;
+ * the topic is inside the JSON as `topic`. Each frame carries `id:` (the
+ * case_stream row id), so a reconnecting EventSource sends Last-Event-ID and
+ * resumes exactly where it stopped.
+ *
+ * Auth: authPlugin + requireAgency. The JWT may arrive as ?access_token=
+ * because EventSource cannot set headers.
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { requireAgency } from '../plugins/auth.js';
 import { z } from 'zod';
-import IORedis from 'ioredis';
+import type { CaseStream } from '@chainsight/shared-types';
+import { requireAgency } from '../plugins/auth.js';
 
 export interface EventsRouteOptions {
-  redis_url: string;
-  namespace: string;
+  stream: CaseStream;
 }
+
+const TOPICS = ['trace', 'graph-updated', 'inspector'];
 
 const paramsSchema = z.object({ case_id: z.string().uuid() });
 
 export async function eventsRoutes(fastify: FastifyInstance, opts: EventsRouteOptions) {
   fastify.addHook('preHandler', requireAgency);
 
-  fastify.get<{ Params: { case_id: string } }>('/events/case/:case_id', async (request: FastifyRequest<{ Params: { case_id: string } }>, reply: FastifyReply) => {
-    if (!request.auth) return reply.unauthorized();
-    const { case_id } = paramsSchema.parse(request.params);
+  fastify.get<{ Params: { case_id: string } }>(
+    '/events/case/:case_id',
+    async (request: FastifyRequest<{ Params: { case_id: string } }>, reply: FastifyReply) => {
+      if (!request.auth) return reply.unauthorized();
+      const { case_id } = paramsSchema.parse(request.params);
 
-    // Hijack Fastify's reply so we can stream chunks directly.
-    reply.raw.setHeader('Content-Type', 'text/event-stream');
-    reply.raw.setHeader('Cache-Control', 'no-cache, no-transform');
-    reply.raw.setHeader('Connection', 'keep-alive');
-    reply.raw.setHeader('X-Accel-Buffering', 'no');
-    reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
-    reply.raw.flushHeaders?.();
+      // Resume point: Last-Event-ID from a reconnecting EventSource.
+      const lastEventId = Number(request.headers['last-event-id']);
+      const afterId = Number.isFinite(lastEventId) && lastEventId > 0 ? lastEventId : undefined;
 
-    // Dedicated subscriber connection per stream — ioredis subscribers cannot
-    // be shared with the publisher and don't accept other commands.
-    const sub = new IORedis(opts.redis_url, { maxRetriesPerRequest: null });
+      reply.raw.setHeader('Content-Type', 'text/event-stream');
+      reply.raw.setHeader('Cache-Control', 'no-cache, no-transform');
+      reply.raw.setHeader('Connection', 'keep-alive');
+      reply.raw.setHeader('X-Accel-Buffering', 'no');
+      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
+      reply.raw.flushHeaders?.();
 
-    const patterns = [
-      `case:${case_id}:inspector:*:${opts.namespace}`,
-      `case:${case_id}:trace:*:${opts.namespace}`,
-      `case:${case_id}:graph-updated:${opts.namespace}`,
-    ];
-    try { await sub.psubscribe(...patterns); } catch (e) {
-      request.log.warn({ e }, 'sse psubscribe failed');
-    }
+      const write = (frame: string) => {
+        try {
+          reply.raw.write(frame);
+        } catch {
+          /* client gone; cleanup runs on close */
+        }
+      };
+      const send = (data: unknown, id?: number) => {
+        let frame = id !== undefined ? `id: ${id}\n` : '';
+        for (const line of JSON.stringify(data).split('\n')) frame += `data: ${line}\n`;
+        write(frame + '\n');
+      };
 
-    const send = (eventName: string, data: string) => {
-      reply.raw.write(`event: ${eventName}\n`);
-      // Split data on newlines per SSE spec (one `data:` line per line).
-      for (const line of data.split('\n')) reply.raw.write(`data: ${line}\n`);
-      reply.raw.write('\n');
-    };
+      // Clients can backfill durable history from belief.events after this.
+      send({
+        kind: 'snapshot_marker',
+        topic: 'control',
+        case_id,
+        resumed_after: afterId ?? null,
+        ts: new Date().toISOString(),
+      });
 
-    // Initial snapshot marker so clients can backfill if they missed events
-    // during the (re)connect window.
-    send('snapshot_marker', JSON.stringify({ case_id, namespace: opts.namespace, ts: new Date().toISOString() }));
+      const abort = new AbortController();
+      const heartbeat = setInterval(() => write(': ping\n\n'), 25_000);
+      heartbeat.unref?.();
 
-    sub.on('pmessage', (_pattern, channel, message) => {
-      // Derive the event name from the channel suffix between case_id and namespace.
-      // Examples:
-      //   case:<id>:inspector:<tx>:<ns>  → 'inspector'
-      //   case:<id>:trace:<job>:<ns>     → 'trace'
-      //   case:<id>:graph-updated:<ns>   → 'graph-updated'
-      const parts = channel.split(':');
-      const eventName = parts.length >= 3 ? parts[2]! : 'message';
-      send(eventName, message);
-    });
+      const cleanup = () => {
+        clearInterval(heartbeat);
+        abort.abort();
+      };
+      request.raw.on('close', cleanup);
+      request.raw.on('error', cleanup);
 
-    // Heartbeat every 25 s so reverse proxies don't close the idle connection.
-    const heartbeat = setInterval(() => {
-      try { reply.raw.write(': ping\n\n'); } catch { /* */ }
-    }, 25_000);
-    heartbeat.unref?.();
+      void (async () => {
+        for await (const row of opts.stream.tail({
+          case_id,
+          topics: TOPICS,
+          afterId,
+          signal: abort.signal,
+        })) {
+          const payload = (
+            row.payload && typeof row.payload === 'object' ? row.payload : { value: row.payload }
+          ) as Record<string, unknown>;
+          send(
+            { ...payload, topic: row.topic, topic_key: row.topic_key, at: row.created_at },
+            row.id,
+          );
+        }
+      })().catch((err) =>
+        request.log.warn({ err: (err as Error).message, case_id }, 'sse tail ended'),
+      );
 
-    const cleanup = () => {
-      clearInterval(heartbeat);
-      sub.removeAllListeners('pmessage');
-      // punsubscribe + quit; ignore errors during teardown
-      sub.punsubscribe(...patterns).catch(() => { /* */ });
-      sub.quit().catch(() => { /* */ });
-    };
-
-    request.raw.on('close', cleanup);
-    request.raw.on('error', cleanup);
-
-    // Tell Fastify we've taken over the response.
-    return reply;
-  });
+      return reply;
+    },
+  );
 }

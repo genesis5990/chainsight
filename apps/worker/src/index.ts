@@ -1,25 +1,14 @@
 /**
- * ChainSight worker — BullMQ-based job processor.
+ * ChainSight worker: trace jobs and graph materialization.
  *
- * Phase 0 Week 1: empty skeleton with a hello-world job for end-to-end smoke testing.
- * Phase 0 Week 3+: Tracer Agent jobs, document extraction, wallet analysis kickoff.
+ * Postgres only. Trace jobs are claimed from belief.trace_jobs (migration
+ * 0014), live events go to belief.case_stream, and caches are in-process
+ * (MemoryKv). There is no Redis dependency.
  */
-import { Worker, Queue, type ConnectionOptions } from 'bullmq';
-import IORedis from 'ioredis';
 import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
 import { BeliefPubSub, RedisL2Cache, SupabaseBeliefStateService } from '@chainsight/belief-state';
 import { MathClient } from '@chainsight/math-client';
-import {
-  FixtureChainProvider,
-  RouterChainProvider,
-  RouterLlmClient,
-  StubLlmClient,
-  SupabaseInspectorRunLookup,
-  SupabaseInspectorRunPersister,
-  makeBullMQConsumer as makeInspectorConsumer,
-  INSPECTOR_QUEUE_NAME,
-} from '@chainsight/inspector-pipeline';
 import {
   AnthropicConnector,
   CapabilityRouter,
@@ -35,7 +24,7 @@ import {
   SupabaseL2Cache,
   SupabaseResolutionAudit,
 } from '@chainsight/capability-router';
-import type { AgencyContext } from '@chainsight/shared-types';
+import { CaseStream, MemoryKv, type AgencyContext } from '@chainsight/shared-types';
 import {
   GraphMaterializer,
   SupabaseAtomFeed,
@@ -47,42 +36,12 @@ import {
   RouterNeighborsProvider,
   type NeighborsCtx,
   SupabaseTraceJobStore,
-  makeTraceConsumers,
+  startPgTraceConsumer,
 } from '@chainsight/tracer-agent';
 
 const log = pino({ name: 'chainsight-worker', level: process.env.LOG_LEVEL ?? 'info' });
-const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
-// BullMQ accepts an IORedis instance as `connection`, but its type expects
-// a ConnectionOptions union. Casting via unknown is the documented pattern.
-const connection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null,
-}) as unknown as ConnectionOptions;
-
-const HELLO_QUEUE = 'hello-world';
-
-// Outbound producer (other apps can import this pattern)
-export const helloQueue = new Queue(HELLO_QUEUE, { connection });
-
-// Inbound consumer
-const worker = new Worker(
-  HELLO_QUEUE,
-  async (job) => {
-    log.info({ id: job.id, name: job.name, data: job.data }, 'processing job');
-    return { processedAt: new Date().toISOString() };
-  },
-  { connection },
-);
-
-worker.on('completed', (job, result) => {
-  log.info({ id: job.id, result }, 'job completed');
-});
-
-worker.on('failed', (job, err) => {
-  log.error({ id: job?.id, err }, 'job failed');
-});
-
-// ─── Inspector pipeline consumer (gated on full env presence) ──────────────
+// ─── Wiring (requires Supabase service credentials) ─────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const MATH_URL = process.env.MATH_URL ?? 'https://chainsight-math-dev.fly.dev';
@@ -92,9 +51,14 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const pubsubConn = new IORedis(REDIS_URL, { maxRetriesPerRequest: null });
-  const l2 = new RedisL2Cache({ redis: pubsubConn, namespace: NAMESPACE });
-  const pubsub = new BeliefPubSub({ publisher: pubsubConn, namespace: NAMESPACE });
+  // In-process cache (replaces Redis) and Postgres event stream (replaces pub/sub).
+  const kv = new MemoryKv();
+  const caseStream = new CaseStream(
+    supabase as unknown as ConstructorParameters<typeof CaseStream>[0],
+    { warn: (msg, ctx) => log.warn(ctx ?? {}, msg) },
+  );
+  const l2 = new RedisL2Cache({ redis: kv, namespace: NAMESPACE });
+  const pubsub = new BeliefPubSub({ stream: caseStream });
   const math = new MathClient({ baseUrl: MATH_URL });
   const belief = new SupabaseBeliefStateService({
     serviceClient: supabase,
@@ -129,70 +93,31 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       new EnvCredentialStore(),
     ]),
     caches: {
-      l1: new RedisL1Cache(pubsubConn),
+      l1: new RedisL1Cache(kv),
       l2: new SupabaseL2Cache(
         supabase as unknown as ConstructorParameters<typeof SupabaseL2Cache>[0],
       ),
     },
-    redis: pubsubConn,
+    redis: kv,
     audit: new SupabaseResolutionAudit(
       supabase as unknown as ConstructorParameters<typeof SupabaseResolutionAudit>[0],
     ),
   });
 
-  // Worker-level AgencyContext used by router-backed providers. Real per-job
-  // context comes from the inspector request; this is the boot-time identity.
+  // Boot-time identity for router-backed providers. Per-job agency comes
+  // from the trace job itself.
   const workerCtx: AgencyContext = {
     user_id: process.env.WORKER_USER_ID ?? '00000000-0000-0000-0000-000000000000',
-    agency_id: process.env.WORKER_AGENCY_ID ?? '*',
+    agency_id: '',
     active_case_id: null,
     roles: ['investigator'],
     supervisory_scope_id: null,
     available_capabilities: ['get_tx_by_hash', 'get_address_attribution', 'llm_narrative'],
   };
 
-  // supabase-js client exposes the schema().from().insert() shape the
-  // persister depends on; cast for the structural interface check.
-  const persister = new SupabaseInspectorRunPersister(
-    supabase as unknown as ConstructorParameters<typeof SupabaseInspectorRunPersister>[0],
-  );
-  const lookup = new SupabaseInspectorRunLookup(
-    supabase as unknown as ConstructorParameters<typeof SupabaseInspectorRunLookup>[0],
-  );
-
-  const inspectorWorker = makeInspectorConsumer({
-    belief,
-    math,
-    // RouterChainProvider falls back to FixtureChainProvider for the seeded
-    // Op Lemon + USDT test fixtures, so demos still work without an Etherscan key.
-    chain: new RouterChainProvider({
-      router,
-      ctx: workerCtx,
-      fallback: new FixtureChainProvider(),
-    }),
-    // RouterLlmClient falls back to StubLlmClient when no Anthropic install
-    // is configured for the agency — keeps the pipeline explainable end-to-end.
-    llm: new RouterLlmClient({
-      router,
-      ctx: workerCtx,
-      fallback: new StubLlmClient(),
-    }),
-    connection,
-    publisher: pubsubConn,
-    namespace: NAMESPACE,
-    persister,
-    lookup,
-  });
-  inspectorWorker.on('completed', (job, result) => {
-    log.info(
-      { id: job.id, run_id: result.run_id, emitted: result.emitted_atom_ids.length },
-      'inspector job completed',
-    );
-  });
-  inspectorWorker.on('failed', (job, err) => {
-    log.error({ id: job?.id, err }, 'inspector job failed');
-  });
-  log.info({ queue: INSPECTOR_QUEUE_NAME }, 'inspector pipeline consumer started');
+  // The inspector pipeline has no producer yet (no API route enqueues
+  // inspector jobs), so no consumer runs. Add a Postgres-claimed consumer
+  // alongside the tracer one when an inspector route exists.
 
   // ── Graph materializer (v1.1 §6.3) ────────────────────────────────────────────
   const materializer = new GraphMaterializer({
@@ -202,7 +127,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     sink: new SupabaseMaterializerSink(
       supabase as unknown as ConstructorParameters<typeof SupabaseMaterializerSink>[0],
     ),
-    publisher: pubsubConn,
+    publisher: caseStream,
     namespace: NAMESPACE,
   });
   materializer.start();
@@ -221,7 +146,8 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
     router,
     contextFor: (nctx: NeighborsCtx): AgencyContext => ({
       user_id: workerCtx.user_id,
-      agency_id: nctx.agency_id || workerCtx.agency_id,
+      // Every trace job carries its agency. Never fall back to "all agencies".
+      agency_id: nctx.agency_id,
       active_case_id: nctx.case_id as AgencyContext['active_case_id'],
       roles: workerCtx.roles,
       supervisory_scope_id: workerCtx.supervisory_scope_id,
@@ -249,33 +175,41 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       return stubNeighbors.fetchNeighbors(query, ctx);
     },
   };
-  const tracerNeighbors = new CachedNeighborsProvider(fallbackNeighbors, pubsubConn);
+  const tracerNeighbors = new CachedNeighborsProvider(fallbackNeighbors, kv);
   const traceJobStore = new SupabaseTraceJobStore(
     supabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
   );
-  const traceConsumers = makeTraceConsumers({
+  const traceConsumer = startPgTraceConsumer({
     belief,
     neighbors: tracerNeighbors,
     store: traceJobStore,
-    connection,
-    publisher: pubsubConn,
+    publisher: caseStream,
     namespace: NAMESPACE,
+    concurrency: Number(process.env.TRACE_CONCURRENCY ?? 4),
+    pollMs: Number(process.env.TRACE_POLL_MS ?? 2000),
+    log: { info: (o, m) => log.info(o, m), error: (o, m) => log.error(o, m) },
   });
-  traceConsumers.trace.on('completed', (job, result) => {
-    log.info(
-      {
-        id: job.id,
-        job_id: result.job_id,
-        hops: result.summary.total_hops,
-        atoms: result.emitted_atom_ids.length,
-      },
-      'trace job completed',
-    );
-  });
-  traceConsumers.trace.on('failed', (job, err) => {
-    log.error({ id: job?.id, err }, 'trace job failed');
-  });
-  log.info('tracer agent consumers started');
+
+  // Prune live-event rows older than 24h (durable history is belief.events).
+  const prune = setInterval(
+    () => {
+      caseStream.prune('24 hours').then(
+        (n) => n > 0 && log.info({ rows: n }, 'case_stream pruned'),
+        (err) => log.error({ err: (err as Error).message }, 'case_stream prune failed'),
+      );
+    },
+    60 * 60 * 1000,
+  );
+  prune.unref();
+
+  const shutdown = async (signal: string) => {
+    log.info({ signal }, 'shutting down: finishing in-flight trace jobs');
+    clearInterval(prune);
+    await traceConsumer.close();
+    process.exit(0);
+  };
+  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+  process.once('SIGINT', () => void shutdown('SIGINT'));
 
   // ── Envelope cipher boot probe ─────────────────────────────────────────────────────
   // Record envelope cipher status in belief.envelope_health_probe so ops can
@@ -315,33 +249,6 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
   })();
 } else {
   log.warn(
-    'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing — inspector pipeline + materializer disabled',
+    'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing: tracer consumer and materializer disabled',
   );
 }
-
-// Eagerly verify the broker is reachable so a misconfigured REDIS_URL
-// fails fast at boot instead of on the first job enqueue.
-(async () => {
-  try {
-    const pingClient = new IORedis(REDIS_URL, {
-      lazyConnect: true,
-      maxRetriesPerRequest: 3,
-      connectTimeout: 5000,
-    });
-    await pingClient.connect();
-    const pong = await pingClient.ping();
-    const host = (() => {
-      try {
-        return new URL(REDIS_URL).host;
-      } catch {
-        return 'unknown';
-      }
-    })();
-    log.info({ host, pong }, 'redis broker reachable');
-    await pingClient.quit();
-  } catch (err) {
-    log.error({ err }, 'redis broker unreachable — worker will not process jobs');
-  }
-})();
-
-log.info('ChainSight worker started');

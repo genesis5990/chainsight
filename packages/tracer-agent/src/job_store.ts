@@ -27,6 +27,18 @@ export interface TraceJobStore {
   byId(job_id: string): Promise<TraceJobStatus | null>;
   isCancelled(job_id: string): Promise<boolean>;
   listForCase(case_id: CaseId, limit?: number): Promise<TraceJobStatus[]>;
+
+  /* ── Postgres queue (replaces BullMQ) ── */
+
+  /**
+   * Put a failed or cancelled job back in the queue with a fresh payload.
+   * Returns false if the job is not in a re-runnable state.
+   */
+  requeue(job_id: string, payload: TraceJob): Promise<boolean>;
+  /** Claim the oldest claimable job for this worker, or null. */
+  claim(worker_id: string): Promise<TraceJob | null>;
+  /** Refresh the heartbeat. False if the job is no longer running for this worker. */
+  heartbeat(job_id: string, worker_id: string): Promise<boolean>;
 }
 
 export interface TraceJobInsertInput {
@@ -39,6 +51,8 @@ export interface TraceJobInsertInput {
   methodology: string;
   params: Record<string, unknown>;
   idempotency_key: string;
+  /** Full job for the worker. A queued row is claimable only once this is set. */
+  job_payload: TraceJob;
 }
 
 export interface TraceJobInsertResult {
@@ -60,6 +74,7 @@ export interface TraceJobCompletion {
 export interface SupabaseTraceJobClient {
   schema(name: string): {
     from(table: string): SupabaseTable;
+    rpc(fn: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string } | null }>;
   };
 }
 
@@ -97,6 +112,7 @@ export class SupabaseTraceJobStore implements TraceJobStore {
       params: input.params,
       idempotency_key: input.idempotency_key,
       status: 'queued',
+      job_payload: input.job_payload,
     };
     const { error } = await this.client.schema('belief').from('trace_jobs').insert(row);
     if (error) {
@@ -165,6 +181,45 @@ export class SupabaseTraceJobStore implements TraceJobStore {
       if (error || !data) return [];
       return data.map(mapRow);
     } catch { return []; }
+  }
+
+  async requeue(job_id: string, payload: TraceJob): Promise<boolean> {
+    const current = await this.byId(job_id);
+    if (!current || (current.status !== 'failed' && current.status !== 'cancelled')) return false;
+    const { error } = await this.client.schema('belief').from('trace_jobs').update({
+      status: 'queued',
+      job_payload: payload,
+      queued_at: new Date().toISOString(),
+      started_at: null,
+      completed_at: null,
+      cancelled_at: null,
+      error: null,
+      termination_reason: null,
+      claimed_by: null,
+      heartbeat_at: null,
+      attempts: 0,
+      total_hops: 0,
+      total_atoms_emitted: 0,
+      total_budget_spent_usd: 0,
+      provider_response_hashes: [],
+    }).eq('id', job_id);
+    if (error) throw new Error(`trace_jobs requeue failed: ${error.message}`);
+    return true;
+  }
+
+  async claim(worker_id: string): Promise<TraceJob | null> {
+    const { data, error } = await this.client.schema('belief').rpc('claim_trace_job', { p_worker: worker_id });
+    if (error) throw new Error(`claim_trace_job failed: ${error.message}`);
+    const row = (Array.isArray(data) ? data[0] : data) as { job_payload?: TraceJob } | null | undefined;
+    return row?.job_payload ?? null;
+  }
+
+  async heartbeat(job_id: string, worker_id: string): Promise<boolean> {
+    const { data, error } = await this.client
+      .schema('belief')
+      .rpc('heartbeat_trace_job', { p_job_id: job_id, p_worker: worker_id });
+    if (error) throw new Error(`heartbeat_trace_job failed: ${error.message}`);
+    return data === true;
   }
 
   private async byIdemKey(case_id: CaseId, idempotency_key: string): Promise<TraceJobStatus | null> {

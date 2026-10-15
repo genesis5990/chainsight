@@ -26,17 +26,7 @@ services:
       - '--also-log-to-stderr=true'
       - '--log-level=WARNING'
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-
 volumes:
   memgraph_data:
   memgraph_log:
   memgraph_etc:
-  redis_data:
