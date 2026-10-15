@@ -269,6 +269,9 @@ export class TracerRunner {
           object_payload: {
             tx_hash: edge.tx_hash,
             block_height: edge.block_height,
+            // Provider-reported. Left absent (and the atom rejected) rather
+            // than invented when a provider does not return it.
+            ...(edge.block_hash ? { block_hash: edge.block_hash } : {}),
             block_time_utc: edge.block_time_utc,
             from: edge.from_subject,
             to: edge.to_subject,
@@ -295,7 +298,9 @@ export class TracerRunner {
             counterparty: edge.to_subject,
             value_native_minor: edge.value_native_minor,
             block_height: edge.block_height,
+            block_time_utc: edge.block_time_utc,
             edge_index: edge.edge_index,
+            edge_kind: edge.edge_kind,
             trace_job_id: job.job_id,
           },
           basis: 'T0',
@@ -318,7 +323,9 @@ export class TracerRunner {
             counterparty: edge.from_subject,
             value_native_minor: edge.value_native_minor,
             block_height: edge.block_height,
+            block_time_utc: edge.block_time_utc,
             edge_index: edge.edge_index,
+            edge_kind: edge.edge_kind,
             trace_job_id: job.job_id,
           },
           basis: 'T0',
@@ -356,9 +363,16 @@ export class TracerRunner {
           subject_ref: counterparty,
           predicate: 'has_taint_share',
           object_payload: {
-            taint_share: newTaint,
+            // The tracer computes a proportional approximation regardless of
+            // the requested methodology (FIFO/LIFO run in the math service at
+            // materialization). Label what was actually computed, and keep the
+            // request alongside it.
+            methodology: 'proportional',
+            requested_methodology: job.methodology,
+            tainted_minor: taintedMinor(edgeValue, newTaint),
+            total_minor: edgeValue.toString(),
+            fraction: newTaint,
             origin_count: job.origin.length,
-            methodology: job.methodology,
             trace_job_id: job.job_id,
           },
           basis: 'T2',
@@ -441,3 +455,11 @@ function clamp01(x: number): number {
 
 /** Re-export BeliefAtom so consumers see the chain. */
 export type { BeliefAtom };
+
+/** floor(total * fraction) in integer minor units, with 1e-9 fraction precision. */
+function taintedMinor(total: bigint, fraction: number): string {
+  if (total <= 0n || !(fraction > 0)) return '0';
+  const scale = 1_000_000_000n;
+  const f = BigInt(Math.floor(Math.min(1, fraction) * Number(scale)));
+  return ((total * f) / scale).toString();
+}

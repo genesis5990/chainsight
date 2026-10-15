@@ -179,6 +179,8 @@ export interface TracerNeighborEdge {
   tx_hash: string;
   edge_index: number;
   block_height: number;
+  /** Hash of the block containing the tx. Required by the tx_exists atom schema. */
+  block_hash?: string;
   block_time_utc: string;
   from_subject: SubjectRef;
   to_subject: SubjectRef;

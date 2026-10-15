@@ -50,12 +50,34 @@ export function useStartTrace() {
   });
 }
 
+const ACTIVE_TRACE = new Set(['queued', 'running']);
+
+/** True if any trace in a /traces response is still queued or running. */
+export function hasActiveTrace(data: unknown): boolean {
+  const traces = (data as { traces?: Array<{ status: string }> } | undefined)?.traces ?? [];
+  return traces.some((t) => ACTIVE_TRACE.has(t.status));
+}
+
 export function useTraceJobs(case_id: string | null) {
   return useQuery({
     queryKey: ['tracer', 'list', case_id],
     enabled: !!case_id,
     queryFn: async () => apiFetch(`/v1/cases/${case_id}/traces`),
-    staleTime: 10_000,
+    staleTime: 2_000,
+    // Poll while a trace is in flight so status never depends on SSE alone.
+    refetchInterval: (q) => (hasActiveTrace(q.state.data) ? 3_000 : false),
+  });
+}
+
+/** Materialized transaction graph for the canvas. Polls while traces run. */
+export function useCaseGraph(case_id: string | null, active: boolean) {
+  return useQuery({
+    queryKey: ['case', 'graph', case_id],
+    enabled: !!case_id,
+    queryFn: async () => apiFetch(`/v1/cases/${case_id}/graph`),
+    staleTime: 2_000,
+    retry: false,
+    refetchInterval: active ? 5_000 : false,
   });
 }
 
