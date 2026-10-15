@@ -1,9 +1,9 @@
 /**
- * TracerService — the public surface the API uses to enqueue jobs, cancel
- * them, and read status. Backed by BullMQ + TraceJobStore.
+ * TracerService: the API's surface for starting, cancelling and reading
+ * trace jobs. Backed by Postgres only: belief.trace_jobs is both the job
+ * record and the queue (see migration 0014). No Redis.
  */
 
-import { Queue, type ConnectionOptions } from 'bullmq';
 import type {
   AgencyContext,
   CaseId,
@@ -12,39 +12,17 @@ import type {
   TraceJobStatus,
   TracerAgentService,
 } from '@chainsight/shared-types';
-import { TRACER_QUEUE_NAME, TRACER_CANCEL_QUEUE_NAME } from '@chainsight/shared-types';
 import { traceIdempotencyKey, withTraceDefaults } from './idempotency';
 import { buildTraceJob, deriveJobId, type TraceJobStore } from './job_store';
 
 export interface TracerServiceOptions {
   store: TraceJobStore;
-  connection: ConnectionOptions;
-}
-
-/** Thrown when a trace job cannot be handed to the queue. Maps to HTTP 503. */
-export class TraceQueueUnavailableError extends Error {
-  readonly statusCode = 503;
-  constructor(reason: string) {
-    super(`Trace queue unavailable: ${reason}`);
-    this.name = 'TraceQueueUnavailableError';
-  }
 }
 
 export class TracerService implements TracerAgentService {
-  private readonly analyzeQueue: Queue<TraceJob>;
-  private readonly cancelQueue: Queue<{ job_id: string }>;
+  constructor(private readonly opts: TracerServiceOptions) {}
 
-  constructor(private readonly opts: TracerServiceOptions) {
-    this.analyzeQueue = new Queue<TraceJob>(TRACER_QUEUE_NAME, { connection: opts.connection });
-    this.cancelQueue = new Queue<{ job_id: string }>(TRACER_CANCEL_QUEUE_NAME, {
-      connection: opts.connection,
-    });
-  }
-
-  async start(
-    req: TraceJobRequest,
-    ctx: AgencyContext,
-  ): Promise<{ job_id: string; idempotency_key: string; deduplicated: boolean }> {
+  async start(req: TraceJobRequest, ctx: AgencyContext): Promise<{ job_id: string; idempotency_key: string; deduplicated: boolean }> {
     const resolved = withTraceDefaults(req);
     const idempotency_key = traceIdempotencyKey({
       case_id: resolved.case_id,
@@ -58,6 +36,26 @@ export class TracerService implements TracerAgentService {
       budget_usd: resolved.budget_usd,
     });
     const job_id = deriveJobId(idempotency_key);
+
+    const traceJob: TraceJob = buildTraceJob({
+      job_id,
+      case_id: resolved.case_id,
+      initiated_by_id: ctx.user_id,
+      agency_id: ctx.agency_id,
+      idempotency_key,
+      mode: resolved.mode,
+      origin: resolved.origin as string[],
+      direction: resolved.direction,
+      max_hops_per_path: resolved.max_hops_per_path,
+      max_total_hops: resolved.max_total_hops,
+      branching_cap: resolved.branching_cap,
+      budget_usd: resolved.budget_usd,
+      methodology: resolved.methodology,
+      taint_threshold: resolved.taint_threshold,
+      terminate_at_kinds: resolved.terminate_at_kinds,
+      terminate_at_subjects: resolved.terminate_at_subjects,
+      emit_progress_every_n_hops: resolved.emit_progress_every_n_hops,
+    });
 
     const insert = await this.opts.store.insertQueued({
       job_id,
@@ -78,54 +76,22 @@ export class TracerService implements TracerAgentService {
         emit_progress_every_n_hops: resolved.emit_progress_every_n_hops,
       },
       idempotency_key,
+      job_payload: traceJob,
     });
 
-    if (insert.deduplicated) {
-      return { job_id: insert.job_id, idempotency_key, deduplicated: true };
+    if (!insert.deduplicated) {
+      return { job_id: insert.job_id, idempotency_key, deduplicated: false };
     }
 
-    const traceJob: TraceJob = buildTraceJob({
-      job_id: insert.job_id,
-      case_id: resolved.case_id,
-      initiated_by_id: ctx.user_id,
-      agency_id: ctx.agency_id,
-      idempotency_key,
-      mode: resolved.mode,
-      origin: resolved.origin as string[],
-      direction: resolved.direction,
-      max_hops_per_path: resolved.max_hops_per_path,
-      max_total_hops: resolved.max_total_hops,
-      branching_cap: resolved.branching_cap,
-      budget_usd: resolved.budget_usd,
-      methodology: resolved.methodology,
-      taint_threshold: resolved.taint_threshold,
-      terminate_at_kinds: resolved.terminate_at_kinds,
-      terminate_at_subjects: resolved.terminate_at_subjects,
-      emit_progress_every_n_hops: resolved.emit_progress_every_n_hops,
-    });
-
-    try {
-      await this.analyzeQueue.add('trace', traceJob, {
-        jobId: insert.job_id,
-        removeOnComplete: { age: 24 * 60 * 60, count: 100 },
-        removeOnFail: { age: 24 * 60 * 60 },
-      });
-    } catch (err) {
-      // The row is already inserted as 'queued'. If the queue rejects the
-      // job (Redis down, quota exceeded), mark it failed so it does not sit
-      // in 'queued' forever, and surface a clear error to the caller.
-      const reason = err instanceof Error ? err.message : String(err);
-      await this.opts.store
-        .markFailed(insert.job_id, `enqueue failed: ${reason}`)
-        .catch(() => undefined);
-      throw new TraceQueueUnavailableError(reason);
-    }
-
-    return { job_id: insert.job_id, idempotency_key, deduplicated: false };
+    // Same settings as an earlier job. If that job failed or was cancelled,
+    // run it again instead of handing back the dead job.
+    const requeued = await this.opts.store.requeue(insert.job_id, { ...traceJob, job_id: insert.job_id });
+    return { job_id: insert.job_id, idempotency_key, deduplicated: !requeued };
   }
 
   async cancel(job_id: string, _ctx: AgencyContext): Promise<void> {
-    await this.cancelQueue.add('cancel', { job_id }, { jobId: `cancel:${job_id}` });
+    // The runner checks the row's status at every hop and stops cleanly.
+    await this.opts.store.markCancelled(job_id);
   }
 
   async status(job_id: string, _ctx: AgencyContext): Promise<TraceJobStatus | null> {
@@ -137,6 +103,6 @@ export class TracerService implements TracerAgentService {
   }
 
   async close(): Promise<void> {
-    await Promise.allSettled([this.analyzeQueue.close(), this.cancelQueue.close()]);
+    // Nothing to close: no queue connections.
   }
 }
