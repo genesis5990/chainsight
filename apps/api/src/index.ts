@@ -33,6 +33,7 @@ import { tracerRoutes } from './routes/tracer.js';
 import { eventsRoutes } from './routes/events.js';
 import { reproPackRoutes } from './routes/repro_pack.js';
 import { agencyRoutes } from './routes/agency.js';
+import { graphRoutes } from './routes/graph.js';
 
 const fastify = Fastify({
   logger: {
@@ -118,6 +119,7 @@ const tracerStore = new SupabaseTraceJobStore(
 );
 const tracer = new TracerService({ store: tracerStore });
 await fastify.register(tracerRoutes, { prefix: '/v1', tracer });
+await fastify.register(graphRoutes, { prefix: '/v1', supabase: pfSupabase });
 
 // ─── SSE events bridge ────────────────────────────────────────────────────────────────────────
 await fastify.register(eventsRoutes, { prefix: '/v1', stream: caseStream });

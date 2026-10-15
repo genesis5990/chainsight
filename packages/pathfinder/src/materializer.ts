@@ -184,7 +184,8 @@ export function buildFromAtom(atom: BeliefAtom): { edges: MaterializedEdge[]; no
         chain: deriveChain(String(atom.subject_ref)),
         from_subject: String(atom.subject_ref),
         to_subject: counterparty,
-        edge_kind: 'tx_native',
+        // Provider-reported kind (tx_native | token_transfer); default native.
+        edge_kind: (typeof obj.edge_kind === 'string' ? obj.edge_kind : 'tx_native') as GraphEdgeKind,
         tx_ref: txRef,
         edge_index: edgeIndex,
         block_height: blockHeight,

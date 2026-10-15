@@ -48,6 +48,7 @@ interface NeighborsProviderEdge {
   tx_hash: string;
   edge_index: number;
   block_height: number;
+  block_hash?: string;
   block_time_utc: string;
   from_subject: string;
   to_subject: string;
@@ -128,6 +129,7 @@ function mapPayload(payload: NeighborsProviderPayload): TracerNeighborsResponse 
     tx_hash: e.tx_hash,
     edge_index: e.edge_index,
     block_height: e.block_height,
+    ...(e.block_hash ? { block_hash: e.block_hash } : {}),
     block_time_utc: e.block_time_utc,
     from_subject: e.from_subject as SubjectRef,
     to_subject: e.to_subject as SubjectRef,

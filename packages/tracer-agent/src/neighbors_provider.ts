@@ -10,6 +10,7 @@
  * with 5-minute TTL (spec §8.2).
  */
 
+import { createHash } from 'node:crypto';
 import type { KvStore } from '@chainsight/shared-types';
 import type {
   BeliefChainId,
@@ -130,6 +131,7 @@ export function mkEdge(input: {
   tx_hash: string;
   edge_index?: number;
   block_height: number;
+  block_hash?: string;
   block_time_utc?: string;
   from: SubjectRef;
   to: SubjectRef;
@@ -142,6 +144,8 @@ export function mkEdge(input: {
     tx_hash: input.tx_hash,
     edge_index: input.edge_index ?? 0,
     block_height: input.block_height,
+    // Fixture-only helper: synthesize a stable block hash when none is given.
+    block_hash: input.block_hash ?? fixtureBlockHash(input.chain, input.block_height),
     block_time_utc: input.block_time_utc ?? new Date(1_700_000_000_000 + input.block_height * 12_000).toISOString(),
     from_subject: input.from,
     to_subject: input.to,
@@ -149,6 +153,10 @@ export function mkEdge(input: {
     edge_kind: input.edge_kind ?? 'tx_native',
     cost_usd: input.cost_usd ?? 0.002,
   };
+}
+
+function fixtureBlockHash(chain: string, height: number): string {
+  return '0x' + createHash('sha256').update(`fixture-block:${chain}:${height}`).digest('hex');
 }
 
 /** Stable hash of a neighbors response (for provider_response_hashes audit). */

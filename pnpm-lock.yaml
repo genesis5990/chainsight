@@ -426,6 +426,9 @@ importers:
         specifier: ^1.6.1
         version: 1.8.0
     devDependencies:
+      '@chainsight/belief-state':
+        specifier: workspace:*
+        version: link:../belief-state
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.21

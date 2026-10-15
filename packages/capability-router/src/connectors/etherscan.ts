@@ -117,6 +117,7 @@ export interface EtherscanNeighborsResponse {
     tx_hash: string;
     edge_index: number;
     block_height: number;
+    block_hash?: string;
     block_time_utc: string;
     from_subject: string;
     to_subject: string;
@@ -347,6 +348,7 @@ export class EtherscanConnector implements ProviderConnector {
         tx_hash: t.hash,
         edge_index: 0,
         block_height: Number(t.blockNumber),
+        block_hash: t.blockHash,
         block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
         from_subject: `evm:${chainId}_addr:${t.from.toLowerCase()}`,
         to_subject: `evm:${chainId}_addr:${t.to.toLowerCase()}`,
@@ -363,6 +365,7 @@ export class EtherscanConnector implements ProviderConnector {
         tx_hash: t.hash,
         edge_index: Number(t.transactionIndex ?? 0),
         block_height: Number(t.blockNumber),
+        block_hash: t.blockHash,
         block_time_utc: new Date(Number(t.timeStamp) * 1000).toISOString(),
         from_subject: `evm:${chainId}_addr:${t.from.toLowerCase()}`,
         to_subject: `evm:${chainId}_addr:${t.to.toLowerCase()}`,
@@ -448,6 +451,7 @@ function matchesDirection(
 }
 
 interface EtherscanListTx {
+  blockHash: string;
   blockNumber: string;
   timeStamp: string;
   hash: string;
@@ -457,6 +461,7 @@ interface EtherscanListTx {
 }
 
 interface EtherscanListToken extends EtherscanListTx {
+  blockHash: string;
   transactionIndex?: string;
   contractAddress?: string;
 }
