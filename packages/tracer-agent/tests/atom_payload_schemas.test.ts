@@ -131,3 +131,25 @@ describe('tracer atoms vs belief-state payload schemas', () => {
     await expect(new TracerRunner({ belief, neighbors: p }).run(job(), ctx)).rejects.toThrow(/tx_exists.*block_hash/);
   });
 });
+
+describe('trace direction', () => {
+  it('maps tracer directions onto the connector vocabulary', async () => {
+    const { toConnectorDirection } = await import('../src/router_neighbors_provider');
+    expect(toConnectorDirection('forward')).toBe('outflow');
+    expect(toConnectorDirection('backward')).toBe('inflow');
+    expect(toConnectorDirection('both')).toBe('both');
+  });
+
+  it('a forward trace ignores incoming transfers even if the provider returns them', async () => {
+    const X = 'evm:1_addr:0x9999999999999999999999999999999999999999' as SubjectRef;
+    const p = new StubNeighborsProvider();
+    // Provider ignored the direction and returned both: X→A (incoming) and A→B (outgoing).
+    p.add({ node: A, direction: 'forward', node_attribution_kind: null, edges: [etherscanEdge(X, A, 10, '5000'), etherscanEdge(A, B, 11, '4000')] });
+    p.add({ node: B, direction: 'forward', node_attribution_kind: 'exchange', edges: [] });
+    const belief = new ValidatingBelief();
+    await new TracerRunner({ belief, neighbors: p }).run(job(), ctx);
+    const sent = belief.atoms.filter((a) => a.predicate === 'address_sent');
+    expect(sent.map((a) => (a.object_payload as { counterparty: string }).counterparty)).toEqual([B]);
+    expect(belief.atoms.some((a) => a.subject_ref === X)).toBe(false);
+  });
+});

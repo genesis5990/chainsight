@@ -87,7 +87,10 @@ export class RouterNeighborsProvider implements NeighborsProvider {
     const args: Record<string, unknown> = {
       chain: parsed.chain,
       address: parsed.address,
-      direction: query.direction,
+      // The tracer speaks forward/backward; connectors speak outflow/inflow.
+      // An unmapped value was treated as 'both', so a forward trace also
+      // followed incoming transfers (recorded as the address paying itself).
+      direction: toConnectorDirection(query.direction),
     };
     if (query.block_window) args.block_window = query.block_window;
 
@@ -144,4 +147,11 @@ function mapPayload(payload: NeighborsProviderPayload): TracerNeighborsResponse 
     node_attribution_kind,
     total_cost_usd: payload.total_cost_usd ?? edges.reduce((a, b) => a + b.cost_usd, 0),
   };
+}
+
+/** Map the tracer's direction onto the connector vocabulary. */
+export function toConnectorDirection(d: string): 'outflow' | 'inflow' | 'both' {
+  if (d === 'forward' || d === 'outflow') return 'outflow';
+  if (d === 'backward' || d === 'inflow') return 'inflow';
+  return 'both';
 }
