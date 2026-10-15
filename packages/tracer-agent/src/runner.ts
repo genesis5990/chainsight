@@ -351,7 +351,11 @@ export class TracerRunner {
       // outgoing edge value over the sum of all outgoing edge values.
       // Full FIFO/LIFO/proportional methodology is computed in the math
       // service at materialization time; the tracer cheaply approximates.
-      const edgeShare = totalCarriedTaint > 0n ? Number(edgeValue) / Math.max(1, Number(totalCarriedTaint)) : 0;
+      // When the carried amount is unknown (the origin's seed lot has
+      // amount 0), every outflow inherits the carried taint in full. The old
+      // fallback of 0 cut every origin branch at taint_below_threshold, so no
+      // trace could get past hop 1.
+      const edgeShare = totalCarriedTaint > 0n ? Number(edgeValue) / Math.max(1, Number(totalCarriedTaint)) : 1;
       const newTaint = clamp01(entry.carried_lots.reduce((s, l) => s + l.taint_share, 0) / entry.carried_lots.length * Math.min(1, edgeShare || 0));
 
       if (newTaint < job.taint_threshold) {

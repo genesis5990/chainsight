@@ -168,6 +168,25 @@ describe('TracerRunner.run', () => {
     expect(result.summary.total_edges).toBe(txAtoms.length);
   });
 
+  it('traces past the origin at the production taint threshold (seed lot amount unknown)', async () => {
+    // Regression: the origin's seed lot has amount 0 ("unknown until first
+    // hop"). The edge share fell back to 0, so with the default 0.01
+    // threshold every origin branch was cut and no trace passed hop 1.
+    // The other tests use taint_threshold 0, which hid this.
+    const belief = new FakeBeliefStateService();
+    const runner = new TracerRunner({ belief, neighbors: makeProvider() });
+    const result = await runner.run(buildJob({ taint_threshold: 0.01 }), ctx);
+    const taint = belief.atoms.filter((a) => a.predicate === 'has_taint_share');
+    const txs = belief.atoms.filter((a) => a.predicate === 'tx_exists').map((a) => (a.object_payload as { tx_hash: string }).tx_hash);
+    expect(result.summary.total_hops).toBeGreaterThan(1);
+    expect(txs).toEqual(expect.arrayContaining(['0xVB1', '0xBR1']));
+    expect(taint.length).toBeGreaterThan(0);
+    // VICTIM -> BRIDGE moves the whole seed: full taint at hop 1.
+    const first = taint.find((a) => a.subject_ref === BRIDGE)!;
+    expect((first.object_payload as { fraction: number }).fraction).toBe(1);
+    expect(result.summary.branch_termination_counts.taint_below_threshold ?? 0).toBe(0);
+  });
+
   it('terminates branches that reach a mixer (terminate_at_kinds)', async () => {
     const events: TraceProgressEvent[] = [];
     const runner = new TracerRunner({
