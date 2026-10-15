@@ -40,7 +40,7 @@ import {
 import { ProviderCircuitBreaker } from './circuit_breaker';
 import type { CredentialStore } from './credential_store';
 import type { InstallRegistry } from './install_registry';
-import type Redis from 'ioredis';
+import type { KvStore } from '@chainsight/shared-types';
 
 export interface ResolutionAudit {
   record(input: {
@@ -68,7 +68,7 @@ export interface CapabilityRouterOptions {
   credentials: CredentialStore;
   caches: { l1?: CacheBackend; l2?: CacheBackend };
   /** Redis for circuit breaker state. Optional — router degrades to no-breaker if null. */
-  redis?: Redis | null;
+  redis?: KvStore | null;
   /** Resolution audit log. Defaults to no-op. */
   audit?: ResolutionAudit;
   /** Default deadline. Override per-capability via deadline_ms in resolve(). */

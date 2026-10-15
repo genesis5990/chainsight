@@ -28,7 +28,7 @@ describe('ProviderCircuitBreaker', () => {
   it('stays closed below the failure threshold', async () => {
     let now = 1_000_000;
     const redis = new FakeRedis();
-    const cb = new ProviderCircuitBreaker('install-1', redis as unknown as import('ioredis').default, {
+    const cb = new ProviderCircuitBreaker('install-1', redis as unknown as import('@chainsight/shared-types').KvStore, {
       failure_threshold: 5, now: () => now,
     });
     for (let i = 0; i < 4; i++) await cb.recordFailure();
@@ -38,7 +38,7 @@ describe('ProviderCircuitBreaker', () => {
   it('trips open at the failure threshold', async () => {
     let now = 1_000_000;
     const redis = new FakeRedis();
-    const cb = new ProviderCircuitBreaker('install-2', redis as unknown as import('ioredis').default, {
+    const cb = new ProviderCircuitBreaker('install-2', redis as unknown as import('@chainsight/shared-types').KvStore, {
       failure_threshold: 5, now: () => now,
     });
     for (let i = 0; i < 5; i++) await cb.recordFailure();
@@ -48,7 +48,7 @@ describe('ProviderCircuitBreaker', () => {
   it('moves to half_open after the reset timeout and allows a call', async () => {
     let now = 1_000_000;
     const redis = new FakeRedis();
-    const cb = new ProviderCircuitBreaker('install-3', redis as unknown as import('ioredis').default, {
+    const cb = new ProviderCircuitBreaker('install-3', redis as unknown as import('@chainsight/shared-types').KvStore, {
       failure_threshold: 3, reset_timeout_ms: 1000, now: () => now,
     });
     for (let i = 0; i < 3; i++) await cb.recordFailure();
@@ -62,7 +62,7 @@ describe('ProviderCircuitBreaker', () => {
   it('returns to closed after a success in half_open', async () => {
     let now = 1_000_000;
     const redis = new FakeRedis();
-    const cb = new ProviderCircuitBreaker('install-4', redis as unknown as import('ioredis').default, {
+    const cb = new ProviderCircuitBreaker('install-4', redis as unknown as import('@chainsight/shared-types').KvStore, {
       failure_threshold: 3, reset_timeout_ms: 100, now: () => now,
     });
     for (let i = 0; i < 3; i++) await cb.recordFailure();

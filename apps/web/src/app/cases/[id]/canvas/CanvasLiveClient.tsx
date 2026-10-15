@@ -63,12 +63,20 @@ export function CanvasLiveClient({ case_id }: { case_id: string }) {
   const [events, setEvents] = useState<Array<{ kind: string; case_seq?: number; at: string }>>([]);
   useSSE(case_id, {
     onEvent: (evt) => {
+      const e = evt as { kind?: string; topic?: string; case_seq?: number };
+      if (e.topic === 'control') return; // snapshot marker
       setEvents((cur) =>
         [
-          { kind: evt.kind, case_seq: evt.case_seq, at: new Date().toLocaleTimeString() },
+          {
+            kind: e.kind ?? e.topic ?? 'event',
+            case_seq: e.case_seq,
+            at: new Date().toLocaleTimeString(),
+          },
           ...cur,
         ].slice(0, 30),
       );
+      // Keep the trace list current as jobs progress and finish.
+      if (e.topic === 'trace') void traceJobs.refetch();
     },
   });
 

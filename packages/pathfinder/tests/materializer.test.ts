@@ -147,7 +147,7 @@ describe('GraphMaterializer.tick', () => {
     const mat = new GraphMaterializer({
       feed: new FakeFeed([[a1]]),
       sink,
-      publisher: publisher as unknown as Parameters<typeof GraphMaterializer.prototype['tick']>[0] extends never ? never : import('ioredis').default,
+      publisher: publisher as unknown as Parameters<typeof GraphMaterializer.prototype['tick']>[0] extends never ? never : import('@chainsight/shared-types').EventPublisher,
       namespace: 'test',
     });
     await mat.tick();

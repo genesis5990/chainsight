@@ -17,8 +17,6 @@ export type { LlmNarrativeClient, LlmNarrativeStream, LlmNarrativeInputs } from 
 export { FixtureChainProvider, ACME_VICTIM_BTC_REF, RANSOM_CREW_ETH_REF } from './chain_provider_stub';
 export type { ChainProvider, ChainTxFixture, ChainTxParty } from './chain_provider_stub';
 
-export { makeBullMQConsumer, INSPECTOR_QUEUE_NAME } from './bullmq_consumer';
-export type { BullMQConsumerOptions } from './bullmq_consumer';
 
 export {
   SupabaseInspectorRunPersister,

@@ -41,9 +41,10 @@ export {
 } from './job_store';
 
 export {
-  makeTraceConsumers,
-  type TraceConsumerOptions,
-  type TraceConsumers,
-} from './bullmq_consumer';
+  startPgTraceConsumer,
+  processTraceJob,
+  type PgTraceConsumer,
+  type PgTraceConsumerOptions,
+} from './pg_consumer';
 
-export { TracerService, TraceQueueUnavailableError, type TracerServiceOptions } from './service';
+export { TracerService, type TracerServiceOptions } from './service';

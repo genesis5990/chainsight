@@ -10,7 +10,7 @@
  * with 5-minute TTL (spec §8.2).
  */
 
-import type Redis from 'ioredis';
+import type { KvStore } from '@chainsight/shared-types';
 import type {
   BeliefChainId,
   GraphEdgeKind,
@@ -49,7 +49,7 @@ export interface NeighborsCtx {
 export class CachedNeighborsProvider implements NeighborsProvider {
   constructor(
     private readonly inner: NeighborsProvider,
-    private readonly redis: Redis | null,
+    private readonly redis: KvStore | null,
     private readonly ttl_seconds: number = NEIGHBORS_CACHE_TTL_S,
   ) {}
 

@@ -6,7 +6,7 @@
  * process; the API embeds it.
  */
 
-import type Redis from 'ioredis';
+import type { CaseStream } from '@chainsight/shared-types';
 import type {
   AgencyContext,
   GraphEdge,
@@ -44,8 +44,12 @@ export interface PathfinderOptions {
   loader: GraphLoader;
   store?: CaseGraphStore;
   resultCache?: PathResultCache;
-  /** Redis subscriber for `case:{id}:graph-updated` events (optional). */
-  invalidatorSubscriber?: Redis | null;
+  /**
+   * Stream of `graph-updated` events from the worker's materializer
+   * (belief.case_stream). When set, the adjacency cache and result cache
+   * for a case are cleared as soon as its graph changes.
+   */
+  graphUpdates?: CaseStream | null;
   /** Deployment namespace, e.g. 'dev'/'prod'. */
   namespace?: string;
 }
@@ -54,6 +58,7 @@ export class Pathfinder implements PathfinderService {
   private readonly store: CaseGraphStore;
   private readonly cache: PathResultCache;
   readonly namespace: string;
+  private readonly stop = new AbortController();
 
   constructor(private readonly opts: PathfinderOptions) {
     this.store = opts.store ?? new CaseGraphStore();
@@ -61,15 +66,24 @@ export class Pathfinder implements PathfinderService {
     this.namespace = opts.namespace ?? 'dev';
 
     // Wire invalidator (optional).
-    if (opts.invalidatorSubscriber) {
-      const sub = opts.invalidatorSubscriber;
-      const pattern = `case:*:graph-updated:${this.namespace}`;
-      sub.psubscribe(pattern).catch(() => { /* best-effort */ });
-      sub.on('pmessage', (_pat, channel) => {
-        const m = channel.match(/^case:([^:]+):graph-updated:/);
-        if (m) this.store.invalidate(m[1] as CaseGraph['case_id']);
-      });
+    if (opts.graphUpdates) {
+      const stream = opts.graphUpdates;
+      const store = this.store;
+      const cache = this.cache;
+      const signal = this.stop.signal;
+      void (async () => {
+        for await (const row of stream.tail({ topics: ['graph-updated'], signal })) {
+          const case_id = row.case_id as CaseGraph['case_id'];
+          store.invalidate(case_id);
+          await cache.invalidateCase?.(case_id);
+        }
+      })().catch(() => { /* tail() retries internally; only exits on abort */ });
     }
+  }
+
+  /** Stop listening for graph updates. */
+  close(): void {
+    this.stop.abort();
   }
 
   /* ─── public API ────────────────────────────────────────────────────── */

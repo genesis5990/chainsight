@@ -7,7 +7,7 @@
  * duplicate emissions no-ops.
  *
  * On a successful batch commit, publishes `case:{id}:graph-updated:{ns}`
- * on Redis pub/sub so API processes can invalidate their adjacency caches.
+ * to belief.case_stream so API processes can invalidate their adjacency caches.
  *
  * Phase 1 design: pull-based on a 5-second tick that scans for new atoms.
  * A push-based subscriber will follow in Week 6 once the belief-state
@@ -15,7 +15,7 @@
  * the predicate so we can filter cheaply.
  */
 
-import type Redis from 'ioredis';
+import type { EventPublisher } from '@chainsight/shared-types';
 import type {
   BeliefAtom,
   CaseId,
@@ -73,7 +73,8 @@ export interface MaterializedNode {
 export interface MaterializerOptions {
   feed: AtomFeed;
   sink: MaterializerSink;
-  publisher?: Redis | null;
+  /** Live event sink (CaseStream). Emits `graph-updated` per changed case. */
+  publisher?: EventPublisher | null;
   namespace?: string;
   tick_interval_ms?: number;
   batch_size?: number;

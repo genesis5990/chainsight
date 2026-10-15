@@ -13,9 +13,9 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import rateLimit from '@fastify/rate-limit';
-import IORedis from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
-import { Pathfinder, RedisPathResultCache, SupabaseGraphLoader } from '@chainsight/pathfinder';
+import { MemoryPathResultCache, Pathfinder, SupabaseGraphLoader } from '@chainsight/pathfinder';
+import { CaseStream } from '@chainsight/shared-types';
 import { SupabaseTraceJobStore, TracerService } from '@chainsight/tracer-agent';
 import {
   Ed25519PackSigner,
@@ -94,22 +94,19 @@ await fastify.register(caseRoutes, { prefix: '/v1' });
 const pfSupabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-const pfRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null, lazyConnect: true });
-const pfRedisSubscriber = new IORedis(env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-  lazyConnect: true,
-});
-await pfRedis.connect().catch((e) => fastify.log.warn({ e }, 'pathfinder redis L1 unavailable'));
-await pfRedisSubscriber
-  .connect()
-  .catch((e) => fastify.log.warn({ e }, 'pathfinder redis subscriber unavailable'));
+// Live events (replaces Redis pub/sub): the worker writes to
+// belief.case_stream; SSE clients and the pathfinder's cache invalidator read it.
+const caseStream = new CaseStream(
+  pfSupabase as unknown as ConstructorParameters<typeof CaseStream>[0],
+  { warn: (msg, ctx) => fastify.log.warn(ctx ?? {}, msg) },
+);
 
 const pathfinder = new Pathfinder({
   loader: new SupabaseGraphLoader(
     pfSupabase as unknown as ConstructorParameters<typeof SupabaseGraphLoader>[0],
   ),
-  resultCache: new RedisPathResultCache(pfRedis),
-  invalidatorSubscriber: pfRedisSubscriber,
+  resultCache: new MemoryPathResultCache(),
+  graphUpdates: caseStream,
   namespace: process.env.CHAINSIGHT_NAMESPACE ?? 'dev',
 });
 
@@ -119,21 +116,11 @@ await fastify.register(pathfinderRoutes, { prefix: '/v1', pathfinder });
 const tracerStore = new SupabaseTraceJobStore(
   pfSupabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
 );
-const tracerQueueRedis = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
-const tracer = new TracerService({
-  store: tracerStore,
-  connection: tracerQueueRedis as unknown as ConstructorParameters<
-    typeof TracerService
-  >[0]['connection'],
-});
+const tracer = new TracerService({ store: tracerStore });
 await fastify.register(tracerRoutes, { prefix: '/v1', tracer });
 
 // ─── SSE events bridge ────────────────────────────────────────────────────────────────────────
-await fastify.register(eventsRoutes, {
-  prefix: '/v1',
-  redis_url: env.REDIS_URL,
-  namespace: process.env.CHAINSIGHT_NAMESPACE ?? 'dev',
-});
+await fastify.register(eventsRoutes, { prefix: '/v1', stream: caseStream });
 
 // ─── Reproducibility Pack ───────────────────────────────────────────────────────────────────────────────────
 const packSigner =

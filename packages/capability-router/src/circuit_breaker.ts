@@ -12,7 +12,7 @@
  * Redis outages MUST NOT crash the router.
  */
 
-import type Redis from 'ioredis';
+import type { KvStore } from '@chainsight/shared-types';
 
 export const FAILURE_THRESHOLD = 5;
 export const FAILURE_WINDOW_MS = 60_000;
@@ -49,7 +49,7 @@ export class ProviderCircuitBreaker {
 
   constructor(
     private readonly install_id: string,
-    private readonly redis: Redis | null,
+    private readonly redis: KvStore | null,
     opts: CircuitBreakerOptions = {},
   ) {
     this.threshold = opts.failure_threshold ?? FAILURE_THRESHOLD;
