@@ -137,6 +137,7 @@ describe('MathClient', () => {
             reject(err);
           });
         })) as typeof fetch,
+      coldStartRetryMs: 0, // plain deadline behaviour; the retry has its own tests
     });
     await expect(
       client.computeConfidence({ basis_tier: 'T0' }, { deadline_ms: 30 }),
