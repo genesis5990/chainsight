@@ -118,7 +118,7 @@ const tracerStore = new SupabaseTraceJobStore(
   pfSupabase as unknown as ConstructorParameters<typeof SupabaseTraceJobStore>[0],
 );
 const tracer = new TracerService({ store: tracerStore });
-await fastify.register(tracerRoutes, { prefix: '/v1', tracer });
+await fastify.register(tracerRoutes, { prefix: '/v1', tracer, acl: pfSupabase });
 await fastify.register(graphRoutes, { prefix: '/v1', supabase: pfSupabase });
 
 // ─── SSE events bridge ────────────────────────────────────────────────────────────────────────
